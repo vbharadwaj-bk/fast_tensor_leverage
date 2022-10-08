@@ -1,2 +1,2 @@
-# fast_tensor_leverag
+# fast_tensor_leverage
 Fast Leverage Score Computation for Tensor Networks
