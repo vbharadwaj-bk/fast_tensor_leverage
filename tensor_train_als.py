@@ -84,40 +84,45 @@ class TensorTrain:
         res = ncon(right_cores, labels, out_order=output_label_list).squeeze()
         return matricize_isolate_last_mode(res)
 
-def als_tt(ground_truth, tt_to_optimize):
-    gt_materialized = ground_truth.materialize()
+    def optimize_core(self, ground_truth, idx, sweeping_right):
+        left_contraction = self.materialize_left_contraction(idx)
+        right_contraction = self.materialize_right_contraction(idx)
 
-    # Sweep from right to left 
-    #for idx in range(ground_truth.dim):
+        if left_contraction is None:
+            lhs = right_contraction
+        elif right_contraction is None:
+            lhs = left_contraction
+        else:
+            lhs = np.kron(left_contraction, right_contraction)
+            
+        axes = list(range(self.dim))
+        axes.remove(idx)
+        axes.append(idx)
 
-    idx = 3
+        rhs = matricize_isolate_last_mode(np.transpose(ground_truth, axes=axes))
+        lstsq_res, _, _, _ = la.lstsq(lhs, rhs, rcond=None)
 
-    left_contraction = ground_truth.materialize_left_contraction(idx)
-    right_contraction = ground_truth.materialize_right_contraction(idx)
+        left_rank = self.cores[idx].shape[0]
+        modesize = self.cores[idx].shape[1]
+        right_rank = self.cores[idx].shape[2]
 
-    if left_contraction is None:
-        lhs = right_contraction
-    elif right_contraction is None:
-        lhs = left_contraction
-    else:
-        lhs = np.kron(left_contraction, right_contraction)
-        
-    axes = list(range(ground_truth.dim))
-    axes.remove(idx)
-    axes.append(idx)
+        self.cores[idx] = np.swapaxes(lstsq_res.reshape((left_rank, right_rank, modesize)), 1, 2)
 
-    rhs = matricize_isolate_last_mode(np.transpose(gt_materialized, axes=axes))
-    idx_core_reshaped = matricize_isolate_last_mode(np.swapaxes(ground_truth.cores[idx], 1, 2))
+    def compute_residual(self, ground_truth):
+        return la.norm(self.materialize() - ground_truth)
 
-    print(lhs.shape)
-    print(idx_core_reshaped.shape)
-    print(rhs.shape)
+    def als_optimize(self, ground_truth, num_iters):
+        for iter in range(num_iters):
+            for idx in range(self.dim): # Sweep to the right
+                self.optimize_core(ground_truth, idx, sweeping_right=True)
+                print(f"Residual iteration {iter}, right sweep index {idx}, {self.compute_residual(ground_truth)}")
 
-    print(la.norm(lhs @ idx_core_reshaped - rhs))
-
+            for idx in reversed(range(self.dim)): # Sweep to the left
+                self.optimize_core(ground_truth, idx, sweeping_right=False)
+                print(f"Residual iteration {iter}, left sweep index {idx}, {self.compute_residual(ground_truth)}")
 
 if __name__=='__main__':
     ground_truth = TensorTrain([20, 21, 22, 23], [5, 6, 7])
     tt_to_optimize = TensorTrain([20, 21, 22, 23], [5, 6, 7])
 
-    als_tt(ground_truth, tt_to_optimize)
+    tt_to_optimize.als_optimize(ground_truth.materialize(), num_iters=3)
