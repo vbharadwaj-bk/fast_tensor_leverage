@@ -100,6 +100,10 @@ class TensorTrain:
         axes.append(idx)
 
         rhs = matricize_isolate_last_mode(np.transpose(ground_truth, axes=axes))
+        gram = lhs.T @ lhs
+        diffnorm = la.norm(gram - np.eye(lhs.shape[1]))
+        print(f"Norm of Diff. Between Gram Matrix and Identity: {diffnorm}")
+
         lstsq_res, _, _, _ = la.lstsq(lhs, rhs, rcond=None)
 
         (left_rank, modesize, right_rank) = self.cores[idx].shape
