@@ -102,24 +102,65 @@ class TensorTrain:
         rhs = matricize_isolate_last_mode(np.transpose(ground_truth, axes=axes))
         lstsq_res, _, _, _ = la.lstsq(lhs, rhs, rcond=None)
 
-        left_rank = self.cores[idx].shape[0]
-        modesize = self.cores[idx].shape[1]
-        right_rank = self.cores[idx].shape[2]
+        (left_rank, modesize, right_rank) = self.cores[idx].shape
 
         self.cores[idx] = np.swapaxes(lstsq_res.reshape((left_rank, right_rank, modesize)), 1, 2)
 
     def compute_residual(self, ground_truth):
         return la.norm(self.materialize() - ground_truth)
 
-    def als_optimize(self, ground_truth, num_iters):
-        for iter in range(num_iters):
-            for idx in range(self.dim): # Sweep to the right
-                self.optimize_core(ground_truth, idx, sweeping_right=True)
-                print(f"Residual iteration {iter}, right sweep index {idx}, {self.compute_residual(ground_truth)}")
+    def orthogonalize_core(self, idx, sweeping_right, absorb_r_into_adjacent=True):
+        if (idx == 0 and not sweeping_right) or (idx == self.dim-1 and sweeping_right):
+            assert(False)
 
-            for idx in reversed(range(self.dim)): # Sweep to the left
+        (left_rank, modesize, right_rank) = self.cores[idx].shape
+
+        labels = self.get_mode_labels()
+        if sweeping_right:
+            core_reshaped = self.cores[idx].reshape((left_rank * modesize, right_rank))
+            q, r = la.qr(core_reshaped)
+            self.cores[idx] = q.reshape((left_rank, modesize, right_rank))
+
+            if absorb_r_into_adjacent:
+                adj_core_labels = labels[idx + 1]
+                adj_core_labels[1] = prepend_dash(adj_core_labels[1]) 
+                adj_core_labels[2] = prepend_dash(adj_core_labels[2])
+                r_labels = ['-n', adj_core_labels[0]]
+                out_order= ['-n', adj_core_labels[1], adj_core_labels[2]]
+                res = ncon([r, self.cores[idx + 1]], [r_labels, adj_core_labels], out_order=out_order)
+                self.cores[idx + 1] = res
+        else:
+            core_reshaped = self.cores[idx].reshape((left_rank, modesize * right_rank))
+            q, r = la.qr(core_reshaped.T)
+            self.cores[idx] = q.T.reshape((left_rank, modesize, right_rank))
+
+            if absorb_r_into_adjacent:
+                adj_core_labels = labels[idx - 1]
+                adj_core_labels[0] = prepend_dash(adj_core_labels[0]) 
+                adj_core_labels[1] = prepend_dash(adj_core_labels[1])
+                r_labels = [adj_core_labels[2], '-n']
+                out_order= [adj_core_labels[0], adj_core_labels[1], '-n']
+                res = ncon([self.cores[idx - 1], r.T], [adj_core_labels, r_labels], out_order=out_order)
+                self.cores[idx - 1] = res
+
+    def als_optimize(self, ground_truth, num_iters):
+        print(f"Residual before initial orthog. sweep to right: {self.compute_residual(ground_truth)}")
+        for idx in reversed(range(1, self.dim)): # Initial sweep to right to orthogonalize cores 
+            self.orthogonalize_core(idx, sweeping_right=False) 
+
+        print(f"Residual after initial orthog. sweep to right: {self.compute_residual(ground_truth)}")
+
+        for iter in range(num_iters):
+            for idx in range(self.dim - 1): # Sweep to the right
+                self.optimize_core(ground_truth, idx, sweeping_right=True)
+                self.orthogonalize_core(idx, sweeping_right=True, absorb_r_into_adjacent=False)             
+
+            for idx in reversed(range(1, self.dim)): # Sweep to the left
+                absorb = idx == 1
                 self.optimize_core(ground_truth, idx, sweeping_right=False)
-                print(f"Residual iteration {iter}, left sweep index {idx}, {self.compute_residual(ground_truth)}")
+                self.orthogonalize_core(idx, sweeping_right=False, absorb_r_into_adjacent=absorb)
+
+            print(f"Iteration {iter} residual magnitude: {self.compute_residual(ground_truth)}")
 
 if __name__=='__main__':
     ground_truth = TensorTrain([20, 21, 22, 23], [5, 6, 7])
