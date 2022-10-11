@@ -100,9 +100,9 @@ class TensorTrain:
         axes.append(idx)
 
         rhs = matricize_isolate_last_mode(np.transpose(ground_truth, axes=axes))
-        gram = lhs.T @ lhs
-        diffnorm = la.norm(gram - np.eye(lhs.shape[1]))
-        print(f"Norm of Diff. Between Gram Matrix and Identity: {diffnorm}")
+        #gram = lhs.T @ lhs
+        #diffnorm = la.norm(gram - np.eye(lhs.shape[1]))
+        #print(f"Norm of Diff. Between Gram Matrix and Identity: {diffnorm}")
 
         lstsq_res, _, _, _ = la.lstsq(lhs, rhs, rcond=None)
 
@@ -151,6 +151,15 @@ class TensorTrain:
         print(f"Residual before initial orthog. sweep to right: {self.compute_residual(ground_truth)}")
         for idx in reversed(range(1, self.dim)): # Initial sweep to right to orthogonalize cores 
             self.orthogonalize_core(idx, sweeping_right=False) 
+
+        # Here, we will check a certain fact about the tensor-train decomposition
+        core = self.cores[1]
+        sum_of_grams = np.zeros((core.shape[0], core.shape[0]))
+        for i in range(core.shape[1]):
+            sum_of_grams += core[:, i, :] @ core[:, i, :].T
+
+        print(sum_of_grams)
+        exit(1)
 
         print(f"Residual after initial orthog. sweep to right: {self.compute_residual(ground_truth)}")
 
