@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # This is a slow prototype intended to demonstrate correctness.
 # It is intended to align as closely as possible to the pseudocode
@@ -22,7 +23,7 @@ class PartitionTree:
     def __init__(self, n, F):
         '''
         Full, complete binary tree represented through an array of length 2 * (# leaves) - 1.
-        Each node is indexed by an integer in [0, nodecount). The root node is 0: 
+        Each node is indexed by an integer in [0, nodecount). The root node is 0. 
         '''
         self.n = n
         self.F = F
@@ -49,12 +50,24 @@ class PartitionTree:
 
     def get_leaf_index(self, v):
         '''
-        Gets the index of a leaf in the range [0, leaf_count) 
+        Gets the index of a leaf in [0, leaf_count). Each leaf is responsible
+        for the interval [F * leaf_index, min(F * (leaf_index + 1), node_count))
         '''
         if v >= self.nodes_up_to_lfill:
             return v - self.nodes_up_to_lfill
         else:
             return v - self.complete_level_offset 
+
+    def get_leaf_range(self, v):
+        leaf_index = self.get_leaf_index(v)
+        start_idx = leaf_index * self.F
+        end_idx = min((leaf_index + 1) * self.F, self.n)
+        return (start_idx, end_idx)
+
+    def test_node_ranges(self):
+        for i in range(self.node_count):
+            if self.is_leaf(i):
+                print(f"{i} {self.get_leaf_range(i)}")
 
     def PTSample(self, m, q):
         c = 0
@@ -69,11 +82,53 @@ class PartitionTree:
                 c = self.R(c)
                 mc -= ml
 
-    def print_leaf_indices(self):
-        for i in range(self.node_count):
+        start, end = self.get_leaf_range(c)
+        qprobs = q(c)
+        qprobs /= np.sum(qprobs)  # Could also divide by mc 
+        Rc = np.random.multinomial(1, qprobs)
+        return start + np.nonzero(Rc==1)[0][0]
+
+    def test_on_explicit_pmf(self, masses, sample_count):
+        '''
+        Test the partition tree sampling on a provided explicit PMF.
+        Computes m(v) ahead of time on all nodes, then draws the 
+        specified number of samples.
+        '''
+        m_vals = np.zeros(self.node_count)
+        for i in reversed(range(self.node_count)):
             if self.is_leaf(i):
-                print(f"Leaf {i} {self.get_leaf_index(i)}")
+                start, end = self.get_leaf_range(i)
+                m_vals[i] = np.sum(masses[start:end])
+            else:
+                m_vals[i] = m_vals[self.L(i)] + m_vals[self.R(i)]
+
+        m = lambda c : m_vals[c]
+        q = lambda c : masses[self.get_leaf_range(c)[0] : self.get_leaf_range(c)[1]].copy()
+
+        result = np.zeros(self.n, dtype=np.int32)
+        for i in range(sample_count):
+            sample = self.PTSample(m, q)
+            result[sample] += 1
+
+        return result / sample_count
+
+def test_tree(tree, sample_count):
+    '''
+    Test the partition tree with several distributions
+    '''
+    def run_pmf_test(pmf):
+        tree_samples = tree.test_on_explicit_pmf(pmf, sample_count) 
+        pmf_normalized = pmf / np.sum(pmf)
+        numpy_samples = np.random.multinomial(sample_count, pmf_normalized) / sample_count
+        return pmf_normalized, tree_samples, numpy_samples 
+
+    uniform = np.ones(tree.n)
+    exponential_decay = np.ones(tree.n)
+    for i in range(1, tree.n):
+        exponential_decay[i] = exponential_decay[i-1] / 2
+    
+    return [run_pmf_test(uniform), run_pmf_test(exponential_decay)]
 
 if __name__=='__main__':
-    tree = PartitionTree(29, 1)
-    tree.print_leaf_indices()
+    tree = PartitionTree(30, 1)
+    test_tree(tree)
