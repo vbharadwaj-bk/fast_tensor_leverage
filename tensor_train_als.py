@@ -159,7 +159,6 @@ class TensorTrain:
             sum_of_grams += core[:, i, :] @ core[:, i, :].T
 
         print(sum_of_grams)
-        exit(1)
 
         print(f"Residual after initial orthog. sweep to right: {self.compute_residual(ground_truth)}")
 
