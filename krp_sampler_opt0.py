@@ -58,7 +58,7 @@ class PartitionTree:
         else:
             return v - self.complete_level_offset 
 
-    def get_leaf_range(self, v):
+    def S(self, v):
         leaf_index = self.get_leaf_index(v)
         start_idx = leaf_index * self.F
         end_idx = min((leaf_index + 1) * self.F, self.n)
@@ -67,7 +67,7 @@ class PartitionTree:
     def test_node_ranges(self):
         for i in range(self.node_count):
             if self.is_leaf(i):
-                print(f"{i} {self.get_leaf_range(i)}")
+                print(f"{i} {self.S(i)}")
 
     def PTSample(self, m, q):
         c = 0
@@ -82,7 +82,7 @@ class PartitionTree:
                 c = self.R(c)
                 mc -= ml
 
-        start, end = self.get_leaf_range(c)
+        start, end = self.S(c)
         qprobs = q(c)
         qprobs /= np.sum(qprobs)  # Could also divide by mc 
         Rc = np.random.multinomial(1, qprobs)
@@ -97,13 +97,13 @@ class PartitionTree:
         m_vals = np.zeros(self.node_count)
         for i in reversed(range(self.node_count)):
             if self.is_leaf(i):
-                start, end = self.get_leaf_range(i)
+                start, end = self.S(i)
                 m_vals[i] = np.sum(masses[start:end])
             else:
                 m_vals[i] = m_vals[self.L(i)] + m_vals[self.R(i)]
 
         m = lambda c : m_vals[c]
-        q = lambda c : masses[self.get_leaf_range(c)[0] : self.get_leaf_range(c)[1]].copy()
+        q = lambda c : masses[self.S(c)[0] : self.S(c)[1]].copy()
 
         result = np.zeros(self.n, dtype=np.int32)
         for i in range(sample_count):
@@ -129,6 +129,57 @@ def test_tree(tree, sample_count):
     
     return [run_pmf_test(uniform), run_pmf_test(exponential_decay)]
 
-if __name__=='__main__':
-    tree = PartitionTree(30, 1)
-    test_tree(tree)
+class EfficientKRPSampler():
+    def __init__(self, U, F):
+        '''
+        This is a close implementation of the pseudocode procedure
+        "ConstructSampler". 
+
+        U = [U_1, ..., U_N] is a list of matrices. All must have
+        the same column dimension R.
+
+        F = [F_1, ..., F_N] is a list of integers >= 1 
+        '''
+        self.U = U
+        self.N = len(U)
+        self.R = U[0].shape[1]
+        self.trees = []
+        self.G = [] 
+        for j in range(self.N):
+            tree = PartitionTree(U[j].shape[0], F[j])
+            self.trees.append(tree)
+            self.G.append({})
+
+            for v in reversed(range(tree.node_count)):
+                if tree.is_leaf(v):
+                    start, end = tree.S(v)
+                    self.G[j][v] = U[j][start:end].T @ U[j][start:end] 
+                else:
+                    self.G[j][v] = self.G[j][tree.L(v)] + self.G[j][tree.R(v)]
+                    self.G[j][tree.R(v)] = None
+
+    def m(self, h, k, v):
+        return h @ (self.G[k][v] * self.M[k]) @ h.T
+
+    def q(self, h, k, v):
+        start, end = self.trees[k].S(v)
+        X = np.outer(h, h) @ self.M[k] 
+        W = self.U[k][start:end] 
+
+        return np.diag(X @ W @ X.T)
+
+    def KRPDrawSample(self, j):
+        h = np.ones(self.R)
+        vector_result = []
+        scalar_result = 0
+        for k in range(self.N):
+            if k == j:
+                continue
+            m = lambda v : self.m(h, k, v)
+            q = lambda v : self.q(h, k, v)
+            ik = self.trees[k].PTSample(m, q)
+            h *= self.U[k][ik, :]
+            vector_result.append(ik)
+            scalar_result = (scalar_result * self.U[k].shape[0]) + ik
+
+        return h, scalar_result, vector_result
