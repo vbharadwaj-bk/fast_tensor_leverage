@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.linalg as la
 import matplotlib.pyplot as plt
 
 # This is a slow prototype intended to demonstrate correctness.
@@ -17,7 +18,13 @@ def log2_round_down(m):
         log2_res += 1
         lowest_power_2 *= 2
 
-    return log2_res, lowest_power_2 
+    return log2_res, lowest_power_2
+
+def chain_had_prod(matrices):
+    res = np.ones(matrices[0].shape)
+    for mat in matrices:
+        res *= mat
+    return res
 
 class PartitionTree:
     def __init__(self, n, F):
@@ -84,8 +91,7 @@ class PartitionTree:
 
         start, end = self.S(c)
         qprobs = q(c)
-        qprobs /= np.sum(qprobs)  # Could also divide by mc 
-        Rc = np.random.multinomial(1, qprobs)
+        Rc = np.random.multinomial(1, qprobs / np.sum(qprobs)) # Could also divide by mc 
         return start + np.nonzero(Rc==1)[0][0]
 
     def test_on_explicit_pmf(self, masses, sample_count):
@@ -163,10 +169,24 @@ class EfficientKRPSampler():
 
     def q(self, h, k, v):
         start, end = self.trees[k].S(v)
-        X = np.outer(h, h) @ self.M[k] 
-        W = self.U[k][start:end] 
+        X = np.outer(h, h) * self.M[k]
+        W = self.U[k][start:end]
+        return np.diag(W @ X @ W.T)
 
-        return np.diag(X @ W @ X.T)
+    def computeM(self, j):
+        '''
+        Compute M_k for the KRP of all matrices excluding
+        U_j. 
+        '''
+        G = chain_had_prod([self.G[k][0] for k in range(self.N) if k != j])
+        M_buffer = la.pinv(G) 
+
+        self.M = {}
+
+        for k in reversed(range(self.N)):
+            if k != j:
+                self.M[k] = M_buffer.copy()
+                M_buffer *= self.G[k][0] 
 
     def KRPDrawSample(self, j):
         h = np.ones(self.R)
@@ -183,3 +203,33 @@ class EfficientKRPSampler():
             scalar_result = (scalar_result * self.U[k].shape[0]) + ik
 
         return h, scalar_result, vector_result
+
+    def KRPDrawSamples(self, j, J):
+        self.computeM(j)
+        samples = []
+        for _ in range(J):
+            samples.append(self.KRPDrawSample(j)[1])
+
+        return samples
+
+def krp(mats):
+    if len(mats) == 1:
+        return mats[0]
+    else:
+        running_mat = np.einsum('ik,jk->ijk', mats[0], mats[1]).reshape((mats[0].shape[0] * mats[1].shape[0], mats[0].shape[1]))
+        
+        for i in range(2, len(mats)):
+            running_mat = np.einsum('ik,jk->ijk', running_mat, mats[i]).reshape((running_mat.shape[0] * mats[i].shape[0], mats[0].shape[1]))
+
+        return running_mat
+
+if __name__=='__main__':
+    N = 3
+    I = 3
+    R = 5
+    F = 3
+    j = 2
+    J = 10
+    U = [np.random.rand(I, R) for i in range(N)]
+    sampler = EfficientKRPSampler(U, [F] * N)
+    samples = sampler.KRPDrawSamples(j, J)
