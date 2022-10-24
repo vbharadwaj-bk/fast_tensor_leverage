@@ -69,7 +69,7 @@ class EfficientKRPSampler():
                 continue
             m = lambda v : self.m(h, k, v)
             q = lambda v : self.q(h, k, v)
-            ik = self.trees[k].PTSample(m, q)
+            ik = self.trees[k].PTSampleUpgraded(m, q)
             h *= self.U[k][ik, :]
             vector_idxs.append(ik)
             scalar_idx = (scalar_idx * self.U[k].shape[0]) + ik
