@@ -3,6 +3,13 @@ import numpy.linalg as la
 
 from partition_tree import *
 
+def batch_dot_product(A, B):
+    return np.einsum('ij,ij->j', A, B)
+
+'''
+This implementation uses the eigendecomposition to drive down 
+the complexity even further. 
+'''
 class EfficientKRPSampler:
     def __init__(self, U, F):
         '''
@@ -33,27 +40,42 @@ class EfficientKRPSampler:
                     self.G[j][tree.R(v)] = None
 
     def m(self, h, k, v):
-        return h @ (self.G[k][v] * self.M[k]) @ h.T
+        return h @ (self.G[k][v]) @ h.T
 
     def q(self, h, k, v):
         start, end = self.trees[k].S(v)
         W = self.U[k][start:end]
+        #print(np.shape(W @ h))
+        #return (W @ h) ** 2
+        test = np.zeros(self.R)
+        for i in range(self.R):
+            test += (W @ (h * self.scaled_eigs[k][:, i])) ** 2 
+
         X = np.outer(h, h) * self.M[k]
-        return np.diag(W @ X @ W.T)
+        res = np.diag(W @ X @ W.T)
+        #print("=======================")
+        #print(test)
+        #print(res)
+        return test 
 
     def computeM(self, j):
         '''
         Compute M_k for the KRP of all matrices excluding
-        U_j. 
+        U_j. Also compute the eigendecomposition of each M_k,
+        which will be useful to us. 
         '''
         G = chain_had_prod([self.G[k][0] for k in range(self.N) if k != j])
         M_buffer = la.pinv(G) 
 
         self.M = {}
+        self.scaled_eigs = {}
 
         for k in reversed(range(self.N)):
             if k != j:
                 self.M[k] = M_buffer.copy()
+                W, V = la.eigh(M_buffer)
+                print(np.sqrt(W))
+                self.scaled_eigs[k] = (np.sqrt(W) * V)
                 M_buffer *= self.G[k][0] 
 
     def KRPDrawSample(self, j):
@@ -62,9 +84,17 @@ class EfficientKRPSampler:
         scalar_idx = 0
         for k in range(self.N):
             if k == j:
-                continue
+                continue 
+
+            Y = self.scaled_eigs[k]
+            eig_weights = batch_dot_product(Y, self.G[k][0] @ Y)
+
+            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights)) 
+            scaled_h = self.scaled_eigs[k][:, np.nonzero(Rc==1)[0][0]] * h
+
             m = lambda v : self.m(h, k, v)
             q = lambda v : self.q(h, k, v)
+
             ik = self.trees[k].PTSampleUpgraded(m, q)
             h *= self.U[k][ik, :]
             vector_idxs.append(ik)

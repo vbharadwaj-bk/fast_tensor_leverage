@@ -15,11 +15,52 @@ def krp(mats):
 
         return running_mat
 
+def test_on_explicit_pmf(tree, masses, sample_count):
+    '''
+    Test the partition tree sampling on a provided explicit PMF.
+    Computes m(v) ahead of time on all nodes, then draws the 
+    specified number of samples.
+    '''
+    m_vals = np.zeros(tree.node_count)
+    for i in reversed(range(tree.node_count)):
+        if tree.is_leaf(i):
+            start, end = tree.S(i)
+            m_vals[i] = np.sum(masses[start:end])
+        else:
+            m_vals[i] = m_vals[tree.L(i)] + m_vals[tree.R(i)]
+
+    m = lambda c : m_vals[c]
+    q = lambda c : masses[tree.S(c)[0] : tree.S(c)[1]].copy()
+
+    result = np.zeros(tree.n, dtype=np.int32)
+    for i in range(sample_count):
+        sample = tree.PTSample(m, q)
+        result[sample] += 1
+
+    return result / sample_count
+
+def test_tree(tree, sample_count):
+    '''
+    Test the partition tree with several distributions
+    '''
+    def run_pmf_test(pmf):
+        tree_samples = test_on_explicit_pmf(pmf, sample_count) 
+        pmf_normalized = pmf / np.sum(pmf)
+        numpy_samples = np.random.multinomial(sample_count, pmf_normalized) / sample_count
+        return pmf_normalized, tree_samples, numpy_samples 
+
+    uniform = np.ones(tree.n)
+    exponential_decay = np.ones(tree.n)
+    for i in range(1, tree.n):
+        exponential_decay[i] = exponential_decay[i-1] / 2
+    
+    return [run_pmf_test(uniform), run_pmf_test(exponential_decay)]
+
 def test_sampler(sampler_class):
     N = 4
-    I = 8
+    I = 5
     R = 5
-    F = 3
+    F = 5
     U = [np.random.rand(I, R) for i in range(N)]
     sampler = sampler_class(U, [F] * N)
 
