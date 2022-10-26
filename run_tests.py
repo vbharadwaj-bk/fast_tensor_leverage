@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as la
+from scipy.special import rel_entr 
 import matplotlib.pyplot as plt
 
 from krp_sampler_opt0 import EfficientKRPSampler as SamplerOpt0
@@ -58,14 +59,14 @@ def test_tree(tree, sample_count):
 
 def test_sampler(sampler_class):
     N = 4
-    I = 5
+    I = 8
     R = 5
-    F = 5
+    F = 3
     U = [np.random.rand(I, R) for i in range(N)]
     sampler = sampler_class(U, [F] * N)
 
     j = 3
-    J = 100000
+    J = 120000
 
     samples = sampler.KRPDrawSamples_scalar(j, J)
     hist = np.bincount(samples)
@@ -77,4 +78,7 @@ def test_sampler(sampler_class):
     plt.plot(krp_norms / np.sum(krp_norms), label="Ground Truth PDF")
     plt.plot(hist / np.sum(hist), label="PDF of Our Sampler")
     plt.legend()
+
+    dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
+    print(f"Relative Entropy: {np.sum(dist_err)}")
 
