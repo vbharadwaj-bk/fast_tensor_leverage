@@ -45,18 +45,7 @@ class EfficientKRPSampler:
     def q(self, h, k, v):
         start, end = self.trees[k].S(v)
         W = self.U[k][start:end]
-        #print(np.shape(W @ h))
-        #return (W @ h) ** 2
-        test = np.zeros(self.R)
-        for i in range(self.R):
-            test += (W @ (h * self.scaled_eigs[k][:, i])) ** 2 
-
-        X = np.outer(h, h) * self.M[k]
-        res = np.diag(W @ X @ W.T)
-        #print("=======================")
-        #print(test)
-        #print(res)
-        return test 
+        return (W @ h) ** 2
 
     def computeM(self, j):
         '''
@@ -68,14 +57,15 @@ class EfficientKRPSampler:
         M_buffer = la.pinv(G) 
 
         self.M = {}
-        self.scaled_eigs = {}
+        self.eigvecs = {}
+        self.eigvals = {}
 
         for k in reversed(range(self.N)):
             if k != j:
                 self.M[k] = M_buffer.copy()
                 W, V = la.eigh(M_buffer)
-                print(np.sqrt(W))
-                self.scaled_eigs[k] = (np.sqrt(W) * V)
+                self.eigvecs[k] = V
+                self.eigvals[k] = W
                 M_buffer *= self.G[k][0] 
 
     def KRPDrawSample(self, j):
@@ -86,14 +76,14 @@ class EfficientKRPSampler:
             if k == j:
                 continue 
 
-            Y = self.scaled_eigs[k]
-            eig_weights = batch_dot_product(Y, self.G[k][0] @ Y)
+            Y = self.eigvecs[k]
+            eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h, h) * self.G[k][0] @ Y)
 
-            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights)) 
-            scaled_h = self.scaled_eigs[k][:, np.nonzero(Rc==1)[0][0]] * h
+            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
+            scaled_h = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h
 
-            m = lambda v : self.m(h, k, v)
-            q = lambda v : self.q(h, k, v)
+            m = lambda v : self.m(scaled_h, k, v)
+            q = lambda v : self.q(scaled_h, k, v)
 
             ik = self.trees[k].PTSampleUpgraded(m, q)
             h *= self.U[k][ik, :]
