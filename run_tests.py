@@ -68,8 +68,8 @@ def test_sampler(sampler_class):
     j = 3
     J = 120000
 
-    samples = sampler.KRPDrawSamples_scalar(j, J)
-    hist = np.bincount(samples)
+    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    hist = np.bincount(samples.astype(np.int64))
     krp_materialized = krp(U[:-1])
 
     krp_q = la.qr(krp_materialized)[0]
