@@ -1,3 +1,6 @@
+.rendered.*
+.cpython*
+
 visualization/*
 
 # Byte-compiled / optimized / DLL files

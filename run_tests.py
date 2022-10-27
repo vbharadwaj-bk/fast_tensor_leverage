@@ -75,10 +75,13 @@ def test_sampler(sampler_class):
     krp_q = la.qr(krp_materialized)[0]
 
     krp_norms = la.norm(krp_q, axis=1) ** 2
-    plt.plot(krp_norms / np.sum(krp_norms), label="Ground Truth PDF")
-    plt.plot(hist / np.sum(hist), label="PDF of Our Sampler")
-    plt.legend()
+    #plt.plot(krp_norms / np.sum(krp_norms), label="Ground Truth PDF")
+    #plt.plot(hist / np.sum(hist), label="PDF of Our Sampler")
+    #plt.legend()
 
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative Entropy: {np.sum(dist_err)}")
 
+if __name__=='__main__':
+    from krp_sampler_opt3 import EfficientKRPSampler
+    test_sampler(EfficientKRPSampler)
