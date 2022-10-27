@@ -26,6 +26,14 @@ public:
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
     }
+
+    void PTSample(py::array_t<double> U, 
+            py::array_t<double> G,
+            py::array_t<double> h,  
+            py::array_t<double> scaled_h,
+
+            )
+
 };
 
 // cfg['libraries'] = ['cuckoofilter']
