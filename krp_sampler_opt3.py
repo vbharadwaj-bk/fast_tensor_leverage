@@ -31,7 +31,7 @@ class EfficientKRPSampler:
         for j in range(self.N):
             tree = PartitionTree(U[j].shape[0], F[j])
             self.trees.append(tree)
-            self.G.append({})
+            self.G.append(np.zeros((tree.node_count, self.R, self.R), dtype=np.double))
 
             for v in reversed(range(tree.node_count)):
                 if tree.is_leaf(v):
@@ -39,7 +39,6 @@ class EfficientKRPSampler:
                     self.G[j][v] = U[j][start:end].T @ U[j][start:end] 
                 else:
                     self.G[j][v] = self.G[j][tree.L(v)] + self.G[j][tree.R(v)]
-                    self.G[j][tree.R(v)] = None
 
     def m(self, h, k, v):
         return h @ (self.G[k][v]) @ h.T
@@ -51,7 +50,7 @@ class EfficientKRPSampler:
 
     def computeM(self, j):
         '''
-        Compute M_k for the KRP of all matrices excluding
+        Compute M_k for the KRP of all matrices excluding 
         U_j. Also compute the eigendecomposition of each M_k,
         which will be useful to us. 
         '''
@@ -94,15 +93,57 @@ class EfficientKRPSampler:
 
         return h, scalar_idx, vector_idxs
 
+    def Eigensample(self, k, h, scaled_h):
+        J = h.shape[0]
+        for s in range(J):
+            Y = self.eigvecs[k]
+            eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h[s], h[s]) * self.G[k][0] @ Y)
+
+            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
+            scaled_h[s] = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h[s] 
+
+    def Treesample(self, k, h, scaled_h, samples):
+        J = scaled_h.shape[0]
+        for s in range(J):
+            m = lambda v : self.m(scaled_h[s], k, v)
+            q = lambda v : self.q(scaled_h[s], k, v)
+
+            ik = self.trees[k].PTSampleUpgraded(m, q)
+            h[s] *= self.U[k][ik, :]
+            samples[s] = (samples[s] * self.U[k].shape[0]) + ik
+
+    def KRPDrawSamples_scalar_opt(self, j, J):
+        '''
+        Draws J samples from the KRP excluding U_j. Returns the scalar
+        indices of each sampled row in the Khatri-Rao product. 
+        '''
+        self.computeM(j)
+
+        scalar_idxs = np.zeros(J, dtype=np.uint64) 
+        h = np.ones((J, self.R))
+        for k in range(self.N):
+            if k == j:
+                continue
+            scaled_h = self.Eigensample(k, h)
+            self.Treesample(k, h, scaled_h, scalar_idxs)
+
+        return scalar_idxs
+
     def KRPDrawSamples_scalar(self, j, J):
         '''
         Draws J samples from the KRP excluding J. Returns the scalar
         indices of each sampled row in the Khatri-Rao product. 
         '''
         self.computeM(j)
-        samples = []
-        for _ in range(J):
-            samples.append(self.KRPDrawSample(j)[1])
+        samples = np.zeros(J, dtype=np.uint64)
+        h = np.ones((J, self.R), dtype=np.double)
+        scaled_h = np.zeros((J, self.R), dtype=np.double)
+
+        for k in range(self.N):
+            if k == j:
+                continue 
+
+            self.Eigensample(k, h, scaled_h)
+            self.Treesample(k, h, scaled_h, samples)
 
         return samples
-
