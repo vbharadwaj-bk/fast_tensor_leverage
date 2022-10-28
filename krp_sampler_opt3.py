@@ -112,7 +112,6 @@ class EfficientKRPSampler:
         for s in range(J):
             m = lambda v : self.m(scaled_h[s], k, v)
             q = lambda v : self.q(scaled_h[s], k, v)
-            print(f"s={s}:{m(0)}")
 
             ik = self.trees[k].PTSampleUpgraded_draw_provided(m, q, draws[s])
 
