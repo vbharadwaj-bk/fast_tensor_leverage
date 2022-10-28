@@ -162,26 +162,32 @@ public:
             }
         }
 
+
         // We will use the m array as a buffer 
         // for the draw fractions.
         for(int i = 0; i < J; i++) {
             m[i] = (random_draws.ptr[i] - low[i]) / (high[i] - low[i]);
 
             MKL_INT leaf_idx;
-            if(c[i] >= nodes_up_to_lfill) {
-                leaf_idx = c[i] - nodes_up_to_lfill;
+            if(c[i] >= nodes_upto_lfill) {
+                leaf_idx = c[i] - nodes_upto_lfill;
             }
             else {
                 leaf_idx = c[i] - complete_level_offset; 
             }
 
-            a_array[i] = U.ptr + leaf_idx * F * R;
-            y_array[i] = q.data() + i * R; 
+            a_array[i] = U.ptr + (leaf_idx * F * R);
+            y_array[i] = q.data() + i * F; 
         }
 
         m_array[0] = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
+        //lda_array[0] = R;
 
-        dgemv_batch(trans_array, 
+        CBLAS_TRANSPOSE x = CblasNoTrans;
+
+        cblas_dgemv_batch(
+            CblasRowMajor,
+            &x, 
             m_array, 
             n_array, 
             alpha_array, 
@@ -192,18 +198,20 @@ public:
             beta_array, 
             y_array.data(), 
             incy_array, 
-            &group_count, 
+            group_count, 
             group_size);
 
-        for(int i = 0; i < J; i++) {
+
+        for(MKL_INT i = 0; i < J; i++) {
             double running_sum = 0.0;
-            for(int j = 0; j < F; j++) {
-                double temp = q[i * R + j] * q[i * R + j];
-                q[i * R + j] = running_sum;
-                running_sum += temp; 
+            for(MKL_INT j = 0; j < F; j++) {
+                double temp = q[i * F + j] * q[i * F + j];
+                q[i * F + j] = running_sum;
+                running_sum += temp;
             }
-            for(int j = 0; j < F; j++) {
-                q[i * R + j] /= running_sum; 
+
+            for(MKL_INT j = 0; j < F; j++) {
+                q[i * F + j] /= running_sum; 
             }
         }
 
