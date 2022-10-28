@@ -1,5 +1,6 @@
 .rendered.*
 .cpython*
+*.lock
 cpp_ext/matrix_mul_mkl/*
 
 visualization/*
