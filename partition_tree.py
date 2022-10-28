@@ -133,8 +133,6 @@ class PartitionTree:
                 c = self.R(c)
                 low = cutoff
 
-        print(c)
-
         assert(low <= draw and draw <= high)
 
         draw_fraction = min(max((draw - low) / (high - low), 0), 1.0)
@@ -143,5 +141,7 @@ class PartitionTree:
         prefix_sums = np.cumsum(normalized) 
         Rc = np.searchsorted(prefix_sums, draw_fraction) 
         start, _ = self.S(c)
+
+        print(f"Python: {Rc}")
 
         return start + Rc
