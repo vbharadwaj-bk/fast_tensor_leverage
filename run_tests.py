@@ -66,7 +66,7 @@ def test_sampler(sampler_class):
     sampler = sampler_class(U, [F] * N)
 
     j = 3
-    J = 120000
+    J = 5
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
     hist = np.bincount(samples.astype(np.int64))
@@ -79,8 +79,8 @@ def test_sampler(sampler_class):
     #plt.plot(hist / np.sum(hist), label="PDF of Our Sampler")
     #plt.legend()
 
-    dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
-    print(f"Relative Entropy: {np.sum(dist_err)}")
+    #dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
+    #print(f"Relative Entropy: {np.sum(dist_err)}")
 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
