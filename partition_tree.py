@@ -142,6 +142,4 @@ class PartitionTree:
         Rc = np.searchsorted(prefix_sums, draw_fraction) 
         start, _ = self.S(c)
 
-        print(f"Python: {Rc}")
-
         return start + Rc

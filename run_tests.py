@@ -66,7 +66,7 @@ def test_sampler(sampler_class):
     sampler = sampler_class(U, [F] * N)
 
     j = 3
-    J = 5
+    J = 10000
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
     hist = np.bincount(samples.astype(np.int64))
