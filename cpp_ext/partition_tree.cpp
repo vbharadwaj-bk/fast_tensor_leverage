@@ -61,13 +61,13 @@ public:
         NumpyArray<uint64_t> samples(samples_py);
         NumpyArray<double> random_draws(random_draws_py);
 
-        vector<MKL_INT> c(J, 0);
-        vector<double> temp1(J * R, 0);
-        vector<double> m(J, 0);
-
         MKL_INT J = U.info.shape[0];
         MKL_INT R = U.info.shape[1];
         MKL_INT R2 = R * R;
+
+        vector<MKL_INT> c(J, 0);
+        vector<double> temp1(J * R, 0);
+        vector<double> m(J, 0);
 
         char trans_array[1] = {'n'};
         MKL_INT m_array[1] = {R};
@@ -84,23 +84,26 @@ public:
         MKL_INT group_size[1] = {1};
 
         for(MKL_INT i = 0; i < J; i++) {
-            a_array[i] = G.ptr + (c[i] * R2); 
             x_array[i] = scaled_h.ptr + i * R;
             y_array[i] = temp1.data() + i * R; 
+        }
+
+        for(MKL_INT i = 0; i < J; i++) {
+            a_array[i] = G.ptr + (c[i] * R2); 
         }
 
         dgemv_batch(trans_array, 
             m_array, 
             n_array, 
             alpha_array, 
-            a_array.data(), 
+            (const double**) a_array.data(), 
             lda_array, 
-            x_array.data(), 
+            (const double**) x_array.data(), 
             incx_array, 
             beta_array, 
             y_array.data(), 
             incy_array, 
-            group_count, 
+            &group_count, 
             group_size);
 
         batch_dot_product(
@@ -109,6 +112,11 @@ public:
             m.data(),
             J, R 
             );
+
+        for(int i = 0; i < J; i++) {
+            cout << m[i] << " ";
+        }
+        cout << endl;
     }
 
 };
