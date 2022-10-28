@@ -232,6 +232,11 @@ public:
                 leaf_idx = c[i] - complete_level_offset; 
             }
             samples.ptr[i] = res + leaf_idx * F;
+            
+            for(MKL_INT j = 0; j < R; j++) {
+                h.ptr[i * R + j] *= U.ptr[(res + leaf_idx * F) * R + j]; 
+            }
+
         }
     }
 };
