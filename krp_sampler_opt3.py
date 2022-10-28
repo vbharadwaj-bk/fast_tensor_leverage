@@ -107,25 +107,27 @@ class EfficientKRPSampler:
     def Treesample(self, k, h, scaled_h, samples):
         J = scaled_h.shape[0]
         draws = np.random.rand(J)
-        samples_copy = samples.copy()
         h_copy = h.copy()
+
+        ik_test = np.zeros(J, dtype=np.uint64)
         for s in range(J):
             m = lambda v : self.m(scaled_h[s], k, v)
             q = lambda v : self.q(scaled_h[s], k, v)
 
-            ik = self.trees[k].PTSampleUpgraded_draw_provided(m, q, draws[s])
+            ik_test[s] = self.trees[k].PTSampleUpgraded_draw_provided(m, q, draws[s])
+            h[s] *= self.U[k][ik_test[s], :]
+            samples[s] = (samples[s] * self.U[k].shape[0]) + ik_test[s]
 
-            h[s] *= self.U[k][ik, :]
-            samples[s] = (samples[s] * self.U[k].shape[0]) + ik
-
+        ik_idxs = np.zeros(J, dtype=np.uint64)
         self.opt_trees[k].PTSample(
                 self.U[k], 
                 self.G[k], 
                 h_copy,
                 scaled_h,
-                samples_copy,
+                ik_idxs,
                 draws
                 )
+        print(f"Sampling Procedure Fault: {np.sum(ik_idxs - ik_test)}")
 
     def KRPDrawSamples_scalar(self, j, J):
         '''

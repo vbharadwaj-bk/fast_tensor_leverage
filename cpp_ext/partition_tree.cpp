@@ -219,15 +219,21 @@ public:
             MKL_INT res = F-1;
             for(MKL_INT j = 0; j < F - 1; j++) {
                 if(m[i] < q[i * F + j + 1]) {
-                    res = j;
+                    res = j; 
                     break;
                 }
             }
-            cout << res << " ";
-        }
-        cout << endl;
-    }
 
+            MKL_INT leaf_idx;
+            if(c[i] >= nodes_upto_lfill) {
+                leaf_idx = c[i] - nodes_upto_lfill;
+            }
+            else {
+                leaf_idx = c[i] - complete_level_offset; 
+            }
+            samples.ptr[i] = res + leaf_idx * F;
+        }
+    }
 };
 
 PYBIND11_MODULE(partition_tree, m) {
