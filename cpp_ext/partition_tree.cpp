@@ -61,13 +61,17 @@ public:
         NumpyArray<uint64_t> samples(samples_py);
         NumpyArray<double> random_draws(random_draws_py);
 
-        MKL_INT J = U.info.shape[0];
+        MKL_INT J = h.info.shape[0];
         MKL_INT R = U.info.shape[1];
         MKL_INT R2 = R * R;
 
         vector<MKL_INT> c(J, 0);
         vector<double> temp1(J * R, 0);
+
         vector<double> m(J, 0);
+        vector<double> mL(J, 0);
+        vector<double> low(J, 0);
+        vector<double> high(J, 1);
 
         char trans_array[1] = {'n'};
         MKL_INT m_array[1] = {R};
@@ -81,7 +85,7 @@ public:
         vector<double*> y_array(J, nullptr); 
         MKL_INT incy_array[1] = {1};
         MKL_INT group_count = 1;
-        MKL_INT group_size[1] = {1};
+        MKL_INT group_size[1] = {J};
 
         for(MKL_INT i = 0; i < J; i++) {
             x_array[i] = scaled_h.ptr + i * R;
@@ -113,8 +117,51 @@ public:
             J, R 
             );
 
+        // TODO: SHOULD MODIFY THIS ROUTINE SO IT
+        // HANDLES THE LAST PARTIALLY COMPLETE LEVEL
+        // OF THE BINARY TREE
+
+        for(uint32_t c_level = 0; c_level < lfill_level; c_level++) {
+            // Prepare to compute m(L(v)) for all v
+            for(MKL_INT i = 0; i < J; i++) {
+                a_array[i] = G.ptr + ((2 * c[i] + 1) * R2); 
+            }
+
+            dgemv_batch(trans_array, 
+                m_array, 
+                n_array, 
+                alpha_array, 
+                (const double**) a_array.data(), 
+                lda_array, 
+                (const double**) x_array.data(), 
+                incx_array, 
+                beta_array, 
+                y_array.data(), 
+                incy_array, 
+                &group_count, 
+                group_size);
+
+            batch_dot_product(
+                scaled_h.ptr, 
+                temp1.data(), 
+                mL.data(),
+                J, R 
+                );
+
+            for(MKL_INT i = 0; i < J; i++) {
+                double cutoff = low[i] + mL[i] / m[i];
+                if(random_draws.ptr[i] <= cutoff) {
+                    c[i] = 2 * c[i] + 1;
+                    high[i] = cutoff;
+                }
+                else {
+                    c[i] = 2 * c[i] + 2;
+                    low[i] = cutoff;
+                }
+            }
+        }
         for(int i = 0; i < J; i++) {
-            cout << m[i] << " ";
+            cout << c[i] << " ";
         }
         cout << endl;
     }

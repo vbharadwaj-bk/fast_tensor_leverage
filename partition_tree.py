@@ -10,7 +10,7 @@ def log2_round_down(m):
     log2_res = 0
     lowest_power_2 = 1
 
-    while lowest_power_2 * 2 < m:
+    while lowest_power_2 * 2 <= m:
         log2_res += 1
         lowest_power_2 *= 2
 
@@ -132,6 +132,8 @@ class PartitionTree:
             else:
                 c = self.R(c)
                 low = cutoff
+
+        print(c)
 
         assert(low <= draw and draw <= high)
 

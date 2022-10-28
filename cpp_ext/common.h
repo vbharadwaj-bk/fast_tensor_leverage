@@ -21,7 +21,7 @@ inline void log2_round_down(uint32_t m,
     log2_res = 0;
     lowest_power_2 = 1;
 
-    while(lowest_power_2 * 2 < m) {
+    while(lowest_power_2 * 2 <= m) {
         log2_res++; 
         lowest_power_2 *= 2;
     }
