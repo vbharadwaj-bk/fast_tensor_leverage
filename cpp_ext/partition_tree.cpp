@@ -67,6 +67,7 @@ public:
 
         vector<MKL_INT> c(J, 0);
         vector<double> temp1(J * R, 0);
+        vector<double> q(J * F, 0);
 
         vector<double> m(J, 0);
         vector<double> mL(J, 0);
@@ -160,8 +161,61 @@ public:
                 }
             }
         }
+
+        // We will use the m array as a buffer 
+        // for the draw fractions.
         for(int i = 0; i < J; i++) {
-            cout << c[i] << " ";
+            m[i] = (random_draws.ptr[i] - low[i]) / (high[i] - low[i]);
+
+            MKL_INT leaf_idx;
+            if(c[i] >= nodes_up_to_lfill) {
+                leaf_idx = c[i] - nodes_up_to_lfill;
+            }
+            else {
+                leaf_idx = c[i] - complete_level_offset; 
+            }
+
+            a_array[i] = U.ptr + leaf_idx * F * R;
+            y_array[i] = q.data() + i * R; 
+        }
+
+        m_array[0] = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
+
+        dgemv_batch(trans_array, 
+            m_array, 
+            n_array, 
+            alpha_array, 
+            (const double**) a_array.data(), 
+            lda_array, 
+            (const double**) x_array.data(), 
+            incx_array, 
+            beta_array, 
+            y_array.data(), 
+            incy_array, 
+            &group_count, 
+            group_size);
+
+        for(int i = 0; i < J; i++) {
+            double running_sum = 0.0;
+            for(int j = 0; j < F; j++) {
+                double temp = q[i * R + j] * q[i * R + j];
+                q[i * R + j] = running_sum;
+                running_sum += temp; 
+            }
+            for(int j = 0; j < F; j++) {
+                q[i * R + j] /= running_sum; 
+            }
+        }
+
+        for(MKL_INT i = 0; i < J; i++) {
+            MKL_INT res = F-1;
+            for(MKL_INT j = 0; j < F - 1; j++) {
+                if(m[i] < q[i * F + j + 1]) {
+                    res = j;
+                    break;
+                }
+            }
+            cout << res << " ";
         }
         cout << endl;
     }
