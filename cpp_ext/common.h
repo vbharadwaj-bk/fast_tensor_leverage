@@ -27,7 +27,7 @@ inline void log2_round_down(uint32_t m,
     }
 }
 
-#pragma GCC visibility push(hidden)
+//#pragma GCC visibility push(hidden)
 template<typename T>
 class NumpyArray {
 public:

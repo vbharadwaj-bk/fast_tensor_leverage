@@ -116,6 +116,30 @@ class PartitionTree:
         Rc = np.searchsorted(prefix_sums, draw_fraction) 
         start, _ = self.S(c)
 
-        #Rc = np.random.multinomial(1, qprobs / np.sum(qprobs)) # Could also divide by mc 
-        #return start + np.nonzero(Rc==1)[0][0]
+        return start + Rc
+
+
+    def PTSampleUpgraded_draw_provided(self, m, q, draw):
+        c = 0
+        mtotal = m(c)
+        low, high = 0.0, 1.0
+        while not self.is_leaf(c):  
+            ml = m(self.L(c))
+            cutoff = low + ml / mtotal
+            if draw <= cutoff:
+                c = self.L(c)
+                high = cutoff
+            else:
+                c = self.R(c)
+                low = cutoff
+
+        assert(low <= draw and draw <= high)
+
+        draw_fraction = min(max((draw - low) / (high - low), 0), 1.0)
+        qprobs = q(c)
+        normalized = qprobs / np.sum(qprobs)
+        prefix_sums = np.cumsum(normalized) 
+        Rc = np.searchsorted(prefix_sums, draw_fraction) 
+        start, _ = self.S(c)
+
         return start + Rc
