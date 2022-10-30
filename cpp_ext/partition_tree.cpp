@@ -20,7 +20,8 @@ class PartitionTree {
 
     // ============================================================
     vector<MKL_INT> c;
-    vector<double> temp1;
+    //vector<double> temp1;
+    Buffer<double> temp1;
     vector<double> q;
 
     vector<double> m;
@@ -65,7 +66,7 @@ class PartitionTree {
     // ============================================================
 
 public:
-    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) {
+    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) : temp1({J * R}, 0.0) {
         this->n = n;
         this->F = F;
         this->J = J;
@@ -83,7 +84,7 @@ public:
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
 
         c.resize(J);
-        temp1.resize(J * R);
+        //temp1.resize(J * R);
         q.resize(J * F);
         m.resize(J);
         mL.resize(J);
@@ -137,7 +138,7 @@ public:
 
         for(MKL_INT i = 0; i < J; i++) {
             x_array[i] = scaled_h.ptr + i * R;
-            y_array[i] = temp1.data() + i * R; 
+            y_array[i] = temp1() + i * R; 
         }
 
         for(MKL_INT i = 0; i < J; i++) {
@@ -151,7 +152,7 @@ public:
 
         batch_dot_product(
             scaled_h.ptr, 
-            temp1.data(), 
+            temp1(), 
             m.data(),
             J, R 
             );
@@ -170,7 +171,7 @@ public:
 
             batch_dot_product(
                 scaled_h.ptr, 
-                temp1.data(), 
+                temp1(), 
                 mL.data(),
                 J, R 
                 );
