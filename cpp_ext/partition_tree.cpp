@@ -1,5 +1,7 @@
 //cppimport
 #include <iostream>
+#include <cassert>
+#include <cstdlib>
 #include "common.h"
 #include "oneapi/mkl.hpp"
 
@@ -10,14 +12,16 @@ class PartitionTree {
     uint32_t leaf_count, node_count;
 
     uint32_t lfill_level, lfill_count;
+    uint32_t total_levels;
     uint32_t nodes_upto_lfill, nodes_before_lfill;
     uint32_t complete_level_offset;
 
     MKL_INT J, R;
     MKL_INT R2;
 
-    // Temporary buffers related to sampling
+    Buffer<double> G;
 
+    // Temporary buffers related to sampling
     // ============================================================
     Buffer<MKL_INT> c;
     Buffer<double> temp1;
@@ -67,7 +71,8 @@ class PartitionTree {
 
 public:
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) 
-        :   c({J}, 0),
+        :   G({divide_and_roundup(n, F), R * R}, 0.0), 
+            c({J}, 0),
             temp1({J, R}, 0.0),
             q({J, F}, 0.0),
             m({J}, 0.0),
@@ -78,6 +83,7 @@ public:
             x_array({J}, nullptr),
             y_array({J}, nullptr)
         {
+        assert(n % F == 0);
         this->n = n;
         this->F = F;
         this->J = J;
@@ -88,11 +94,87 @@ public:
         node_count = 2 * leaf_count - 1;
 
         log2_round_down(leaf_count, lfill_level, lfill_count);
+        total_levels = node_count > lfill_count ? lfill_level + 1 : lfill_level;
+
         nodes_upto_lfill = lfill_count * 2 - 1;
         nodes_before_lfill = lfill_count - 1;
 
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
+    }
+
+    bool is_leaf(MKL_INT &c) {
+        return 2 * c + 1 >= node_count; 
+    }
+
+    MKL_INT leaf_idx(MKL_INT &c) {
+        if(c >= nodes_upto_lfill) {
+            return c - nodes_upto_lfill;
+        }
+        else {
+            return c - complete_level_offset; 
+        }
+    }
+
+    void build_tree(py::array_t<double> U_py, py::array_t<double> G_check_py) {
+        Buffer<double> U(U_py);
+        Buffer<double> G_check(G_check_py);
+        std::fill(G(), G(node_count * R2), 0.0);
+
+        // First leaf must always be on the lowest filled level 
+        MKL_INT first_leaf_idx = node_count - leaf_count; 
+
+        // First compute outer product sums for each leaf using CBLAS_BATCHED_GEMM
+        //CBLAS_TRANSPOSE transA = CblasNoTrans;
+        //CBLAS_TRANSPOSE transA = CblasNoTrans;
+        alpha_array = 1.0;
+        beta_array = 0.0;
+
+        MKL_INT leaf_count_cast = leaf_count;
+        Buffer<double*> a_array(leaf_count);
+        Buffer<double*> c_array(leaf_count);
+
+        for(int i = first_leaf_idx; i < node_count; i++) {
+            a_array[i] = U(leaf_idx(i) * F, 0);
+            c_array[i] = G(i);
+        }
+
+        cblas_dgemm_batch(      // Would be even easier if we had a batched SYRK routine 
+                CblasRowMajor, 
+                &CblasTrans, 
+                &CblasNoTrans, 
+                &R, 
+                &R, 
+                &F, 
+                &alpha_array, 
+                (const double**) a_array(), 
+                &R, 
+                (const double**) a_array(), 
+                &R, 
+                &beta_array, 
+                c_array(), 
+                &R, 
+                1, 
+                &leaf_count_cast);
+
+        MKL_INT start = nodes_before_lfill; 
+        MKL_INT end = first_leaf_idx;
+
+        for(uint32_t c_level = lfill_level; c_level >= 0; c_level--) {
+            for(int c = start; c < end; c++) {
+                for(int j = 0; j < R2; j++) {
+                    G[c, j] += G[2 * c + 1, j] + G[2 * c + 2, j];
+                } 
+            }
+            end = start;
+            start = (start + 1) / 2;
+        }
+
+        double absdiff = 0.0;
+        for(MKL_INT i = 0; i < node_count * R2; i++) {
+            absdiff += abs(G_check[i] - G[i]);
+        }
+        cout << "Absolute difference: " << absdiff << endl;
     }
 
     void batch_dot_product(
@@ -154,12 +236,9 @@ public:
             J, R 
             );
 
-        // TODO: SHOULD MODIFY THIS ROUTINE SO IT
-        // HANDLES THE LAST PARTIALLY COMPLETE LEVEL
-        // OF THE BINARY TREE
-
         for(uint32_t c_level = 0; c_level < lfill_level; c_level++) {
             // Prepare to compute m(L(v)) for all v
+
             for(MKL_INT i = 0; i < J; i++) {
                 a_array[i] = G((2 * c[i] + 1) * R2); 
             }
@@ -186,6 +265,34 @@ public:
             }
         }
 
+        // Handle the tail case
+        if(node_count > nodes_before_lfill) {
+            for(MKL_INT i = 0; i < J; i++) {
+                a_array[i] = is_leaf(c[i]) ? a_array[i] : G((2 * c[i] + 1) * R2); 
+            }
+
+            execute_mkl_dgemv_batch();
+
+            batch_dot_product(
+                scaled_h(), 
+                temp1(), 
+                mL(),
+                J, R 
+                );
+
+            for(MKL_INT i = 0; i < J; i++) {
+                double cutoff = low[i] + mL[i] / m[i];
+                if((! is_leaf(c[i])) && random_draws[i] <= cutoff) {
+                    c[i] = 2 * c[i] + 1;
+                    high[i] = cutoff;
+                }
+                else if((! is_leaf(c[i])) && random_draws[i] > cutoff) {
+                    c[i] = 2 * c[i] + 2;
+                    low[i] = cutoff;
+                }
+            }
+        }
+
         // We will use the m array as a buffer 
         // for the draw fractions.
         for(int i = 0; i < J; i++) {
@@ -203,8 +310,7 @@ public:
             y_array[i] = q(i, 0);
         }
 
-        m_array = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
-
+        m_array = F;
         execute_mkl_dgemv_batch();
 
         for(MKL_INT i = 0; i < J; i++) {
@@ -227,17 +333,11 @@ public:
                 }
             }
 
-            MKL_INT leaf_idx;
-            if(c[i] >= nodes_upto_lfill) {
-                leaf_idx = c[i] - nodes_upto_lfill;
-            }
-            else {
-                leaf_idx = c[i] - complete_level_offset; 
-            }
-            samples[i] = res + leaf_idx * F;
+            MKL_INT idx = leaf_idx(c[i]);
+            samples[i] = res + idx * F;
             
             for(MKL_INT j = 0; j < R; j++) {
-                h[i * R + j] *= U[res + leaf_idx * F, j]; 
+                h[i, j] *= U[res + idx * F, j]; 
             }
         }
     }
