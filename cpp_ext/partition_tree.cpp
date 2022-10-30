@@ -30,9 +30,9 @@ class PartitionTree {
 
     // ============================================================
     // Parameters related to DGEMV_Batched 
-    vector<double*> a_array;
-    vector<double*> x_array;
-    vector<double*> y_array;
+    Buffer<double*> a_array;
+    Buffer<double*> x_array;
+    Buffer<double*> y_array;
 
     char trans_array; 
     MKL_INT m_array;
@@ -53,12 +53,12 @@ class PartitionTree {
             &m_array, 
             &n_array, 
             &alpha_array, 
-            (const double**) a_array.data(), 
+            (const double**) a_array(), 
             &lda_array, 
-            (const double**) x_array.data(), 
+            (const double**) x_array(), 
             &incx_array, 
             &beta_array, 
-            y_array.data(), 
+            y_array(), 
             &incy_array, 
             group_count, 
             &group_size);
@@ -73,7 +73,10 @@ public:
             m({J}, 0.0),
             mL({J}, 0.0),
             low({J}, 0.0),
-            high({J}, 0.0)
+            high({J}, 0.0),
+            a_array({J}, nullptr),
+            x_array({J}, nullptr),
+            y_array({J}, nullptr)
         {
         this->n = n;
         this->F = F;
@@ -90,10 +93,6 @@ public:
 
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
-
-        a_array.resize(J);
-        x_array.resize(J);
-        y_array.resize(J);
     }
 
     void batch_dot_product(
@@ -118,12 +117,12 @@ public:
             py::array_t<double> random_draws_py
             ) {
 
-        NumpyArray<double> U(U_py);
-        NumpyArray<double> G(G_py);
-        NumpyArray<double> h(h_py);
-        NumpyArray<double> scaled_h(scaled_h_py);
-        NumpyArray<uint64_t> samples(samples_py);
-        NumpyArray<double> random_draws(random_draws_py);
+        Buffer<double> U(U_py);
+        Buffer<double> G(G_py);
+        Buffer<double> h(h_py);
+        Buffer<double> scaled_h(scaled_h_py);
+        Buffer<uint64_t> samples(samples_py);
+        Buffer<double> random_draws(random_draws_py);
 
         trans_array = 'n';
         m_array = R;
@@ -137,21 +136,19 @@ public:
         group_size = J;
 
         for(MKL_INT i = 0; i < J; i++) {
-            x_array[i] = scaled_h.ptr + i * R;
+            x_array[i] = scaled_h(i, 0);
             y_array[i] = temp1(i, 0); 
-        }
 
-        for(MKL_INT i = 0; i < J; i++) {
-            a_array[i] = G.ptr + (c[i] * R2);
+            c[i] = 0;
             low[i] = 0.0;
             high[i] = 1.0;
-            c[i] = 0;
+            a_array[i] = G(0);
         }
 
         execute_mkl_dgemv_batch();
 
         batch_dot_product(
-            scaled_h.ptr, 
+            scaled_h(), 
             temp1(), 
             m(),
             J, R 
@@ -164,13 +161,13 @@ public:
         for(uint32_t c_level = 0; c_level < lfill_level; c_level++) {
             // Prepare to compute m(L(v)) for all v
             for(MKL_INT i = 0; i < J; i++) {
-                a_array[i] = G.ptr + ((2 * c[i] + 1) * R2); 
+                a_array[i] = G((2 * c[i] + 1) * R2); 
             }
 
             execute_mkl_dgemv_batch();
 
             batch_dot_product(
-                scaled_h.ptr, 
+                scaled_h(), 
                 temp1(), 
                 mL(),
                 J, R 
@@ -178,7 +175,7 @@ public:
 
             for(MKL_INT i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
-                if(random_draws.ptr[i] <= cutoff) {
+                if(random_draws[i] <= cutoff) {
                     c[i] = 2 * c[i] + 1;
                     high[i] = cutoff;
                 }
@@ -192,7 +189,7 @@ public:
         // We will use the m array as a buffer 
         // for the draw fractions.
         for(int i = 0; i < J; i++) {
-            m[i] = (random_draws.ptr[i] - low[i]) / (high[i] - low[i]);
+            m[i] = (random_draws[i] - low[i]) / (high[i] - low[i]);
 
             MKL_INT leaf_idx;
             if(c[i] >= nodes_upto_lfill) {
@@ -202,7 +199,7 @@ public:
                 leaf_idx = c[i] - complete_level_offset; 
             }
 
-            a_array[i] = U.ptr + (leaf_idx * F * R);
+            a_array[i] = U(leaf_idx * F, 0);
             y_array[i] = q(i, 0);
         }
 
@@ -239,10 +236,10 @@ public:
             else {
                 leaf_idx = c[i] - complete_level_offset; 
             }
-            samples.ptr[i] = res + leaf_idx * F;
+            samples[i] = res + leaf_idx * F;
             
             for(MKL_INT j = 0; j < R; j++) {
-                h.ptr[i * R + j] *= U.ptr[(res + leaf_idx * F) * R + j]; 
+                h[i * R + j] *= U[res + leaf_idx * F, j]; 
             }
         }
     }
