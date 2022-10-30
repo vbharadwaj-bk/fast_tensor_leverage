@@ -120,11 +120,11 @@ public:
         return ptr + (dim1 * off_x) + off_y;
     }
 
-    T operator[](uint64_t offset) {
+    T& operator[](uint64_t offset) {
         return ptr[offset];
     }
 
-    T operator[](uint64_t off_x, uint64_t off_y) {
+    T& operator[](uint64_t off_x, uint64_t off_y) {
         return ptr[(dim1 * off_x) + off_y];
     }
 
