@@ -218,9 +218,7 @@ public:
             for(MKL_INT j = 0; j < F; j++) {
                 q[i, j] /= running_sum; 
             }
-        }
 
-        for(MKL_INT i = 0; i < J; i++) {
             MKL_INT res = F-1;
             for(MKL_INT j = 0; j < F - 1; j++) {
                 if(m[i] < q[i, j + 1]) {
