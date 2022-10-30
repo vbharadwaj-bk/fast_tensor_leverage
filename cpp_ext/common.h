@@ -78,7 +78,7 @@ public:
         info = arr_py.request();
         ptr = static_cast<T*>(info.ptr);
 
-        if(arr_py.ndim == 2) {
+        if(info.ndim == 2) {
             dim0 = info.shape[0];
             dim1 = info.shape[1];
         }
