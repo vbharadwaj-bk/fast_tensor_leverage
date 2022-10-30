@@ -23,13 +23,17 @@ class PartitionTree {
     Buffer<double> temp1;
     Buffer<double> q;
 
-    vector<double> m;
-    vector<double> mL;
-    vector<double> low;
-    vector<double> high;
+    Buffer<double> m;
+    Buffer<double> mL;
+    Buffer<double> low;
+    Buffer<double> high;
 
     // ============================================================
     // Parameters related to DGEMV_Batched 
+    vector<double*> a_array;
+    vector<double*> x_array;
+    vector<double*> y_array;
+
     char trans_array; 
     MKL_INT m_array;
     MKL_INT n_array;
@@ -40,9 +44,6 @@ class PartitionTree {
     MKL_INT incy_array;
     MKL_INT group_count;
     MKL_INT group_size;
-    vector<double*> a_array;
-    vector<double*> x_array;
-    vector<double*> y_array;
 
     void execute_mkl_dgemv_batch() {
         CBLAS_TRANSPOSE trans = CblasNoTrans;
@@ -68,7 +69,11 @@ public:
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) 
         :   c({J}, 0),
             temp1({J, R}, 0.0),
-            q({J, F}, 0.0)    
+            q({J, F}, 0.0),
+            m({J}, 0.0),
+            mL({J}, 0.0),
+            low({J}, 0.0),
+            high({J}, 0.0)
         {
         this->n = n;
         this->F = F;
@@ -85,11 +90,6 @@ public:
 
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
-
-        m.resize(J);
-        mL.resize(J);
-        low.resize(J);
-        high.resize(J);
 
         a_array.resize(J);
         x_array.resize(J);
@@ -153,7 +153,7 @@ public:
         batch_dot_product(
             scaled_h.ptr, 
             temp1(), 
-            m.data(),
+            m(),
             J, R 
             );
 
@@ -172,7 +172,7 @@ public:
             batch_dot_product(
                 scaled_h.ptr, 
                 temp1(), 
-                mL.data(),
+                mL(),
                 J, R 
                 );
 
