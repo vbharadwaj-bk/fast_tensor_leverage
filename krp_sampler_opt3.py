@@ -13,7 +13,7 @@ This implementation uses the eigendecomposition to drive down
 the complexity even further. 
 '''
 class EfficientKRPSampler:
-    def __init__(self, U, F):
+    def __init__(self, U, F, J):
         '''
         This is a close implementation of the pseudocode procedure
         "ConstructSampler". 
@@ -32,7 +32,7 @@ class EfficientKRPSampler:
         for j in range(self.N):
             tree = PartitionTree(U[j].shape[0], F[j])
             self.trees.append(tree)
-            self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j]))
+            self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j], J, self.R))
             self.G.append(np.zeros((tree.node_count, self.R, self.R), dtype=np.double))
 
             for v in reversed(range(tree.node_count)):
@@ -107,14 +107,6 @@ class EfficientKRPSampler:
     def Treesample(self, k, h, scaled_h, samples):
         J = scaled_h.shape[0]
         draws = np.random.rand(J)
-
-        #ik_test = np.zeros(J, dtype=np.uint64)
-        #for s in range(J):
-            #m = lambda v : self.m(scaled_h[s], k, v)
-            #q = lambda v : self.q(scaled_h[s], k, v)
-
-            #ik_test[s] = self.trees[k].PTSampleUpgraded_draw_provided(m, q, draws[s])
-            #h[s] *= self.U[k][ik_test[s], :]
 
         ik_idxs = np.zeros(J, dtype=np.uint64)
 

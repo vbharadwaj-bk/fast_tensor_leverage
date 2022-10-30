@@ -6,16 +6,55 @@
 using namespace std;
 
 class PartitionTree {
-public:
     uint32_t n, F;
     uint32_t leaf_count, node_count;
 
     uint32_t lfill_level, lfill_count;
     uint32_t nodes_upto_lfill, nodes_before_lfill;
     uint32_t complete_level_offset;
-    PartitionTree(uint32_t n, uint32_t F) {
+
+    MKL_INT J, R;
+    MKL_INT R2;
+
+    // ============================================================
+    // Parameters related to DGEMV_Batched 
+    char trans_array; 
+    MKL_INT m_array;
+    MKL_INT n_array;
+    double alpha_array;
+    MKL_INT lda_array;
+    MKL_INT incx_array;
+    double beta_array;
+    MKL_INT incy_array;
+    MKL_INT group_count;
+    MKL_INT group_size;
+    vector<double*> a_array;
+    vector<double*> x_array;
+    vector<double*> y_array;
+
+    void execute_mkl_dgemv_batch() {
+        dgemv_batch(&trans_array, 
+            &m_array, 
+            &n_array, 
+            &alpha_array, 
+            (const double**) a_array.data(), 
+            &lda_array, 
+            (const double**) x_array.data(), 
+            &incx_array, 
+            &beta_array, 
+            y_array.data(), 
+            &incy_array, 
+            &group_count, 
+            &group_size);
+    }
+
+public:
+    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) {
         this->n = n;
         this->F = F;
+        this->J = J;
+        this->R = R;
+        R2 = R * R;
 
         leaf_count = divide_and_roundup(n, F);
         node_count = 2 * leaf_count - 1;
@@ -26,11 +65,11 @@ public:
 
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
+
+        a_array.resize(J);
+        x_array.resize(J);
+        y_array.resize(J);
     }
-
-    /*void m(vector<uint32_t> &c, double* G, double* scaled_h) {
-
-    }*/
 
     void batch_dot_product(
                 double* A, 
@@ -61,10 +100,6 @@ public:
         NumpyArray<uint64_t> samples(samples_py);
         NumpyArray<double> random_draws(random_draws_py);
 
-        MKL_INT J = h.info.shape[0];
-        MKL_INT R = U.info.shape[1];
-        MKL_INT R2 = R * R;
-
         vector<MKL_INT> c(J, 0);
         vector<double> temp1(J * R, 0);
         vector<double> q(J * F, 0);
@@ -74,19 +109,20 @@ public:
         vector<double> low(J, 0);
         vector<double> high(J, 1);
 
-        char trans_array[1] = {'n'};
-        MKL_INT m_array[1] = {R};
-        MKL_INT n_array[1] = {R};
-        double alpha_array[1] = {1.0};
-        vector<double*> a_array(J, nullptr);
-        MKL_INT lda_array[1] = {R};
+        trans_array = 'n';
+        m_array = R;
+        n_array = R;
+        alpha_array = 1.0;
+        lda_array = R;
+        incx_array = 1;
+        beta_array = 0.0;
+        incy_array = 1;
+        group_count = 1;
+        group_size = J;
+
+        /*vector<double*> a_array(J, nullptr);
         vector<double*> x_array(J, nullptr); 
-        MKL_INT incx_array[1] = {1};
-        double beta_array[1] = {0.0};
-        vector<double*> y_array(J, nullptr); 
-        MKL_INT incy_array[1] = {1};
-        MKL_INT group_count = 1;
-        MKL_INT group_size[1] = {J};
+        vector<double*> y_array(J, nullptr);*/
 
         for(MKL_INT i = 0; i < J; i++) {
             x_array[i] = scaled_h.ptr + i * R;
@@ -97,19 +133,19 @@ public:
             a_array[i] = G.ptr + (c[i] * R2); 
         }
 
-        dgemv_batch(trans_array, 
-            m_array, 
-            n_array, 
-            alpha_array, 
+        dgemv_batch(&trans_array, 
+            &m_array, 
+            &n_array, 
+            &alpha_array, 
             (const double**) a_array.data(), 
-            lda_array, 
+            &lda_array, 
             (const double**) x_array.data(), 
-            incx_array, 
-            beta_array, 
+            &incx_array, 
+            &beta_array, 
             y_array.data(), 
-            incy_array, 
+            &incy_array, 
             &group_count, 
-            group_size);
+            &group_size);
 
         batch_dot_product(
             scaled_h.ptr, 
@@ -128,19 +164,19 @@ public:
                 a_array[i] = G.ptr + ((2 * c[i] + 1) * R2); 
             }
 
-            dgemv_batch(trans_array, 
-                m_array, 
-                n_array, 
-                alpha_array, 
+            dgemv_batch(&trans_array, 
+                &m_array, 
+                &n_array, 
+                &alpha_array, 
                 (const double**) a_array.data(), 
-                lda_array, 
+                &lda_array, 
                 (const double**) x_array.data(), 
-                incx_array, 
-                beta_array, 
+                &incx_array, 
+                &beta_array, 
                 y_array.data(), 
-                incy_array, 
+                &incy_array, 
                 &group_count, 
-                group_size);
+                &group_size);
 
             batch_dot_product(
                 scaled_h.ptr, 
@@ -180,7 +216,7 @@ public:
             y_array[i] = q.data() + i * F; 
         }
 
-        m_array[0] = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
+        m_array = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
         //lda_array[0] = R;
 
         CBLAS_TRANSPOSE x = CblasNoTrans;
@@ -188,19 +224,18 @@ public:
         cblas_dgemv_batch(
             CblasRowMajor,
             &x, 
-            m_array, 
-            n_array, 
-            alpha_array, 
+            &m_array, 
+            &n_array, 
+            &alpha_array, 
             (const double**) a_array.data(), 
-            lda_array, 
+            &lda_array, 
             (const double**) x_array.data(), 
-            incx_array, 
-            beta_array, 
+            &incx_array, 
+            &beta_array, 
             y_array.data(), 
-            incy_array, 
+            &incy_array, 
             group_count, 
-            group_size);
-
+            &group_size);
 
         for(MKL_INT i = 0; i < J; i++) {
             double running_sum = 0.0;
@@ -243,7 +278,7 @@ public:
 
 PYBIND11_MODULE(partition_tree, m) {
   py::class_<PartitionTree>(m, "PartitionTree")
-    .def(py::init<uint32_t, uint32_t>())
+    .def(py::init<uint32_t, uint32_t, uint64_t, uint64_t>())
     .def("PTSample", &PartitionTree::PTSample) 
     ;
 }
@@ -253,7 +288,7 @@ PYBIND11_MODULE(partition_tree, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['-DMKL_ILP64', '-m64', '-I"${MKLROOT}/include"']
+cfg['extra_compile_args'] = ['-DMKL_ILP64', '-m64', '-I"${MKLROOT}/include"', '-std=c++2b']
 cfg['extra_link_args'] = ['-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed', '-lmkl_intel_ilp64', '-lmkl_gnu_thread', '-lmkl_core', '-lgomp', '-lpthread', '-lm', '-ldl']
 cfg['dependencies'] = ['common.h'] 
 %>
