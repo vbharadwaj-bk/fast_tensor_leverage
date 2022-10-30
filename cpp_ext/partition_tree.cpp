@@ -16,6 +16,18 @@ class PartitionTree {
     MKL_INT J, R;
     MKL_INT R2;
 
+    // Temporary buffers related to sampling
+
+    // ============================================================
+    vector<MKL_INT> c;
+    vector<double> temp1;
+    vector<double> q;
+
+    vector<double> m;
+    vector<double> mL;
+    vector<double> low;
+    vector<double> high;
+
     // ============================================================
     // Parameters related to DGEMV_Batched 
     char trans_array; 
@@ -33,7 +45,10 @@ class PartitionTree {
     vector<double*> y_array;
 
     void execute_mkl_dgemv_batch() {
-        dgemv_batch(&trans_array, 
+        CBLAS_TRANSPOSE trans = CblasNoTrans;
+        cblas_dgemv_batch(
+            CblasRowMajor,
+            &trans, 
             &m_array, 
             &n_array, 
             &alpha_array, 
@@ -44,9 +59,10 @@ class PartitionTree {
             &beta_array, 
             y_array.data(), 
             &incy_array, 
-            &group_count, 
+            group_count, 
             &group_size);
     }
+    // ============================================================
 
 public:
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) {
@@ -65,6 +81,14 @@ public:
 
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
+
+        c.resize(J);
+        temp1.resize(J * R);
+        q.resize(J * F);
+        m.resize(J);
+        mL.resize(J);
+        low.resize(J);
+        high.resize(J);
 
         a_array.resize(J);
         x_array.resize(J);
@@ -100,15 +124,6 @@ public:
         NumpyArray<uint64_t> samples(samples_py);
         NumpyArray<double> random_draws(random_draws_py);
 
-        vector<MKL_INT> c(J, 0);
-        vector<double> temp1(J * R, 0);
-        vector<double> q(J * F, 0);
-
-        vector<double> m(J, 0);
-        vector<double> mL(J, 0);
-        vector<double> low(J, 0);
-        vector<double> high(J, 1);
-
         trans_array = 'n';
         m_array = R;
         n_array = R;
@@ -120,32 +135,19 @@ public:
         group_count = 1;
         group_size = J;
 
-        /*vector<double*> a_array(J, nullptr);
-        vector<double*> x_array(J, nullptr); 
-        vector<double*> y_array(J, nullptr);*/
-
         for(MKL_INT i = 0; i < J; i++) {
             x_array[i] = scaled_h.ptr + i * R;
             y_array[i] = temp1.data() + i * R; 
         }
 
         for(MKL_INT i = 0; i < J; i++) {
-            a_array[i] = G.ptr + (c[i] * R2); 
+            a_array[i] = G.ptr + (c[i] * R2);
+            low[i] = 0.0;
+            high[i] = 1.0;
+            c[i] = 0;
         }
 
-        dgemv_batch(&trans_array, 
-            &m_array, 
-            &n_array, 
-            &alpha_array, 
-            (const double**) a_array.data(), 
-            &lda_array, 
-            (const double**) x_array.data(), 
-            &incx_array, 
-            &beta_array, 
-            y_array.data(), 
-            &incy_array, 
-            &group_count, 
-            &group_size);
+        execute_mkl_dgemv_batch();
 
         batch_dot_product(
             scaled_h.ptr, 
@@ -164,19 +166,7 @@ public:
                 a_array[i] = G.ptr + ((2 * c[i] + 1) * R2); 
             }
 
-            dgemv_batch(&trans_array, 
-                &m_array, 
-                &n_array, 
-                &alpha_array, 
-                (const double**) a_array.data(), 
-                &lda_array, 
-                (const double**) x_array.data(), 
-                &incx_array, 
-                &beta_array, 
-                y_array.data(), 
-                &incy_array, 
-                &group_count, 
-                &group_size);
+            execute_mkl_dgemv_batch();
 
             batch_dot_product(
                 scaled_h.ptr, 
@@ -198,7 +188,6 @@ public:
             }
         }
 
-
         // We will use the m array as a buffer 
         // for the draw fractions.
         for(int i = 0; i < J; i++) {
@@ -217,25 +206,8 @@ public:
         }
 
         m_array = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
-        //lda_array[0] = R;
 
-        CBLAS_TRANSPOSE x = CblasNoTrans;
-
-        cblas_dgemv_batch(
-            CblasRowMajor,
-            &x, 
-            &m_array, 
-            &n_array, 
-            &alpha_array, 
-            (const double**) a_array.data(), 
-            &lda_array, 
-            (const double**) x_array.data(), 
-            &incx_array, 
-            &beta_array, 
-            y_array.data(), 
-            &incy_array, 
-            group_count, 
-            &group_size);
+        execute_mkl_dgemv_batch();
 
         for(MKL_INT i = 0; i < J; i++) {
             double running_sum = 0.0;
@@ -271,7 +243,6 @@ public:
             for(MKL_INT j = 0; j < R; j++) {
                 h.ptr[i * R + j] *= U.ptr[(res + leaf_idx * F) * R + j]; 
             }
-
         }
     }
 };
