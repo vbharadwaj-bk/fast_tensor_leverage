@@ -19,10 +19,9 @@ class PartitionTree {
     // Temporary buffers related to sampling
 
     // ============================================================
-    vector<MKL_INT> c;
-    //vector<double> temp1;
+    Buffer<MKL_INT> c;
     Buffer<double> temp1;
-    vector<double> q;
+    Buffer<double> q;
 
     vector<double> m;
     vector<double> mL;
@@ -66,7 +65,11 @@ class PartitionTree {
     // ============================================================
 
 public:
-    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) : temp1({J * R}, 0.0) {
+    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) 
+        :   c({J}, 0),
+            temp1({J, R}, 0.0),
+            q({J, F}, 0.0)    
+        {
         this->n = n;
         this->F = F;
         this->J = J;
@@ -83,9 +86,6 @@ public:
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
 
-        c.resize(J);
-        //temp1.resize(J * R);
-        q.resize(J * F);
         m.resize(J);
         mL.resize(J);
         low.resize(J);
@@ -138,7 +138,7 @@ public:
 
         for(MKL_INT i = 0; i < J; i++) {
             x_array[i] = scaled_h.ptr + i * R;
-            y_array[i] = temp1() + i * R; 
+            y_array[i] = temp1(i, 0); 
         }
 
         for(MKL_INT i = 0; i < J; i++) {
@@ -203,7 +203,7 @@ public:
             }
 
             a_array[i] = U.ptr + (leaf_idx * F * R);
-            y_array[i] = q.data() + i * F; 
+            y_array[i] = q(i, 0);
         }
 
         m_array = F; // TODO: NEED TO PAD EACH ARRAY SO THIS IS OKAY!
@@ -213,20 +213,20 @@ public:
         for(MKL_INT i = 0; i < J; i++) {
             double running_sum = 0.0;
             for(MKL_INT j = 0; j < F; j++) {
-                double temp = q[i * F + j] * q[i * F + j];
-                q[i * F + j] = running_sum;
+                double temp = q[i, j] * q[i, j];
+                q[i, j] = running_sum;
                 running_sum += temp;
             }
 
             for(MKL_INT j = 0; j < F; j++) {
-                q[i * F + j] /= running_sum; 
+                q[i, j] /= running_sum; 
             }
         }
 
         for(MKL_INT i = 0; i < J; i++) {
             MKL_INT res = F-1;
             for(MKL_INT j = 0; j < F - 1; j++) {
-                if(m[i] < q[i * F + j + 1]) {
+                if(m[i] < q[i, j + 1]) {
                     res = j; 
                     break;
                 }
