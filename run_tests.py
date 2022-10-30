@@ -63,10 +63,10 @@ def test_sampler(sampler_class):
     R = 5
     F = 2
     U = [np.random.rand(I, R) for i in range(N)]
-    sampler = sampler_class(U, [F] * N)
 
     j = 3
     J = 120000
+    sampler = sampler_class(U, [F] * N, J)
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
     hist = np.bincount(samples.astype(np.int64))

@@ -5,6 +5,7 @@
 #include <pybind11/numpy.h>
 #include <vector>
 #include <string>
+#include <initializer_list>
 
 using namespace std;
 namespace py = pybind11;
@@ -59,6 +60,77 @@ public:
             py::array_t<T> casted = input_list[i].cast<py::array_t<T>>();
             infos.push_back(casted.request());
             ptrs.push_back(static_cast<T*>(infos[i].ptr));
+        }
+    }
+};
+
+template<typename T>
+class Buffer {
+    py::buffer_info info;
+    T* ptr;
+    bool own_memory;
+    vector<uint64_t> shape;
+    uint64_t dim0;
+    uint64_t dim1;
+
+public:
+    Buffer(py::array_t<T> arr_py) {
+        info = arr_py.request();
+        ptr = static_cast<T*>(info.ptr);
+
+        if(arr_py.ndim == 2) {
+            dim0 = info.shape[0];
+            dim1 = info.shape[1];
+        }
+        own_memory = false;
+    }
+
+    Buffer(initializer_list<uint64_t> args, T value) {
+        uint64_t buffer_size = 1;
+        vector<uint64_t> shape;
+        for(uint64_t i : args) {
+            buffer_size *= i;
+            shape.push_back(i);
+        }
+
+        if(args.size() == 2) {
+            dim0 = shape[0];
+            dim1 = shape[1];
+        }
+
+        ptr = (T*) malloc(sizeof(T) * buffer_size);
+
+        for(uint64_t i = 0; i < buffer_size; i++) {
+            ptr[i] = value;
+        }
+
+        own_memory = true;
+    }
+
+    T* operator()() {
+        return ptr;
+    }
+
+    T* operator()(uint64_t offset) {
+        return ptr + offset;
+    }
+
+    // Assumes that this array is a row-major matrix 
+    T* operator()(uint64_t off_x, uint64_t off_y) {
+        return ptr + (dim1 * off_x) + off_y;
+    }
+
+    T operator[](uint64_t offset) {
+        return ptr[offset];
+    }
+
+    T operator[](uint64_t off_x, uint64_t off_y) {
+        return ptr[(dim1 * off_x) + off_y];
+    }
+
+    ~Buffer() {
+        if(own_memory) {
+            free(ptr);
         }
     }
 };
