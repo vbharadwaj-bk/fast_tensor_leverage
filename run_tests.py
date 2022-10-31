@@ -59,9 +59,9 @@ def test_tree(tree, sample_count):
 
 def test_sampler(sampler_class):
     N = 4
-    I = 10
+    I = 8
     R = 5
-    F = 2
+    F = 1
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3

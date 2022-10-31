@@ -42,6 +42,9 @@ class EfficientKRPSampler:
                 else:
                     self.G[j][v] = self.G[j][tree.L(v)] + self.G[j][tree.R(v)]
 
+        for j in range(self.N):
+            self.opt_trees[j].build_tree(U[j], self.G[j])
+
     def m(self, h, k, v):
         return h @ (self.G[k][v]) @ h.T
 
