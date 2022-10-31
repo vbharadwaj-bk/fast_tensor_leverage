@@ -8,7 +8,7 @@
 using namespace std;
 
 class PartitionTree {
-    uint32_t n, F;
+    MKL_INT n, F;
     uint32_t leaf_count, node_count;
 
     uint32_t lfill_level, lfill_count;
@@ -71,7 +71,7 @@ class PartitionTree {
 
 public:
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) 
-        :   G({divide_and_roundup(n, F), R * R}, 0.0), 
+        :   G({2 * divide_and_roundup(n, F) - 1, R * R}, 0.0), 
             c({J}, 0),
             temp1({J, R}, 0.0),
             q({J, F}, 0.0),
@@ -103,11 +103,11 @@ public:
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
     }
 
-    bool is_leaf(MKL_INT &c) {
+    bool is_leaf(MKL_INT c) {
         return 2 * c + 1 >= node_count; 
     }
 
-    MKL_INT leaf_idx(MKL_INT &c) {
+    MKL_INT leaf_idx(MKL_INT c) {
         if(c >= nodes_upto_lfill) {
             return c - nodes_upto_lfill;
         }
@@ -125,24 +125,25 @@ public:
         MKL_INT first_leaf_idx = node_count - leaf_count; 
 
         // First compute outer product sums for each leaf using CBLAS_BATCHED_GEMM
-        //CBLAS_TRANSPOSE transA = CblasNoTrans;
-        //CBLAS_TRANSPOSE transA = CblasNoTrans;
+        CBLAS_TRANSPOSE noTrans = CblasNoTrans;
+        CBLAS_TRANSPOSE trans = CblasTrans;
         alpha_array = 1.0;
         beta_array = 0.0;
 
         MKL_INT leaf_count_cast = leaf_count;
-        Buffer<double*> a_array(leaf_count);
-        Buffer<double*> c_array(leaf_count);
+        Buffer<double*> a_array({leaf_count}, nullptr);
+        Buffer<double*> c_array({leaf_count}, nullptr);
 
-        for(int i = first_leaf_idx; i < node_count; i++) {
-            a_array[i] = U(leaf_idx(i) * F, 0);
-            c_array[i] = G(i);
+        for(MKL_INT i = 0; i < leaf_count; i++) {
+            uint64_t idx = leaf_idx(first_leaf_idx + i);
+            a_array[i] = U(idx * F, 0);
+            c_array[i] = G(first_leaf_idx + i, 0);
         }
 
         cblas_dgemm_batch(      // Would be even easier if we had a batched SYRK routine 
                 CblasRowMajor, 
-                &CblasTrans, 
-                &CblasNoTrans, 
+                &trans, 
+                &noTrans, 
                 &R, 
                 &R, 
                 &F, 
@@ -160,21 +161,15 @@ public:
         MKL_INT start = nodes_before_lfill; 
         MKL_INT end = first_leaf_idx;
 
-        for(uint32_t c_level = lfill_level; c_level >= 0; c_level--) {
+        for(int c_level = lfill_level; c_level >= 0; c_level--) {
             for(int c = start; c < end; c++) {
                 for(int j = 0; j < R2; j++) {
                     G[c, j] += G[2 * c + 1, j] + G[2 * c + 2, j];
                 } 
             }
             end = start;
-            start = (start + 1) / 2;
+            start = ((start + 1) / 2) - 1;
         }
-
-        double absdiff = 0.0;
-        for(MKL_INT i = 0; i < node_count * R2; i++) {
-            absdiff += abs(G_check[i] - G[i]);
-        }
-        cout << "Absolute difference: " << absdiff << endl;
     }
 
     void batch_dot_product(
@@ -200,7 +195,7 @@ public:
             ) {
 
         Buffer<double> U(U_py);
-        Buffer<double> G(G_py);
+        //Buffer<double> G(G_py);
         Buffer<double> h(h_py);
         Buffer<double> scaled_h(scaled_h_py);
         Buffer<uint64_t> samples(samples_py);
@@ -346,6 +341,7 @@ public:
 PYBIND11_MODULE(partition_tree, m) {
   py::class_<PartitionTree>(m, "PartitionTree")
     .def(py::init<uint32_t, uint32_t, uint64_t, uint64_t>())
+    .def("build_tree", &PartitionTree::build_tree) 
     .def("PTSample", &PartitionTree::PTSample) 
     ;
 }
