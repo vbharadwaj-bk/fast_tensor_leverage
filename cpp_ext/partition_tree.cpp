@@ -136,7 +136,7 @@ public:
         }
     }
 
-    void build_tree(py::array_t<double> U_py, py::array_t<double> G_check_py) {
+    void build_tree(py::array_t<double> U_py) {
         G_unmultiplied.reset(nullptr);
         Buffer<double> U(U_py);
         std::fill(G(), G(node_count * R2), 0.0);
@@ -204,8 +204,14 @@ public:
         for(MKL_INT i = 0; i < node_count; i++) {
             for(int j = 0; j < R2; j++) {
                 G[i, j] = (*G_unmultiplied)[i, j] * mat[j];
+                //cout << G[i, j] << endl;
             }
         }
+    }
+ 
+    void multiply_against_numpy_buffer(py::array_t<double> mat_py) {
+        Buffer<double> mat(mat_py);
+        multiply_matrices_against_provided(mat);
     }
 
     void batch_dot_product(
@@ -327,42 +333,50 @@ public:
 
         // We will use the m array as a buffer 
         // for the draw fractions.
-        for(int i = 0; i < J; i++) {
-            m[i] = (random_draws[i] - low[i]) / (high[i] - low[i]);
+        if(F > 1) {
+            for(int i = 0; i < J; i++) {
+                m[i] = (random_draws[i] - low[i]) / (high[i] - low[i]);
 
-            MKL_INT leaf_idx;
-            if(c[i] >= nodes_upto_lfill) {
-                leaf_idx = c[i] - nodes_upto_lfill;
-            }
-            else {
-                leaf_idx = c[i] - complete_level_offset; 
+                MKL_INT leaf_idx;
+                if(c[i] >= nodes_upto_lfill) {
+                    leaf_idx = c[i] - nodes_upto_lfill;
+                }
+                else {
+                    leaf_idx = c[i] - complete_level_offset; 
+                }
+
+                a_array[i] = U(leaf_idx * F, 0);
+                y_array[i] = q(i, 0);
             }
 
-            a_array[i] = U(leaf_idx * F, 0);
-            y_array[i] = q(i, 0);
+            m_array = F;
+            execute_mkl_dgemv_batch();
         }
 
-        m_array = F;
-        execute_mkl_dgemv_batch();
-
         for(MKL_INT i = 0; i < J; i++) {
-            double running_sum = 0.0;
-            for(MKL_INT j = 0; j < F; j++) {
-                double temp = q[i, j] * q[i, j];
-                q[i, j] = running_sum;
-                running_sum += temp;
-            }
-
-            for(MKL_INT j = 0; j < F; j++) {
-                q[i, j] /= running_sum; 
-            }
-
-            MKL_INT res = F-1;
-            for(MKL_INT j = 0; j < F - 1; j++) {
-                if(m[i] < q[i, j + 1]) {
-                    res = j; 
-                    break;
+            MKL_INT res; 
+            if(F > 1) {
+                res = F - 1;
+                double running_sum = 0.0;
+                for(MKL_INT j = 0; j < F; j++) {
+                    double temp = q[i, j] * q[i, j];
+                    q[i, j] = running_sum;
+                    running_sum += temp;
                 }
+
+                for(MKL_INT j = 0; j < F; j++) {
+                    q[i, j] /= running_sum; 
+                }
+
+                for(MKL_INT j = 0; j < F - 1; j++) {
+                    if(m[i] < q[i, j + 1]) {
+                        res = j; 
+                        break;
+                    }
+                }
+            }
+            else {
+                res = 0;
             }
 
             MKL_INT idx = leaf_idx(c[i]);
@@ -379,6 +393,7 @@ PYBIND11_MODULE(partition_tree, m) {
   py::class_<PartitionTree>(m, "PartitionTree")
     .def(py::init<uint32_t, uint32_t, uint64_t, uint64_t>())
     .def("build_tree", &PartitionTree::build_tree) 
+    .def("multiply_against_numpy_buffer", &PartitionTree::multiply_against_numpy_buffer) 
     .def("PTSample", &PartitionTree::PTSample) 
     ;
 }
