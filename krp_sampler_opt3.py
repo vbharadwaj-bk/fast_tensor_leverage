@@ -28,7 +28,8 @@ class EfficientKRPSampler:
         self.R = U[0].shape[1]
         self.trees = []
         self.opt_trees = []
-        self.G = [] 
+        self.G = []
+        self.J = J
         for j in range(self.N):
             tree = PartitionTree(U[j].shape[0], F[j])
             self.trees.append(tree)
@@ -43,7 +44,7 @@ class EfficientKRPSampler:
                     self.G[j][v] = self.G[j][tree.L(v)] + self.G[j][tree.R(v)]
 
         for j in range(self.N):
-            self.opt_trees[j].build_tree(U[j], self.G[j])
+            self.opt_trees[j].build_tree(U[j])
 
     def m(self, h, k, v):
         return h @ (self.G[k][v]) @ h.T
@@ -65,6 +66,8 @@ class EfficientKRPSampler:
         self.M = {}
         self.eigvecs = {}
         self.eigvals = {}
+        self.scaled_eigvecs = {}
+        self.eigen_trees = {}
 
         for k in reversed(range(self.N)):
             if k != j:
@@ -72,40 +75,33 @@ class EfficientKRPSampler:
                 W, V = la.eigh(M_buffer)
                 self.eigvecs[k] = V
                 self.eigvals[k] = W
+                self.scaled_eigvecs[k] = (np.sqrt(W) * V).T.copy()
+                self.eigen_trees[k] = PartitionTreeOpt(self.R, 1, self.J, self.R)
+                self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
+                self.eigen_trees[k].multiply_against_numpy_buffer(self.G[k][0])
                 M_buffer *= self.G[k][0] 
 
-    def KRPDrawSample(self, j):
-        h = np.ones(self.R)
-        vector_idxs = []
-        scalar_idx = 0
-        for k in range(self.N):
-            if k == j:
-                continue 
-
-            Y = self.eigvecs[k]
-            eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h, h) * self.G[k][0] @ Y)
-
-            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
-            scaled_h = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h
-
-            m = lambda v : self.m(scaled_h, k, v)
-            q = lambda v : self.q(scaled_h, k, v)
-
-            ik = self.trees[k].PTSampleUpgraded(m, q)
-            h *= self.U[k][ik, :]
-            vector_idxs.append(ik)
-            scalar_idx = (scalar_idx * self.U[k].shape[0]) + ik
-
-        return h, scalar_idx, vector_idxs
-
     def Eigensample(self, k, h, scaled_h):
-        J = h.shape[0]
-        for s in range(J):
-            Y = self.eigvecs[k]
-            eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h[s], h[s]) * self.G[k][0] @ Y)
+        #for s in range(self.J):
+            #Y = self.eigvecs[k]
+            #eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h[s], h[s]) * self.G[k][0] @ Y)
 
-            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
-            scaled_h[s] = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h[s] 
+            #Y = self.scaled_eigvecs[k]
+            #eig_weights_test = batch_dot_product(Y.T, np.outer(h[s], h[s]) * self.G[k][0] @ Y.T)
+            #print(eig_weights)
+            #print(eig_weights_test)
+            #quit()
+
+            #Rc = np.random.multinomial(1, eig_weights_test / np.sum(eig_weights_test))
+            #scaled_h[s] = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h[s]
+
+        scaled_h[:] = h
+        ik_idxs = np.zeros(self.J, dtype=np.uint64)
+        self.eigen_trees[k].PTSample(
+            self.scaled_eigvecs[k],
+            scaled_h,
+            h,
+            ik_idxs)
 
     def Treesample(self, k, h, scaled_h, samples):
         J = scaled_h.shape[0]
