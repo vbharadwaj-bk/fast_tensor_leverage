@@ -2,6 +2,9 @@
 #include <iostream>
 #include <cassert>
 #include <cstdlib>
+#include <memory>
+#include <algorithm>
+#include <random>
 #include "common.h"
 #include "oneapi/mkl.hpp"
 
@@ -20,6 +23,12 @@ class PartitionTree {
     MKL_INT R2;
 
     Buffer<double> G;
+    unique_ptr<Buffer<double>> G_unmultiplied;
+
+    // Related to random number generation 
+    std::random_device rd;  
+    std::mt19937 gen;
+    std::uniform_real_distribution<> dis;
 
     // Temporary buffers related to sampling
     // ============================================================
@@ -31,6 +40,7 @@ class PartitionTree {
     Buffer<double> mL;
     Buffer<double> low;
     Buffer<double> high;
+    Buffer<double> random_draws;
 
     // ============================================================
     // Parameters related to DGEMV_Batched 
@@ -71,7 +81,10 @@ class PartitionTree {
 
 public:
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) 
-        :   G({2 * divide_and_roundup(n, F) - 1, R * R}, 0.0), 
+        :   G({2 * divide_and_roundup(n, F) - 1, R * R}, 0.0),
+            rd(),
+            gen(rd()),
+            dis(0.0, 1.0), 
             c({J}, 0),
             temp1({J, R}, 0.0),
             q({J, F}, 0.0),
@@ -79,6 +92,7 @@ public:
             mL({J}, 0.0),
             low({J}, 0.0),
             high({J}, 0.0),
+            random_draws({J}, 0.0),
             a_array({J}, nullptr),
             x_array({J}, nullptr),
             y_array({J}, nullptr)
@@ -101,6 +115,12 @@ public:
 
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
+        G_unmultiplied.reset(nullptr);
+
+    //std::random_device rd;  // Will be used to obtain a seed for the random number engine
+    //std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+    //std::uniform_real_distribution<> dis(1.0, 2.0);
+
     }
 
     bool is_leaf(MKL_INT c) {
@@ -117,8 +137,8 @@ public:
     }
 
     void build_tree(py::array_t<double> U_py, py::array_t<double> G_check_py) {
+        G_unmultiplied.reset(nullptr);
         Buffer<double> U(U_py);
-        Buffer<double> G_check(G_check_py);
         std::fill(G(), G(node_count * R2), 0.0);
 
         // First leaf must always be on the lowest filled level 
@@ -172,6 +192,22 @@ public:
         }
     }
 
+    /*
+    * Multiplies the partial gram matrices maintained by this tree against
+    * the provided buffer, caching the old values for future multiplications. 
+    */
+    void multiply_matrices_against_provided(Buffer<double> &mat) {
+        if(! G_unmultiplied) {
+            G_unmultiplied.reset(new Buffer<double>({node_count, static_cast<unsigned long>(R2)}, 0.0));
+            std::copy(G(), G(node_count * R2), (*G_unmultiplied)());
+        }
+        for(MKL_INT i = 0; i < node_count; i++) {
+            for(int j = 0; j < R2; j++) {
+                G[i, j] = (*G_unmultiplied)[i, j] * mat[j];
+            }
+        }
+    }
+
     void batch_dot_product(
                 double* A, 
                 double* B, 
@@ -187,19 +223,20 @@ public:
     }
 
     void PTSample(py::array_t<double> U_py, 
-            py::array_t<double> G_py,
             py::array_t<double> h_py,  
             py::array_t<double> scaled_h_py,
-            py::array_t<uint64_t> samples_py,
-            py::array_t<double> random_draws_py
+            py::array_t<uint64_t> samples_py
             ) {
 
         Buffer<double> U(U_py);
-        //Buffer<double> G(G_py);
         Buffer<double> h(h_py);
         Buffer<double> scaled_h(scaled_h_py);
         Buffer<uint64_t> samples(samples_py);
-        Buffer<double> random_draws(random_draws_py);
+
+        // Draw random doubles
+        for(MKL_INT i = 0; i < J; i++) {
+            random_draws[i] = dis(gen);
+        }
 
         trans_array = 'n';
         m_array = R;
