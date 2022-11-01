@@ -109,17 +109,13 @@ class EfficientKRPSampler:
 
     def Treesample(self, k, h, scaled_h, samples):
         J = scaled_h.shape[0]
-        draws = np.random.rand(J)
-
         ik_idxs = np.zeros(J, dtype=np.uint64)
 
         self.opt_trees[k].PTSample(
                 self.U[k], 
-                self.G[k], 
                 h,
                 scaled_h,
-                ik_idxs,
-                draws
+                ik_idxs
                 )
 
         samples *= self.U[k].shape[0]
