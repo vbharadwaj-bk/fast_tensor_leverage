@@ -34,16 +34,7 @@ class EfficientKRPSampler:
             tree = PartitionTree(U[j].shape[0], F[j])
             self.trees.append(tree)
             self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j], J, self.R))
-            self.G.append(np.zeros((tree.node_count, self.R, self.R), dtype=np.double))
-
-            for v in reversed(range(tree.node_count)):
-                if tree.is_leaf(v):
-                    start, end = tree.S(v)
-                    self.G[j][v] = U[j][start:end].T @ U[j][start:end] 
-                else:
-                    self.G[j][v] = self.G[j][tree.L(v)] + self.G[j][tree.R(v)]
-
-        for j in range(self.N):
+            self.G.append(U[j].T @ U[j])
             self.opt_trees[j].build_tree(U[j])
 
     def m(self, h, k, v):
@@ -60,7 +51,7 @@ class EfficientKRPSampler:
         U_j. Also compute the eigendecomposition of each M_k,
         which will be useful to us. 
         '''
-        G = chain_had_prod([self.G[k][0] for k in range(self.N) if k != j])
+        G = chain_had_prod([self.G[k] for k in range(self.N) if k != j])
         M_buffer = la.pinv(G) 
 
         self.M = {}
@@ -79,22 +70,9 @@ class EfficientKRPSampler:
                 self.eigen_trees[k] = PartitionTreeOpt(self.R, 1, self.J, self.R)
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
                 self.eigen_trees[k].multiply_against_numpy_buffer(self.G[k][0])
-                M_buffer *= self.G[k][0] 
+                M_buffer *= self.G[k]
 
     def Eigensample(self, k, h, scaled_h):
-        #for s in range(self.J):
-            #Y = self.eigvecs[k]
-            #eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h[s], h[s]) * self.G[k][0] @ Y)
-
-            #Y = self.scaled_eigvecs[k]
-            #eig_weights_test = batch_dot_product(Y.T, np.outer(h[s], h[s]) * self.G[k][0] @ Y.T)
-            #print(eig_weights)
-            #print(eig_weights_test)
-            #quit()
-
-            #Rc = np.random.multinomial(1, eig_weights_test / np.sum(eig_weights_test))
-            #scaled_h[s] = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h[s]
-
         scaled_h[:] = h
         ik_idxs = np.zeros(self.J, dtype=np.uint64)
         self.eigen_trees[k].PTSample(
