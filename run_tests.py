@@ -2,8 +2,7 @@ import numpy as np
 import numpy.linalg as la
 from scipy.special import rel_entr 
 import matplotlib.pyplot as plt
-
-from krp_sampler_opt0 import EfficientKRPSampler as SamplerOpt0
+import time
 
 def krp(mats):
     if len(mats) == 1:
@@ -81,6 +80,22 @@ def test_sampler(sampler_class):
 
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative Entropy: {np.sum(dist_err)}")
+
+def benchmark_sampler(I, R):
+    from krp_sampler_opt3 import EfficientKRPSampler
+    N = 4
+    I = 8
+    R = 5
+    F = R
+    U = [np.random.rand(I, R) for i in range(N)]
+
+    j = 3
+    J = 120000
+    sampler = EfficientKRPSampler(U, [F] * N, J)
+    start = time.time()
+    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    end = time.time()
+    print(end - start)
 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
