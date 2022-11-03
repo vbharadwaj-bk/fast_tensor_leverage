@@ -124,10 +124,6 @@ public:
         return ptr[offset];
     }
 
-    T& operator[](uint64_t off_x, uint64_t off_y) {
-        return ptr[(dim1 * off_x) + off_y];
-    }
-
     ~Buffer() {
         if(own_memory) {
             free(ptr);

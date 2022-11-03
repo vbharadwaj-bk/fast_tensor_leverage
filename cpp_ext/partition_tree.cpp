@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <random>
 #include "common.h"
-#include "oneapi/mkl.hpp"
+#include "cblas.h"
 
 using namespace std;
 
 class PartitionTree {
-    MKL_INT n, F;
+    int64_t n, F;
     uint32_t leaf_count, node_count;
 
     uint32_t lfill_level, lfill_count;
@@ -19,8 +19,8 @@ class PartitionTree {
     uint32_t nodes_upto_lfill, nodes_before_lfill;
     uint32_t complete_level_offset;
 
-    MKL_INT J, R;
-    MKL_INT R2;
+    int64_t J, R;
+    int64_t R2;
 
     Buffer<double> G;
     unique_ptr<Buffer<double>> G_unmultiplied;
@@ -32,7 +32,7 @@ class PartitionTree {
 
     // Temporary buffers related to sampling
     // ============================================================
-    Buffer<MKL_INT> c;
+    Buffer<int64_t> c;
     Buffer<double> temp1;
     Buffer<double> q;
 
@@ -49,33 +49,30 @@ class PartitionTree {
     Buffer<double*> y_array;
 
     char trans_array; 
-    MKL_INT m_array;
-    MKL_INT n_array;
+    int64_t m_array;
+    int64_t n_array;
     double alpha_array;
-    MKL_INT lda_array;
-    MKL_INT incx_array;
+    int64_t lda_array;
+    int64_t incx_array;
     double beta_array;
-    MKL_INT incy_array;
-    MKL_INT group_count;
-    MKL_INT group_size;
+    int64_t incy_array;
+    int64_t group_count;
+    int64_t group_size;
 
-    void execute_mkl_dgemv_batch() {
-        CBLAS_TRANSPOSE trans = CblasNoTrans;
-        cblas_dgemv_batch(
-            CblasRowMajor,
-            &trans, 
-            &m_array, 
-            &n_array, 
-            &alpha_array, 
-            (const double**) a_array(), 
-            &lda_array, 
-            (const double**) x_array(), 
-            &incx_array, 
-            &beta_array, 
-            y_array(), 
-            &incy_array, 
-            group_count, 
-            &group_size);
+    void execute_mkl_dsymv_batch() {
+        for(int64_t i = 0; i < J; i++) {
+            cblas_dsymv(CblasRowMajor, 
+                    CblasUpper, 
+                    R, 
+                    1.0, 
+                    (const double*) a_array[i],
+                    R, 
+                    (const double*) x_array[i], 
+                    1, 
+                    0.0, 
+                    y_array[i], 
+                    1);
+        }
     }
     // ============================================================
 
@@ -123,11 +120,11 @@ public:
 
     }
 
-    bool is_leaf(MKL_INT c) {
+    bool is_leaf(int64_t c) {
         return 2 * c + 1 >= node_count; 
     }
 
-    MKL_INT leaf_idx(MKL_INT c) {
+    int64_t leaf_idx(int64_t c) {
         if(c >= nodes_upto_lfill) {
             return c - nodes_upto_lfill;
         }
@@ -142,7 +139,7 @@ public:
         std::fill(G(), G(node_count * R2), 0.0);
 
         // First leaf must always be on the lowest filled level 
-        MKL_INT first_leaf_idx = node_count - leaf_count; 
+        int64_t first_leaf_idx = node_count - leaf_count; 
 
         // First compute outer product sums for each leaf using CBLAS_BATCHED_GEMM
         CBLAS_TRANSPOSE noTrans = CblasNoTrans;
@@ -150,41 +147,37 @@ public:
         alpha_array = 1.0;
         beta_array = 0.0;
 
-        MKL_INT leaf_count_cast = leaf_count;
+        int64_t leaf_count_cast = leaf_count;
         Buffer<double*> a_array({leaf_count}, nullptr);
         Buffer<double*> c_array({leaf_count}, nullptr);
 
-        for(MKL_INT i = 0; i < leaf_count; i++) {
+        for(int64_t i = 0; i < leaf_count; i++) {
             uint64_t idx = leaf_idx(first_leaf_idx + i);
             a_array[i] = U(idx * F, 0);
             c_array[i] = G(first_leaf_idx + i, 0);
         }
 
-        cblas_dgemm_batch(      // Would be even easier if we had a batched SYRK routine 
-                CblasRowMajor, 
-                &trans, 
-                &noTrans, 
-                &R, 
-                &R, 
-                &F, 
-                &alpha_array, 
-                (const double**) a_array(), 
-                &R, 
-                (const double**) a_array(), 
-                &R, 
-                &beta_array, 
-                c_array(), 
-                &R, 
-                1, 
-                &leaf_count_cast);
+        for(int64_t i = 0; i < leaf_count; i++) {
+            cblas_dsyrk(CblasRowMajor, 
+                        CblasUpper, 
+                        CblasTrans,
+		                R,
+                        F, 
+                        1.0, 
+                        (const double*) a_array[i], 
+                        R, 
+                        0.0, 
+                        c_array[i], 
+                        R);
+        }
 
-        MKL_INT start = nodes_before_lfill; 
-        MKL_INT end = first_leaf_idx;
+        int64_t start = nodes_before_lfill; 
+        int64_t end = first_leaf_idx;
 
         for(int c_level = lfill_level; c_level >= 0; c_level--) {
             for(int c = start; c < end; c++) {
                 for(int j = 0; j < R2; j++) {
-                    G[c, j] += G[2 * c + 1, j] + G[2 * c + 2, j];
+                    G[c * R2 + j] += G[(2 * c + 1) * R2 + j] + G[(2 * c + 2) * R2 + j];
                 } 
             }
             end = start;
@@ -201,10 +194,9 @@ public:
             G_unmultiplied.reset(new Buffer<double>({node_count, static_cast<unsigned long>(R2)}, 0.0));
             std::copy(G(), G(node_count * R2), (*G_unmultiplied)());
         }
-        for(MKL_INT i = 0; i < node_count; i++) {
+        for(int64_t i = 0; i < node_count; i++) {
             for(int j = 0; j < R2; j++) {
-                G[i, j] = (*G_unmultiplied)[i, j] * mat[j];
-                //cout << G[i, j] << endl;
+                G[i * R2 + j] = (*G_unmultiplied)[i * R2 + j] * mat[j];
             }
         }
     }
@@ -218,7 +210,7 @@ public:
                 double* A, 
                 double* B, 
                 double* result,
-                MKL_INT J, MKL_INT R 
+                int64_t J, int64_t R 
                 ) {
         for(int i = 0; i < J; i++) {
             result[i] = 0;
@@ -240,7 +232,7 @@ public:
         Buffer<uint64_t> samples(samples_py);
 
         // Draw random doubles
-        for(MKL_INT i = 0; i < J; i++) {
+        for(int64_t i = 0; i < J; i++) {
             random_draws[i] = dis(gen);
         }
 
@@ -255,7 +247,7 @@ public:
         group_count = 1;
         group_size = J;
 
-        for(MKL_INT i = 0; i < J; i++) {
+        for(int64_t i = 0; i < J; i++) {
             x_array[i] = scaled_h(i, 0);
             y_array[i] = temp1(i, 0); 
 
@@ -265,7 +257,7 @@ public:
             a_array[i] = G(0);
         }
 
-        execute_mkl_dgemv_batch();
+        execute_mkl_dsymv_batch();
 
         batch_dot_product(
             scaled_h(), 
@@ -277,11 +269,11 @@ public:
         for(uint32_t c_level = 0; c_level < lfill_level; c_level++) {
             // Prepare to compute m(L(v)) for all v
 
-            for(MKL_INT i = 0; i < J; i++) {
+            for(int64_t i = 0; i < J; i++) {
                 a_array[i] = G((2 * c[i] + 1) * R2); 
             }
 
-            execute_mkl_dgemv_batch();
+            execute_mkl_dsymv_batch();
 
             batch_dot_product(
                 scaled_h(), 
@@ -290,7 +282,7 @@ public:
                 J, R 
                 );
 
-            for(MKL_INT i = 0; i < J; i++) {
+            for(int64_t i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
                 if(random_draws[i] <= cutoff) {
                     c[i] = 2 * c[i] + 1;
@@ -305,11 +297,11 @@ public:
 
         // Handle the tail case
         if(node_count > nodes_before_lfill) {
-            for(MKL_INT i = 0; i < J; i++) {
+            for(int64_t i = 0; i < J; i++) {
                 a_array[i] = is_leaf(c[i]) ? a_array[i] : G((2 * c[i] + 1) * R2); 
             }
 
-            execute_mkl_dgemv_batch();
+            execute_mkl_dsymv_batch();
 
             batch_dot_product(
                 scaled_h(), 
@@ -318,7 +310,7 @@ public:
                 J, R 
                 );
 
-            for(MKL_INT i = 0; i < J; i++) {
+            for(int64_t i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
                 if((! is_leaf(c[i])) && random_draws[i] <= cutoff) {
                     c[i] = 2 * c[i] + 1;
@@ -337,7 +329,7 @@ public:
             for(int i = 0; i < J; i++) {
                 m[i] = (random_draws[i] - low[i]) / (high[i] - low[i]);
 
-                MKL_INT leaf_idx;
+                int64_t leaf_idx;
                 if(c[i] >= nodes_upto_lfill) {
                     leaf_idx = c[i] - nodes_upto_lfill;
                 }
@@ -350,26 +342,26 @@ public:
             }
 
             m_array = F;
-            execute_mkl_dgemv_batch();
+            execute_mkl_dsymv_batch();
         }
 
-        for(MKL_INT i = 0; i < J; i++) {
-            MKL_INT res; 
+        for(int64_t i = 0; i < J; i++) {
+            int64_t res; 
             if(F > 1) {
                 res = F - 1;
                 double running_sum = 0.0;
-                for(MKL_INT j = 0; j < F; j++) {
-                    double temp = q[i, j] * q[i, j];
-                    q[i, j] = running_sum;
+                for(int64_t j = 0; j < F; j++) {
+                    double temp = q[i * F + j] * q[i * F + j];
+                    q[i * F + j] = running_sum;
                     running_sum += temp;
                 }
 
-                for(MKL_INT j = 0; j < F; j++) {
-                    q[i, j] /= running_sum; 
+                for(int64_t j = 0; j < F; j++) {
+                    q[i * F + j] /= running_sum; 
                 }
 
-                for(MKL_INT j = 0; j < F - 1; j++) {
-                    if(m[i] < q[i, j + 1]) {
+                for(int64_t j = 0; j < F - 1; j++) {
+                    if(m[i] < q[i * F + j + 1]) {
                         res = j; 
                         break;
                     }
@@ -379,11 +371,11 @@ public:
                 res = 0;
             }
 
-            MKL_INT idx = leaf_idx(c[i]);
+            int64_t idx = leaf_idx(c[i]);
             samples[i] = res + idx * F;
             
-            for(MKL_INT j = 0; j < R; j++) {
-                h[i, j] *= U[res + idx * F, j]; 
+            for(int64_t j = 0; j < R; j++) {
+                h[i * R + j] *= U[(res + idx * F) * R + j]; 
             }
         }
     }
@@ -398,13 +390,11 @@ PYBIND11_MODULE(partition_tree, m) {
     ;
 }
 
-// C++ Compiler: dpcpp 
-
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['-DMKL_ILP64', '-m64', '-I"${MKLROOT}/include"', '-std=c++2b']
-cfg['extra_link_args'] = ['-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed', '-lmkl_intel_ilp64', '-lmkl_gnu_thread', '-lmkl_core', '-lgomp', '-lpthread', '-lm', '-ldl']
+cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS']
+cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS', '-lopenblas']
 cfg['dependencies'] = ['common.h'] 
 %>
 */
