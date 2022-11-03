@@ -16,20 +16,21 @@ int main(int argc, char** argv) {
     #pragma omp parallel for
     for(int i = 0; i < 20; i++) {
         double* C = new double[N * N];
-        cblas_dgemm(
-            CblasRowMajor,
-            CblasNoTrans,
-            CblasNoTrans,
-            N, N, N,
-            1.0,
-            (const double*) A,
-            N,
-            (const double*) B,
-            N,
-            0.0,
-            C,
-            N);
     }
+
+    cblas_dgemm(
+        CblasRowMajor,
+        CblasNoTrans,
+        CblasNoTrans,
+        N, N, N,
+        1.0,
+        (const double*) A,
+        N,
+        (const double*) B,
+        N,
+        0.0,
+        C,
+        N);
 
 
     auto end = std::chrono::system_clock::now();
