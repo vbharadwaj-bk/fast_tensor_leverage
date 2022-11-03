@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <random>
 #include "common.h"
+#include "omp.h"
 #include "cblas.h"
 
 using namespace std;
@@ -48,18 +49,8 @@ class __attribute__((visibility("hidden"))) PartitionTree {
     Buffer<double*> x_array;
     Buffer<double*> y_array;
 
-    char trans_array; 
-    int64_t m_array;
-    int64_t n_array;
-    double alpha_array;
-    int64_t lda_array;
-    int64_t incx_array;
-    double beta_array;
-    int64_t incy_array;
-    int64_t group_count;
-    int64_t group_size;
-
     void execute_mkl_dsymv_batch() {
+        #pragma omp for
         for(int64_t i = 0; i < J; i++) {
             cblas_dsymv(CblasRowMajor, 
                     CblasUpper, 
@@ -205,6 +196,7 @@ public:
                 double* result,
                 int64_t J, int64_t R 
                 ) {
+        #pragma omp for
         for(int i = 0; i < J; i++) {
             result[i] = 0;
             for(int j = 0; j < R; j++) {
@@ -224,22 +216,13 @@ public:
         Buffer<double> scaled_h(scaled_h_py);
         Buffer<uint64_t> samples(samples_py);
 
-        // Draw random doubles
         for(int64_t i = 0; i < J; i++) {
             random_draws[i] = dis(gen);
         }
 
-        trans_array = 'n';
-        m_array = R;
-        n_array = R;
-        alpha_array = 1.0;
-        lda_array = R;
-        incx_array = 1;
-        beta_array = 0.0;
-        incy_array = 1;
-        group_count = 1;
-        group_size = J;
-
+        #pragma omp parallel
+{
+        #pragma omp for
         for(int64_t i = 0; i < J; i++) {
             x_array[i] = scaled_h(i, 0);
             y_array[i] = temp1(i, 0); 
@@ -262,6 +245,7 @@ public:
         for(uint32_t c_level = 0; c_level < lfill_level; c_level++) {
             // Prepare to compute m(L(v)) for all v
 
+            #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 a_array[i] = G((2 * c[i] + 1) * R2); 
             }
@@ -275,6 +259,7 @@ public:
                 J, R 
                 );
 
+            #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
                 if(random_draws[i] <= cutoff) {
@@ -290,6 +275,7 @@ public:
 
         // Handle the tail case
         if(node_count > nodes_before_lfill) {
+            #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 a_array[i] = is_leaf(c[i]) ? a_array[i] : G((2 * c[i] + 1) * R2); 
             }
@@ -303,6 +289,7 @@ public:
                 J, R 
                 );
 
+            #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
                 if((! is_leaf(c[i])) && random_draws[i] <= cutoff) {
@@ -319,6 +306,7 @@ public:
         // We will use the m array as a buffer 
         // for the draw fractions.
         if(F > 1) {
+            #pragma omp for
             for(int i = 0; i < J; i++) {
                 m[i] = (random_draws[i] - low[i]) / (high[i] - low[i]);
 
@@ -334,10 +322,10 @@ public:
                 y_array[i] = q(i, 0);
             }
 
-            m_array = F;
             execute_mkl_dsymv_batch();
         }
-
+        
+        #pragma omp for
         for(int64_t i = 0; i < J; i++) {
             int64_t res; 
             if(F > 1) {
@@ -371,6 +359,7 @@ public:
                 h[i * R + j] *= U[(res + idx * F) * R + j]; 
             }
         }
+}
     }
 };
 
