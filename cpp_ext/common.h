@@ -64,8 +64,9 @@ public:
     }
 };
 
+//#pragma GCC visibility push(hidden)
 template<typename T>
-class Buffer {
+class __attribute__((visibility("hidden"))) Buffer {
     py::buffer_info info;
     T* ptr;
     bool own_memory;

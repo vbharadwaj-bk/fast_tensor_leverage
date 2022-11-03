@@ -83,5 +83,6 @@ def test_sampler(sampler_class):
     print(f"Relative Entropy: {np.sum(dist_err)}")
 
 if __name__=='__main__':
+    #print("Starting...")
     from krp_sampler_opt3 import EfficientKRPSampler
     test_sampler(EfficientKRPSampler)

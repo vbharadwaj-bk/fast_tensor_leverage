@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class PartitionTree {
+class __attribute__((visibility("hidden"))) PartitionTree {
     int64_t n, F;
     uint32_t leaf_count, node_count;
 
@@ -141,13 +141,6 @@ public:
         // First leaf must always be on the lowest filled level 
         int64_t first_leaf_idx = node_count - leaf_count; 
 
-        // First compute outer product sums for each leaf using CBLAS_BATCHED_GEMM
-        CBLAS_TRANSPOSE noTrans = CblasNoTrans;
-        CBLAS_TRANSPOSE trans = CblasTrans;
-        alpha_array = 1.0;
-        beta_array = 0.0;
-
-        int64_t leaf_count_cast = leaf_count;
         Buffer<double*> a_array({leaf_count}, nullptr);
         Buffer<double*> c_array({leaf_count}, nullptr);
 
