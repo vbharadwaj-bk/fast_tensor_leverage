@@ -156,7 +156,7 @@ public:
         Buffer<double*> c_array({leaf_count}, nullptr);
 
         #pragma omp parallel
-{ 
+{
         #pragma omp for
         for(int64_t i = 0; i < leaf_count; i++) {
             uint64_t idx = leaf_idx(first_leaf_idx + i);
@@ -183,7 +183,7 @@ public:
         int64_t end = first_leaf_idx;
 
         for(int c_level = lfill_level; c_level >= 0; c_level--) {
-            #pragma omp for simd collapse(2) 
+            #pragma omp for 
             for(int c = start; c < end; c++) {
                 for(int j = 0; j < R2; j++) {
                     G[c * R2 + j] += G[(2 * c + 1) * R2 + j] + G[(2 * c + 2) * R2 + j];
@@ -193,6 +193,13 @@ public:
             start = ((start + 1) / 2) - 1;
         }
 }
+    }
+
+    void get_G0(py::array_t<double> M_buffer_py) {
+        Buffer<double> M_buffer(M_buffer_py);
+        for(int64_t i = 0; i < R2; i++) {
+            M_buffer[i] = G[i];
+        } 
     }
 
     /*
@@ -395,15 +402,16 @@ PYBIND11_MODULE(partition_tree, m) {
     .def(py::init<uint32_t, uint32_t, uint64_t, uint64_t>())
     .def("build_tree", &PartitionTree::build_tree) 
     .def("multiply_against_numpy_buffer", &PartitionTree::multiply_against_numpy_buffer) 
-    .def("PTSample", &PartitionTree::PTSample) 
+    .def("PTSample", &PartitionTree::PTSample)
+    .def("get_G0", &PartitionTree::get_G0)
     ;
 }
 
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp']
-cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp']
+cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-O3']
+cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-O3']
 cfg['dependencies'] = ['common.h'] 
 %>
 */

@@ -59,13 +59,13 @@ def test_tree(tree, sample_count):
 
 def test_sampler(sampler_class):
     N = 4
-    I = 20
+    I = 8
     R = 5
-    F = 5
+    F = 2
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3
-    J = 100000
+    J = 120000
     sampler = sampler_class(U, [F] * N, J)
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
@@ -105,15 +105,15 @@ def benchmark_sampler(I, R):
     return data
 
 if __name__=='__main__':
-    #print("Starting...")
     from krp_sampler_opt3 import EfficientKRPSampler
-    #test_sampler(EfficientKRPSampler)
-    lst = []
-    for i in range(4, 23):
-        res = benchmark_sampler(2 ** i, 50)
-        lst.append(res)
-        print(res)
+    test_sampler(EfficientKRPSampler)
+    #lst = []
+    #R=32
+    #for i in range(5, 28):
+    #    res = benchmark_sampler(2 ** i, R)
+    #    lst.append(res)
+    #    print(res)
 
-    with open("outputs/benchmark_laptop_rank50.json", "w") as outfile:
-        json.dump(lst, outfile) 
+    #with open(f"outputs/bench_rank{R}.json", "w") as outfile:
+    #    json.dump(lst, outfile) 
     
