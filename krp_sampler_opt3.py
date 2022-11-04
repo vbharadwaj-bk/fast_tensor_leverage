@@ -31,19 +31,9 @@ class EfficientKRPSampler:
         self.G = []
         self.J = J
         for j in range(self.N):
-            tree = PartitionTree(U[j].shape[0], F[j])
-            self.trees.append(tree)
             self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j], J, self.R))
             self.G.append(U[j].T @ U[j])
             self.opt_trees[j].build_tree(U[j])
-
-    def m(self, h, k, v):
-        return h @ (self.G[k][v]) @ h.T
-
-    def q(self, h, k, v):
-        start, end = self.trees[k].S(v)
-        W = self.U[k][start:end]
-        return (W @ h) ** 2
 
     def computeM(self, j):
         '''
