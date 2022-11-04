@@ -3,6 +3,7 @@ import numpy.linalg as la
 from scipy.special import rel_entr 
 import matplotlib.pyplot as plt
 import time
+import json
 
 def krp(mats):
     if len(mats) == 1:
@@ -83,20 +84,35 @@ def test_sampler(sampler_class):
 
 def benchmark_sampler(I, R):
     from krp_sampler_opt3 import EfficientKRPSampler
+    data = {}
     N = 4
-    I = 8
-    R = 5
     F = R
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3
-    J = 120000
+    J = 100000
+    start = time.time()
     sampler = EfficientKRPSampler(U, [F] * N, J)
+    end = time.time()
+    data["Construction Time"] = end - start
+
     start = time.time()
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
     end = time.time()
-    print(end - start)
+    data["Sampling Time"] = end - start
+    data["I"] = I
+    data["R"] = R
+    return data
 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
+    #test_sampler(EfficientKRPSampler)
+    lst = []
+    for i in range(4, 23):
+        res = benchmark_sampler(2 ** i, 50)
+        lst.append(res)
+        print(res)
+
+    with open("outputs/benchmark_laptop_rank50.json", "w") as outfile:
+        json.dump(lst, outfile) 
+    
