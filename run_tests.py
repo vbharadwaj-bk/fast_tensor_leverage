@@ -117,5 +117,5 @@ def run_benchmarks():
         json.dump(lst, outfile) 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    #test_sampler(EfficientKRPSampler)
-    run_benchmarks() 
+    test_sampler(EfficientKRPSampler)
+    #run_benchmarks() 
