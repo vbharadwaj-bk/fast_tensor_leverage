@@ -2,8 +2,8 @@ import numpy as np
 import numpy.linalg as la
 from scipy.special import rel_entr 
 import matplotlib.pyplot as plt
-
-from krp_sampler_opt0 import EfficientKRPSampler as SamplerOpt0
+import time
+import json
 
 def krp(mats):
     if len(mats) == 1:
@@ -82,7 +82,38 @@ def test_sampler(sampler_class):
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative Entropy: {np.sum(dist_err)}")
 
+def benchmark_sampler(I, R):
+    from krp_sampler_opt3 import EfficientKRPSampler
+    data = {}
+    N = 4
+    F = R
+    U = [np.random.rand(I, R) for i in range(N)]
+
+    j = 3
+    J = 100000
+    start = time.time()
+    sampler = EfficientKRPSampler(U, [F] * N, J)
+    end = time.time()
+    data["Construction Time"] = end - start
+
+    start = time.time()
+    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    end = time.time()
+    data["Sampling Time"] = end - start
+    data["I"] = I
+    data["R"] = R
+    return data
+
 if __name__=='__main__':
     #print("Starting...")
     from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
+    #test_sampler(EfficientKRPSampler)
+    lst = []
+    for i in range(4, 23):
+        res = benchmark_sampler(2 ** i, 50)
+        lst.append(res)
+        print(res)
+
+    with open("outputs/benchmark_laptop_rank50.json", "w") as outfile:
+        json.dump(lst, outfile) 
+    

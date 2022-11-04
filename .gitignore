@@ -3,6 +3,7 @@
 *.lock
 test_project/build/*
 .vscode/*
+outputs/*
 
 visualization/*
 
