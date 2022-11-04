@@ -59,13 +59,13 @@ def test_tree(tree, sample_count):
 
 def test_sampler(sampler_class):
     N = 4
-    I = 8
+    I = 20
     R = 5
-    F = 1
+    F = 5
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3
-    J = 120000
+    J = 100000
     sampler = sampler_class(U, [F] * N, J)
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
