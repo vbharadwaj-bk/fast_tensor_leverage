@@ -30,13 +30,9 @@ class EfficientKRPSampler:
         self.trees = []
         self.opt_trees = []
         self.J = J
-        start = time.time()
         for j in range(self.N):
             self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j], J, self.R))
-            self.opt_trees[j].build_tree(U[j])
-        end = time.time()
-        print(f"Python elapsed: {end - start}")
-    
+            self.opt_trees[j].build_tree(U[j]) 
 
     def symmetrize(self, buf):
         return buf + buf.T - np.diag(np.diag(buf))

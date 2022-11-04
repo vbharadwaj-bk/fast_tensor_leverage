@@ -155,8 +155,6 @@ public:
         Buffer<double*> a_array({leaf_count});
         Buffer<double*> c_array({leaf_count});
 
-        auto s = std::chrono::system_clock::now();
-
         #pragma omp parallel
 {
         #pragma omp for
@@ -170,8 +168,7 @@ public:
             a_array[i] = U(idx * F, 0);
             c_array[i] = G(first_leaf_idx + i, 0);
         }
-
-    
+ 
         #pragma omp for
         for(int64_t i = 0; i < leaf_count; i++) {
             cblas_dsyrk(CblasRowMajor, 
@@ -202,10 +199,6 @@ public:
         }
 }
 
-        auto e = std::chrono::system_clock::now();
-        std::chrono::duration<double> diff = e - s; 
-        double elapsed_seconds = diff.count();
-        cout << "Elapsed in C++: " << elapsed_seconds << endl;
     }
 
     void get_G0(py::array_t<double> M_buffer_py) {
