@@ -5,6 +5,7 @@
 #include <memory>
 #include <algorithm>
 #include <random>
+#include <chrono>
 #include "common.h"
 #include "omp.h"
 #include "cblas.h"
@@ -88,22 +89,22 @@ class __attribute__((visibility("hidden"))) PartitionTree {
     // ============================================================
 
 public:
-    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R) 
-        :   G({2 * divide_and_roundup(n, F) - 1, R * R}, 0.0),
+    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R)
+        :   G({2 * divide_and_roundup(n, F) - 1, R * R}),
             rd(),
             gen(rd()),
             dis(0.0, 1.0), 
-            c({J}, 0),
-            temp1({J, R}, 0.0),
-            q({J, F}, 0.0),
-            m({J}, 0.0),
-            mL({J}, 0.0),
-            low({J}, 0.0),
-            high({J}, 0.0),
-            random_draws({J}, 0.0),
-            a_array({J}, nullptr),
-            x_array({J}, nullptr),
-            y_array({J}, nullptr)
+            c({J}),
+            temp1({J, R}),
+            q({J, F}),
+            m({J}),
+            mL({J}),
+            low({J}),
+            high({J}),
+            random_draws({J}),
+            a_array({J}),
+            x_array({J}),
+            y_array({J})
         {
         assert(n % F == 0);
         this->n = n;
@@ -147,16 +148,22 @@ public:
     void build_tree(py::array_t<double> U_py) {
         G_unmultiplied.reset(nullptr);
         Buffer<double> U(U_py);
-        std::fill(G(), G(node_count * R2), 0.0);
 
         // First leaf must always be on the lowest filled level 
         int64_t first_leaf_idx = node_count - leaf_count; 
 
-        Buffer<double*> a_array({leaf_count}, nullptr);
-        Buffer<double*> c_array({leaf_count}, nullptr);
+        Buffer<double*> a_array({leaf_count});
+        Buffer<double*> c_array({leaf_count});
+
+        auto s = std::chrono::system_clock::now();
 
         #pragma omp parallel
 {
+        #pragma omp for
+        for(int64_t i = 0; i < node_count * R2; i++) {
+            G[i] = 0.0;
+        }
+
         #pragma omp for
         for(int64_t i = 0; i < leaf_count; i++) {
             uint64_t idx = leaf_idx(first_leaf_idx + i);
@@ -164,6 +171,7 @@ public:
             c_array[i] = G(first_leaf_idx + i, 0);
         }
 
+    
         #pragma omp for
         for(int64_t i = 0; i < leaf_count; i++) {
             cblas_dsyrk(CblasRowMajor, 
@@ -193,6 +201,11 @@ public:
             start = ((start + 1) / 2) - 1;
         }
 }
+
+        auto e = std::chrono::system_clock::now();
+        std::chrono::duration<double> diff = e - s; 
+        double elapsed_seconds = diff.count();
+        cout << "Elapsed in C++: " << elapsed_seconds << endl;
     }
 
     void get_G0(py::array_t<double> M_buffer_py) {
