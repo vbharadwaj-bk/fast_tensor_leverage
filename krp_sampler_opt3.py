@@ -28,12 +28,13 @@ class EfficientKRPSampler:
         self.R = U[0].shape[1]
         self.trees = []
         self.opt_trees = []
-        self.G = []
         self.J = J
         for j in range(self.N):
             self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j], J, self.R))
-            self.G.append(U[j].T @ U[j])
             self.opt_trees[j].build_tree(U[j])
+
+    def symmetrize(self, buf):
+        return buf + buf.T - np.diag(np.diag(buf))
 
     def computeM(self, j):
         '''
@@ -41,7 +42,15 @@ class EfficientKRPSampler:
         U_j. Also compute the eigendecomposition of each M_k,
         which will be useful to us. 
         '''
-        G = chain_had_prod([self.G[k] for k in range(self.N) if k != j])
+
+        lst = []
+        for k in range(self.N):
+            if k != j:
+                buf = np.zeros((self.R, self.R))
+                self.opt_trees[k].get_G0(buf)
+                lst.append(buf)
+
+        G = self.symmetrize(chain_had_prod(lst))
         M_buffer = la.pinv(G) 
 
         self.M = {}
@@ -59,8 +68,12 @@ class EfficientKRPSampler:
                 self.scaled_eigvecs[k] = (np.sqrt(W) * V).T.copy()
                 self.eigen_trees[k] = PartitionTreeOpt(self.R, 1, self.J, self.R)
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
-                self.eigen_trees[k].multiply_against_numpy_buffer(self.G[k][0])
-                M_buffer *= self.G[k]
+
+                buf = np.zeros((self.R, self.R))
+                self.opt_trees[k].get_G0(buf)
+                buf = self.symmetrize(buf)
+                self.eigen_trees[k].multiply_against_numpy_buffer(buf)
+                M_buffer *= buf 
 
     def Eigensample(self, k, h, scaled_h):
         scaled_h[:] = h
