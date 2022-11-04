@@ -87,7 +87,7 @@ def benchmark_sampler(I, R):
     data = {}
     N = 4
     F = R
-    U = [np.random.rand(I, R) for i in range(N)]
+    U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
 
     j = 3
     J = 100000
@@ -97,23 +97,25 @@ def benchmark_sampler(I, R):
     data["Construction Time"] = end - start
 
     start = time.time()
-    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    #samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
     end = time.time()
     data["Sampling Time"] = end - start
     data["I"] = I
     data["R"] = R
     return data
 
+def run_benchmarks():
+    lst = []
+    R=32
+    #for i in range(5, 28):
+    for i in range(23, 24):
+        res = benchmark_sampler(2 ** i, R)
+        lst.append(res)
+        print(res)
+
+    with open(f"outputs/bench_rank{R}.json", "w") as outfile:
+        json.dump(lst, outfile) 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
-    #lst = []
-    #R=32
-    #for i in range(5, 28):
-    #    res = benchmark_sampler(2 ** i, R)
-    #    lst.append(res)
-    #    print(res)
-
-    #with open(f"outputs/bench_rank{R}.json", "w") as outfile:
-    #    json.dump(lst, outfile) 
-    
+    #test_sampler(EfficientKRPSampler)
+    run_benchmarks() 

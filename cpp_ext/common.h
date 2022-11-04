@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include <initializer_list>
+#include <chrono>
+#include "omp.h"
 
 using namespace std;
 namespace py = pybind11;
@@ -86,6 +88,23 @@ public:
         own_memory = false;
     }
 
+    Buffer(initializer_list<uint64_t> args) {
+        uint64_t buffer_size = 1;
+        vector<uint64_t> shape;
+        for(uint64_t i : args) {
+            buffer_size *= i;
+            shape.push_back(i);
+        }
+
+        if(args.size() == 2) {
+            dim0 = shape[0];
+            dim1 = shape[1];
+        }
+
+        ptr = (T*) malloc(sizeof(T) * buffer_size);
+        own_memory = true;
+    }
+
     Buffer(initializer_list<uint64_t> args, T value) {
         uint64_t buffer_size = 1;
         vector<uint64_t> shape;
@@ -101,6 +120,7 @@ public:
 
         ptr = (T*) malloc(sizeof(T) * buffer_size);
 
+        #pragma omp parallel for
         for(uint64_t i = 0; i < buffer_size; i++) {
             ptr[i] = value;
         }
@@ -131,3 +151,17 @@ public:
         }
     }
 };
+
+/*typedef chrono::time_point<std::chrono::steady_clock> my_timer_t; 
+
+
+my_timer_t start_clock() {
+    return std::chrono::steady_clock::now();
+}
+
+
+double stop_clock_get_elapsed(my_timer_t &start) {
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    return diff.count();
+}*/

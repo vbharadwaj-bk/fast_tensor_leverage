@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as la
+import time
 
 import cppimport.import_hook
 from cpp_ext.partition_tree import PartitionTree as PartitionTreeOpt
@@ -29,9 +30,13 @@ class EfficientKRPSampler:
         self.trees = []
         self.opt_trees = []
         self.J = J
+        start = time.time()
         for j in range(self.N):
             self.opt_trees.append(PartitionTreeOpt(U[j].shape[0], F[j], J, self.R))
             self.opt_trees[j].build_tree(U[j])
+        end = time.time()
+        print(f"Python elapsed: {end - start}")
+    
 
     def symmetrize(self, buf):
         return buf + buf.T - np.diag(np.diag(buf))
