@@ -65,6 +65,26 @@ class __attribute__((visibility("hidden"))) PartitionTree {
                     1);
         }
     }
+
+    void execute_mkl_dgemv_batch() {
+        #pragma omp for
+        for(int64_t i = 0; i < J; i++) {
+            cblas_dgemv(CblasRowMajor, 
+                    CblasNoTrans,
+                    F,
+                    R, 
+                    1.0, 
+                    (const double*) a_array[i],
+                    R, 
+                    (const double*) x_array[i], 
+                    1, 
+                    0.0, 
+                    y_array[i], 
+                    1);
+        }
+    }
+
+
     // ============================================================
 
 public:
@@ -135,12 +155,16 @@ public:
         Buffer<double*> a_array({leaf_count}, nullptr);
         Buffer<double*> c_array({leaf_count}, nullptr);
 
+        #pragma omp parallel
+{ 
+        #pragma omp for
         for(int64_t i = 0; i < leaf_count; i++) {
             uint64_t idx = leaf_idx(first_leaf_idx + i);
             a_array[i] = U(idx * F, 0);
             c_array[i] = G(first_leaf_idx + i, 0);
         }
 
+        #pragma omp for
         for(int64_t i = 0; i < leaf_count; i++) {
             cblas_dsyrk(CblasRowMajor, 
                         CblasUpper, 
@@ -159,6 +183,7 @@ public:
         int64_t end = first_leaf_idx;
 
         for(int c_level = lfill_level; c_level >= 0; c_level--) {
+            #pragma omp for simd collapse(2) 
             for(int c = start; c < end; c++) {
                 for(int j = 0; j < R2; j++) {
                     G[c * R2 + j] += G[(2 * c + 1) * R2 + j] + G[(2 * c + 2) * R2 + j];
@@ -167,6 +192,7 @@ public:
             end = start;
             start = ((start + 1) / 2) - 1;
         }
+}
     }
 
     /*
@@ -178,6 +204,7 @@ public:
             G_unmultiplied.reset(new Buffer<double>({node_count, static_cast<unsigned long>(R2)}, 0.0));
             std::copy(G(), G(node_count * R2), (*G_unmultiplied)());
         }
+        #pragma omp parallel for
         for(int64_t i = 0; i < node_count; i++) {
             for(int j = 0; j < R2; j++) {
                 G[i * R2 + j] = (*G_unmultiplied)[i * R2 + j] * mat[j];
@@ -322,7 +349,7 @@ public:
                 y_array[i] = q(i, 0);
             }
 
-            execute_mkl_dsymv_batch();
+            execute_mkl_dgemv_batch();
         }
         
         #pragma omp for
