@@ -95,8 +95,6 @@ def test_CPPSampler():
     j = 3
     J = 120000
     sampler = EfficientKRPSampler(J, R, U)
-    print("Built a sampler...")
-
 
 
 def benchmark_sampler(I, R):
@@ -133,7 +131,7 @@ def run_benchmarks():
     with open(f"outputs/bench_rank{R}.json", "w") as outfile:
         json.dump(lst, outfile) 
 if __name__=='__main__':
-    #from krp_sampler_opt3 import EfficientKRPSampler
-    #test_sampler(EfficientKRPSampler)
-    test_CPPSampler()
+    from krp_sampler_opt3 import EfficientKRPSampler
+    test_sampler(EfficientKRPSampler)
+    #test_CPPSampler()
     #run_benchmarks() 
