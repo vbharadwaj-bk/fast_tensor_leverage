@@ -49,34 +49,28 @@ public:
     }*/
 };
 
-template<typename T>
-class NumpyList {
-public:
-    vector<py::buffer_info> infos;
-    vector<T*> ptrs;
-    int length;
-
-    NumpyList(py::list input_list) {
-        length = py::len(input_list);
-        for(int i = 0; i < length; i++) {
-            py::array_t<T> casted = input_list[i].cast<py::array_t<T>>();
-            infos.push_back(casted.request());
-            ptrs.push_back(static_cast<T*>(infos[i].ptr));
-        }
-    }
-};
-
 //#pragma GCC visibility push(hidden)
 template<typename T>
 class __attribute__((visibility("hidden"))) Buffer {
     py::buffer_info info;
     T* ptr;
     bool own_memory;
-    vector<uint64_t> shape;
     uint64_t dim0;
     uint64_t dim1;
 
 public:
+    vector<uint64_t> shape;
+
+    Buffer(Buffer&& other)
+        :   info(std::move(other.info)), 
+            ptr(std::move(other.ptr)), 
+            own_memory(other.own_memory),
+            dim0(other.dim0),
+            dim1(other.dim1)
+    {}
+    Buffer& operator=(const Buffer& other) = default;
+
+
     Buffer(py::array_t<T> arr_py) {
         info = arr_py.request();
         ptr = static_cast<T*>(info.ptr);
@@ -151,6 +145,22 @@ public:
         }
     }
 };
+
+template<typename T>
+class __attribute__((visibility("hidden"))) NPBufferList {
+public:
+    vector<Buffer<T>> buffers;
+    int length;
+
+    NPBufferList(py::list input_list) {
+        length = py::len(input_list);
+        for(int i = 0; i < length; i++) {
+            py::array_t<T> casted = input_list[i].cast<py::array_t<T>>();
+            buffers.emplace_back(casted);
+        }
+    }
+};
+
 
 /*typedef chrono::time_point<std::chrono::steady_clock> my_timer_t; 
 
