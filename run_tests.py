@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import time
 import json
 
+import cppimport.import_hook
+
 def krp(mats):
     if len(mats) == 1:
         return mats[0]
@@ -82,6 +84,21 @@ def test_sampler(sampler_class):
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative Entropy: {np.sum(dist_err)}")
 
+def test_CPPSampler():
+    from cpp_ext.efficient_krp_sampler import EfficientKRPSampler 
+    N = 4
+    I = 8
+    R = 5
+    F = 2
+    U = [np.random.rand(I, R) for i in range(N)]
+
+    j = 3
+    J = 120000
+    sampler = EfficientKRPSampler(J, R, U)
+    print("Built a sampler...")
+
+
+
 def benchmark_sampler(I, R):
     from krp_sampler_opt3 import EfficientKRPSampler
     data = {}
@@ -97,7 +114,7 @@ def benchmark_sampler(I, R):
     data["Construction Time"] = end - start
 
     start = time.time()
-    #samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    sampler.KRPDrawSamples_scalar(j, J)
     end = time.time()
     data["Sampling Time"] = end - start
     data["I"] = I
@@ -106,9 +123,9 @@ def benchmark_sampler(I, R):
 
 def run_benchmarks():
     lst = []
-    R=32
-    #for i in range(5, 28):
-    for i in range(23, 24):
+    R=4
+    #for i in range(23, 24):
+    for i in range(5, 28):
         res = benchmark_sampler(2 ** i, R)
         lst.append(res)
         print(res)
@@ -116,6 +133,7 @@ def run_benchmarks():
     with open(f"outputs/bench_rank{R}.json", "w") as outfile:
         json.dump(lst, outfile) 
 if __name__=='__main__':
-    from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
+    #from krp_sampler_opt3 import EfficientKRPSampler
+    #test_sampler(EfficientKRPSampler)
+    test_CPPSampler()
     #run_benchmarks() 
