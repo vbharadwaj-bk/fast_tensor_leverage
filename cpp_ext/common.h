@@ -63,13 +63,13 @@ public:
 
     Buffer(Buffer&& other)
         :   info(std::move(other.info)), 
-            ptr(std::move(other.ptr)), 
+            ptr(std::move(other.ptr)),
             own_memory(other.own_memory),
             dim0(other.dim0),
-            dim1(other.dim1)
+            dim1(other.dim1),
+            shape(std::move(other.shape))
     {}
     Buffer& operator=(const Buffer& other) = default;
-
 
     Buffer(py::array_t<T> arr_py) {
         info = arr_py.request();
@@ -78,6 +78,10 @@ public:
         if(info.ndim == 2) {
             dim0 = info.shape[0];
             dim1 = info.shape[1];
+        }
+
+        for(int64_t i = 0; i < info.ndim; i++) {
+            shape.push_back(info.shape[i]);
         }
         own_memory = false;
     }
