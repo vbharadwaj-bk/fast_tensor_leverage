@@ -15,11 +15,10 @@ public:
         tree(n, F, J, R, scratch)
     {}
 
-
     void build_tree(py::array_t<double> U_py) {
-        tree.build_tree(U_py);
+        Buffer<double> U(U_py);
+        tree.build_tree(U);
     }
-
 
     void multiply_against_numpy_buffer(py::array_t<double> mat_py) {
         tree.multiply_against_numpy_buffer(mat_py);
@@ -38,7 +37,6 @@ public:
     }
 
 };
-
 
 PYBIND11_MODULE(partition_tree, m) {
   py::class_<PartitionTreeWrapper>(m, "PartitionTree")

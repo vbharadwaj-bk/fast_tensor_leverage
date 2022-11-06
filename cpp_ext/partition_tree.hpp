@@ -46,6 +46,7 @@ public:
 };
 
 class __attribute__((visibility("hidden"))) PartitionTree {
+public:
     int64_t n, F;
     uint32_t leaf_count, node_count;
 
@@ -102,9 +103,6 @@ class __attribute__((visibility("hidden"))) PartitionTree {
         }
     }
 
-    // ============================================================
-
-public:
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R, ScratchBuffer &scr)
         :   G({2 * divide_and_roundup(n, F) - 1, R * R}),
             scratch(scr),
@@ -150,9 +148,8 @@ public:
         }
     }
 
-    void build_tree(py::array_t<double> U_py) {
+    void build_tree(Buffer<double> &U) {
         G_unmultiplied.reset(nullptr);
-        Buffer<double> U(U_py);
 
         // First leaf must always be on the lowest filled level 
         int64_t first_leaf_idx = node_count - leaf_count; 
