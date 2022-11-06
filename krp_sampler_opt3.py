@@ -51,6 +51,7 @@ class EfficientKRPSampler:
                 self.opt_trees[k].get_G0(buf)
                 lst.append(buf)
 
+        print(chain_had_prod(lst))
         G = self.symmetrize(chain_had_prod(lst))
         M_buffer = la.pinv(G) 
 

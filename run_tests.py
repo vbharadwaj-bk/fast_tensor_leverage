@@ -62,8 +62,8 @@ def test_tree(tree, sample_count):
 def test_sampler(sampler_class):
     N = 4
     I = 8
-    R = 5
-    F = 2
+    R = 4
+    F = 4
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3
@@ -88,14 +88,15 @@ def test_CPPSampler():
     from cpp_ext.efficient_krp_sampler import EfficientKRPSampler 
     N = 4
     I = 8
-    R = 5
-    F = 2
+    R = 4
+
+    assert(I % R == 0)
     U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
 
     j = 3
     J = 100000
     sampler = EfficientKRPSampler(J, R, U)
-
+    sampler.computeM(j)
 
 def benchmark_sampler(I, R):
     from krp_sampler_opt3 import EfficientKRPSampler
@@ -132,6 +133,6 @@ def run_benchmarks():
         json.dump(lst, outfile) 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    #test_sampler(EfficientKRPSampler)
+    test_sampler(EfficientKRPSampler)
     test_CPPSampler()
     #run_benchmarks() 
