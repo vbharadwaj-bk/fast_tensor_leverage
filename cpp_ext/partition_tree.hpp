@@ -13,6 +13,38 @@
 
 using namespace std;
 
+/*
+* Collection of temporary buffers that can be reused by all tree samplers 
+*/
+class __attribute__((visibility("hidden"))) ScratchBuffer {
+public:
+    Buffer<int64_t> c;
+    Buffer<double> temp1;
+    Buffer<double> q;
+    Buffer<double> m;
+    Buffer<double> mL;
+    Buffer<double> low;
+    Buffer<double> high;
+    Buffer<double> random_draws;
+    Buffer<double*> a_array;
+    Buffer<double*> x_array;
+    Buffer<double*> y_array;
+
+    ScratchBuffer(uint32_t F, uint64_t J, uint64_t R) : 
+            c({J}),
+            temp1({J, R}),
+            q({J, F}),
+            m({J}),
+            mL({J}),
+            low({J}),
+            high({J}),
+            random_draws({J}),
+            a_array({J}),
+            x_array({J}),
+            y_array({J}) 
+    {}
+};
+
 class __attribute__((visibility("hidden"))) PartitionTree {
     int64_t n, F;
     uint32_t leaf_count, node_count;
@@ -26,30 +58,14 @@ class __attribute__((visibility("hidden"))) PartitionTree {
     int64_t R2;
 
     Buffer<double> G;
+    ScratchBuffer &scratch;
+
     unique_ptr<Buffer<double>> G_unmultiplied;
 
     // Related to random number generation 
     std::random_device rd;  
     std::mt19937 gen;
     std::uniform_real_distribution<> dis;
-
-    // Temporary buffers related to sampling
-    // ============================================================
-    Buffer<int64_t> c;
-    Buffer<double> temp1;
-    Buffer<double> q;
-
-    Buffer<double> m;
-    Buffer<double> mL;
-    Buffer<double> low;
-    Buffer<double> high;
-    Buffer<double> random_draws;
-
-    // ============================================================
-    // Parameters related to DGEMV_Batched 
-    Buffer<double*> a_array;
-    Buffer<double*> x_array;
-    Buffer<double*> y_array;
 
     void execute_mkl_dsymv_batch() {
         #pragma omp for
@@ -58,12 +74,12 @@ class __attribute__((visibility("hidden"))) PartitionTree {
                     CblasUpper, 
                     R, 
                     1.0, 
-                    (const double*) a_array[i],
+                    (const double*) scratch.a_array[i],
                     R, 
-                    (const double*) x_array[i], 
+                    (const double*) scratch.x_array[i], 
                     1, 
                     0.0, 
-                    y_array[i], 
+                    scratch.y_array[i], 
                     1);
         }
     }
@@ -76,12 +92,12 @@ class __attribute__((visibility("hidden"))) PartitionTree {
                     F,
                     R, 
                     1.0, 
-                    (const double*) a_array[i],
+                    (const double*) scratch.a_array[i],
                     R, 
-                    (const double*) x_array[i], 
+                    (const double*) scratch.x_array[i], 
                     1, 
                     0.0, 
-                    y_array[i], 
+                    scratch.y_array[i], 
                     1);
         }
     }
@@ -89,22 +105,12 @@ class __attribute__((visibility("hidden"))) PartitionTree {
     // ============================================================
 
 public:
-    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R)
+    PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R, ScratchBuffer &scr)
         :   G({2 * divide_and_roundup(n, F) - 1, R * R}),
+            scratch(scr),
             rd(),
             gen(rd()),
-            dis(0.0, 1.0), 
-            c({J}),
-            temp1({J, R}),
-            q({J, F}),
-            m({J}),
-            mL({J}),
-            low({J}),
-            high({J}),
-            random_draws({J}),
-            a_array({J}),
-            x_array({J}),
-            y_array({J})
+            dis(0.0, 1.0) 
         {
         assert(n % F == 0);
         this->n = n;
@@ -197,7 +203,6 @@ public:
             start = ((start + 1) / 2) - 1;
         }
 }
-
     }
 
     void get_G0(py::array_t<double> M_buffer_py) {
@@ -249,6 +254,19 @@ public:
             py::array_t<double> scaled_h_py,
             py::array_t<uint64_t> samples_py
             ) {
+ 
+        Buffer<int64_t> &c = scratch.c;
+        Buffer<double> &temp1 = scratch.temp1;
+        Buffer<double> &q = scratch.q;
+        Buffer<double> &m = scratch.m;
+        Buffer<double> &mL = scratch.mL;
+        Buffer<double> &low = scratch.low;
+        Buffer<double> &high = scratch.high;
+        Buffer<double> &random_draws = scratch.random_draws;
+        Buffer<double*> &a_array = scratch.a_array;
+        Buffer<double*> &x_array = scratch.x_array;
+        Buffer<double*> &y_array = scratch.y_array;
+
 
         Buffer<double> U(U_py);
         Buffer<double> h(h_py);
