@@ -90,10 +90,10 @@ def test_CPPSampler():
     I = 8
     R = 5
     F = 2
-    U = [np.random.rand(I, R) for i in range(N)]
+    U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
 
     j = 3
-    J = 120000
+    J = 100000
     sampler = EfficientKRPSampler(J, R, U)
 
 
@@ -132,6 +132,6 @@ def run_benchmarks():
         json.dump(lst, outfile) 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
-    #test_CPPSampler()
+    #test_sampler(EfficientKRPSampler)
+    test_CPPSampler()
     #run_benchmarks() 
