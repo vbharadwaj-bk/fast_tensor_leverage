@@ -86,15 +86,21 @@ def test_sampler(sampler_class):
 
 def test_CPPSampler():
     from cpp_ext.efficient_krp_sampler import EfficientKRPSampler 
+    from krp_sampler_opt3 import EfficientKRPSampler as GTSampler
     N = 4
     I = 8
     R = 4
+    F = R
 
     assert(I % R == 0)
     U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
 
     j = 3
     J = 100000
+
+    gt = GTSampler(U, [F] * N, J)
+    gt.KRPDrawSamples_scalar(j, J)
+
     sampler = EfficientKRPSampler(J, R, U)
     sampler.computeM(j)
 
@@ -133,6 +139,6 @@ def run_benchmarks():
         json.dump(lst, outfile) 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
+    #test_sampler(EfficientKRPSampler)
     test_CPPSampler()
     #run_benchmarks() 
