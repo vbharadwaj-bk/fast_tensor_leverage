@@ -28,7 +28,7 @@ public:
     :        
             U(U_matrices),
             scratch(R, J, R),
-            M({U_matrices.size() + 2, R * R}),
+            M({U_matrices.size() + 1, R * R}),
             lambda({U_matrices.size() + 1, R})
     {    
         this->J = J;
@@ -86,6 +86,9 @@ public:
             }
         }
 
+        // Handles the case where the first matrix is left out of the KRP 
+        std::copy(M(last_buffer, 0), M(last_buffer, R2), M());
+
         // Pseudo-inverse via eigendecomposition, stored in the N+1'th slot of
         // the 2D M array.
 
@@ -101,13 +104,11 @@ public:
         for(uint32_t v = 0; v < R; v++) {
             if(lambda[v] > eigenvalue_tolerance) {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[(N + 1) * R2 + u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
-                        M[N * R2 + u * R + v] = M[u * R + v] * sqrt(lambda[v]); 
+                        M[N * R2 + u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
                 }
             }
             else {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[(N + 1) * R2 + u * R + v] = 0.0; 
                         M[N * R2 + u * R + v] = 0.0; 
                 }
             }
@@ -119,7 +120,7 @@ public:
                     R,
                     R, 
                     1.0, 
-                    (const double*) M(N + 1, 0), 
+                    (const double*) M(N, 0), 
                     R, 
                     0.0, 
                     M(), 
