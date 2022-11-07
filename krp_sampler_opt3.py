@@ -67,13 +67,14 @@ class EfficientKRPSampler:
                 self.eigvecs[k] = V
                 self.eigvals[k] = W
                 self.scaled_eigvecs[k] = (np.sqrt(W) * V).T.copy()
+                print(self.scaled_eigvecs[k])
 
                 self.eigen_trees[k] = PartitionTreeOpt(self.R, 1, self.J, self.R)
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
 
                 buf = np.zeros((self.R, self.R))
-                self.eigen_trees[k].get_G0(buf)
-                print(buf)
+                #self.eigen_trees[k].get_G0(buf)
+                #print(buf)
 
                 self.opt_trees[k].get_G0(buf)
                 buf = self.symmetrize(buf)

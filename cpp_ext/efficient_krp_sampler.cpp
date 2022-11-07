@@ -28,7 +28,7 @@ public:
     :        
             U(U_matrices),
             scratch(R, J, R),
-            M({U_matrices.size() + 1, R * R}),
+            M({U_matrices.size() + 2, R * R}),
             lambda({U_matrices.size() + 1, R})
     {    
         this->J = J;
@@ -77,7 +77,7 @@ public:
         std::fill(M(N * R2), M((N + 1) * R2), 1.0);
         uint32_t last_buffer = N;
         for(int k = N - 1; k >= 0; k--) {
-            if(k != j) {
+            if((uint32_t) k != j) {
                 for(uint32_t i = 0; i < R2; i++) {
                     M[k * R2 + i] = gram_trees[k]->G[i] * M[(last_buffer * R2) + i];   
                 } 
@@ -101,11 +101,13 @@ public:
         for(uint32_t v = 0; v < R; v++) {
             if(lambda[v] > eigenvalue_tolerance) {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[N * R2 + u * R + v] = M[u * R + v] * 1.0 / sqrt(lambda[v]); 
+                        M[(N + 1) * R2 + u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
+                        M[N * R2 + u * R + v] = M[u * R + v] * sqrt(lambda[v]); 
                 }
             }
             else {
                 for(uint32_t u = 0; u < R; u++) {
+                        M[(N + 1) * R2 + u * R + v] = 0.0; 
                         M[N * R2 + u * R + v] = 0.0; 
                 }
             }
@@ -117,13 +119,13 @@ public:
                     R,
                     R, 
                     1.0, 
-                    (const double*) M(), 
+                    (const double*) M(N + 1, 0), 
                     R, 
                     0.0, 
                     M(), 
                     R);
 
-        for(int k = N - 1; k > 0; k--) {
+        for(uint32_t k = N - 1; k > 0; k--) {
             if(k != j) {
                 for(uint32_t i = 0; i < R2; i++) {
                     M[k * R2 + i] *= M[i];   
@@ -150,6 +152,15 @@ public:
                     }
                 }
                 transpose_square_in_place(M(k, 0), R);
+
+                for(uint32_t u = 0; u < R; u++) {
+                    for(uint32_t v = 0; v < R; v++) {
+                        cout << M[k * R2 + u * R + v] << " ";
+                    }
+                    cout << endl;
+                }
+                cout << "--------------------------------------" << endl;
+
             }
         }
         last_buffer = N;
@@ -158,18 +169,16 @@ public:
             if(k != j) {
                 eigen_trees[k]->build_tree(scaled_eigenvecs[last_buffer]);
                 last_buffer = k;
-            }
-        }
 
-        
-        for(uint32_t u = 0; u < R; u++) {
-            for(uint32_t v = 0; v < R; v++) {
-                cout << eigen_trees[0]->G[u * R + v] << " ";
+                /*for(uint32_t u = 0; u < R; u++) {
+                    for(uint32_t v = 0; v < R; v++) {
+                        cout << eigen_trees[k]->G[u * R + v] << " ";
+                    }
+                    cout << endl;
+                }
+                cout << "--------------------------------------" << endl;*/
             }
-            cout << endl;
-        }
-        cout << "--------------------------------------" << endl; 
- 
+        } 
     }
 
     ~EfficientKRPSampler() {
