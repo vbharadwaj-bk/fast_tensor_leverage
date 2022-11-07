@@ -215,7 +215,7 @@ public:
     */
     void multiply_matrices_against_provided(Buffer<double> &mat) {
         if(! G_unmultiplied) {
-            G_unmultiplied.reset(new Buffer<double>({node_count, static_cast<unsigned long>(R2)}, 0.0));
+            G_unmultiplied.reset(new Buffer<double>({node_count, static_cast<unsigned long>(R2)}));
             std::copy(G(), G(node_count * R2), (*G_unmultiplied)());
         }
         #pragma omp parallel for

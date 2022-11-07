@@ -14,6 +14,7 @@ class __attribute__((visibility("hidden"))) EfficientKRPSampler {
     ScratchBuffer scratch;
     Buffer<double> M;
     Buffer<double> lambda;
+    vector<Buffer<double>> scaled_eigenvecs;
 
     vector<PartitionTree*> gram_trees;
     vector<PartitionTree*> eigen_trees;
@@ -50,7 +51,11 @@ public:
         // but this is fine for now.
 
         for(uint32_t i = 0; i < N; i++) {
-            gram_trees[i]->build_tree(U[i]);
+            gram_trees[i]->build_tree(U[i]); 
+        }
+
+        for(uint32_t i = 0; i < N + 1; i++) {
+            scaled_eigenvecs.emplace_back(initializer_list<uint64_t>{R, R}, M(i, 0));
         }
     }
 
@@ -96,12 +101,12 @@ public:
         for(uint32_t v = 0; v < R; v++) {
             if(lambda[v] > eigenvalue_tolerance) {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[u * R + v] *= 1.0 / sqrt(lambda[v]); 
+                        M[N * R2 + u * R + v] = M[u * R + v] * 1.0 / sqrt(lambda[v]); 
                 }
             }
             else {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[u * R + v] = 0.0; 
+                        M[N * R2 + u * R + v] = 0.0; 
                 }
             }
         }
@@ -115,56 +120,57 @@ public:
                     (const double*) M(), 
                     R, 
                     0.0, 
-                    M(N, 0), 
+                    M(), 
                     R);
 
         for(int k = N - 1; k > 0; k--) {
             if(k != j) {
                 for(uint32_t i = 0; i < R2; i++) {
-                    M[k * R2 + i] *= M[(N * R2) + i];   
+                    M[k * R2 + i] *= M[i];   
                 } 
             }
         }
 
         // Eigendecompose each of the gram matrices 
-        for(uint32_t k = N - 1; k > 0; k--) {
+        for(uint32_t k = N; k > 0; k--) {
             if(k != j) {
-                LAPACKE_dsyev( CblasRowMajor, 
-                                'V', 
-                                'U', 
-                                R,
-                                M(k, 0), 
-                                R, 
-                                lambda(k, 0) );
+                if(k < N) {
+                    LAPACKE_dsyev( CblasRowMajor, 
+                                    'V', 
+                                    'U', 
+                                    R,
+                                    M(k, 0), 
+                                    R, 
+                                    lambda(k, 0) );
 
-
-                for(uint32_t v = 0; v < R; v++) { 
-                    for(uint32_t u = 0; u < R; u++) {
-                        M[k * R2 + u * R + v] *= sqrt(lambda[k * R + v]); 
+                    for(uint32_t v = 0; v < R; v++) { 
+                        for(uint32_t u = 0; u < R; u++) {
+                            M[k * R2 + u * R + v] *= sqrt(lambda[k * R + v]); 
+                        }
                     }
                 }
                 transpose_square_in_place(M(k, 0), R);
             }
         }
-    }
-    transpose_square_in_place(M(), R);
+        last_buffer = N;
 
-    for(uint32_t k = 0; k < N; k++) {
-        if(k != j) {
-            gram_trees[i]->build_tree(U[i]);
+        for(uint32_t k = 0; k < N; k++) {
+            if(k != j) {
+                eigen_trees[k]->build_tree(scaled_eigenvecs[last_buffer]);
+                last_buffer = k;
+            }
         }
-    }
 
-    /* 
+        
         for(uint32_t u = 0; u < R; u++) {
             for(uint32_t v = 0; v < R; v++) {
-                cout << M[k * R2 + u * R + v] << " ";
+                cout << eigen_trees[0]->G[u * R + v] << " ";
             }
             cout << endl;
         }
         cout << "--------------------------------------" << endl; 
-    */
-
+ 
+    }
 
     ~EfficientKRPSampler() {
         for(uint32_t i = 0; i < N; i++) {
