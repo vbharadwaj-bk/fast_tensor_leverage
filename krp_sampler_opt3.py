@@ -53,7 +53,6 @@ class EfficientKRPSampler:
 
         G = self.symmetrize(chain_had_prod(lst))
         M_buffer = la.pinv(G)
-        print(M_buffer)
 
         self.M = {}
         self.eigvecs = {}
@@ -68,6 +67,7 @@ class EfficientKRPSampler:
                 self.eigvecs[k] = V
                 self.eigvals[k] = W
                 self.scaled_eigvecs[k] = (np.sqrt(W) * V).T.copy()
+
                 self.eigen_trees[k] = PartitionTreeOpt(self.R, 1, self.J, self.R)
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
 
