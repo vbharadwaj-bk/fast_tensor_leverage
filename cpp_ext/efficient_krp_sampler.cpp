@@ -62,8 +62,7 @@ public:
             for(uint64_t j = i + 1; j < N; j++) {
                 double temp = ptr[i * n + j];
                 ptr[i * n + j] = ptr[j * n + i];
-                ptr[j * n + i];
-
+                ptr[j * n + i] = temp;
             }
         }
     }
@@ -128,7 +127,6 @@ public:
         }
 
         // Eigendecompose each of the gram matrices 
-
         for(uint32_t k = N - 1; k > 0; k--) {
             if(k != j) {
                 LAPACKE_dsyev( CblasRowMajor, 
@@ -146,18 +144,27 @@ public:
                     }
                 }
                 transpose_square_in_place(M(k, 0), R);
-
-                for(uint32_t u = 0; u < R; u++) {
-                    for(uint32_t v = 0; v < R; v++) {
-                        cout << M[N * R2 + u * R + v] << " ";
-                    }
-                    cout << endl;
-                }
-                cout << "--------------------------------------" << endl;
-
             }
         }
     }
+    transpose_square_in_place(M(), R);
+
+    for(uint32_t k = 0; k < N; k++) {
+        if(k != j) {
+            gram_trees[i]->build_tree(U[i]);
+        }
+    }
+
+    /* 
+        for(uint32_t u = 0; u < R; u++) {
+            for(uint32_t v = 0; v < R; v++) {
+                cout << M[k * R2 + u * R + v] << " ";
+            }
+            cout << endl;
+        }
+        cout << "--------------------------------------" << endl; 
+    */
+
 
     ~EfficientKRPSampler() {
         for(uint32_t i = 0; i < N; i++) {
