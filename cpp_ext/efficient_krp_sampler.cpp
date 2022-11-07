@@ -54,6 +54,20 @@ public:
         }
     }
 
+    /*
+     * Simple, unoptimized square-matrix in-place transpose.
+    */
+    void transpose_square_in_place(double* ptr, uint64_t n) {
+        for(uint64_t i = 0; i < N - 1; i++) {
+            for(uint64_t j = i + 1; j < N; j++) {
+                double temp = ptr[i * n + j];
+                ptr[i * n + j] = ptr[j * n + i];
+                ptr[j * n + i];
+
+            }
+        }
+    }
+
     void computeM(uint32_t j) {
         // TODO: the original U matrices are freed!
         std::fill(M(N * R2), M((N + 1) * R2), 1.0);
@@ -105,13 +119,44 @@ public:
                     M(N, 0), 
                     R);
 
-        for(uint32_t u = 0; u < R; u++) {
-            for(uint32_t v = 0; v < R; v++) {
-                cout << M[N * R2 + u * R + v] << " ";
+        for(int k = N - 1; k > 0; k--) {
+            if(k != j) {
+                for(uint32_t i = 0; i < R2; i++) {
+                    M[k * R2 + i] *= M[(N * R2) + i];   
+                } 
             }
-            cout << endl;
         }
 
+        // Eigendecompose each of the gram matrices 
+
+        for(uint32_t k = N - 1; k > 0; k--) {
+            if(k != j) {
+                LAPACKE_dsyev( CblasRowMajor, 
+                                'V', 
+                                'U', 
+                                R,
+                                M(k, 0), 
+                                R, 
+                                lambda(k, 0) );
+
+
+                for(uint32_t v = 0; v < R; v++) { 
+                    for(uint32_t u = 0; u < R; u++) {
+                        M[k * R2 + u * R + v] *= sqrt(lambda[k * R + v]); 
+                    }
+                }
+                transpose_square_in_place(M(k, 0), R);
+
+                for(uint32_t u = 0; u < R; u++) {
+                    for(uint32_t v = 0; v < R; v++) {
+                        cout << M[N * R2 + u * R + v] << " ";
+                    }
+                    cout << endl;
+                }
+                cout << "--------------------------------------" << endl;
+
+            }
+        }
     }
 
     ~EfficientKRPSampler() {
