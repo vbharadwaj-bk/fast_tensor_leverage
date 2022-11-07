@@ -154,30 +154,27 @@ public:
                 }
                 transpose_square_in_place(M(k, 0), R);
 
-                for(uint32_t u = 0; u < R; u++) {
+                /*for(uint32_t u = 0; u < R; u++) {
                     for(uint32_t v = 0; v < R; v++) {
-                        cout << M[k * R2 + u * R + v] << " ";
+                        cout << M[k * R2 + u * R + v]  << " ";
                     }
                     cout << endl;
                 }
-                cout << "--------------------------------------" << endl;
-
+                cout << "--------------------------------------" << endl;*/
             }
         }
-        last_buffer = N;
 
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
-                eigen_trees[k]->build_tree(scaled_eigenvecs[last_buffer]);
-                last_buffer = k;
-
-                /*for(uint32_t u = 0; u < R; u++) {
+                int offset = (k + 1 == j) ? k + 2 : k + 1;
+                eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
+                for(uint32_t u = 0; u < R; u++) {
                     for(uint32_t v = 0; v < R; v++) {
                         cout << eigen_trees[k]->G[u * R + v] << " ";
                     }
                     cout << endl;
                 }
-                cout << "--------------------------------------" << endl;*/
+                cout << "--------------------------------------" << endl;
             }
         } 
     }
