@@ -103,7 +103,7 @@ public:
         own_memory = true;
     }
 
-    Buffer(initializer_list<uint64_t> args, T value) {
+    Buffer(initializer_list<uint64_t> args, T* ptr) {
         uint64_t buffer_size = 1;
         vector<uint64_t> shape;
         for(uint64_t i : args) {
@@ -116,14 +116,9 @@ public:
             dim1 = shape[1];
         }
 
-        ptr = (T*) malloc(sizeof(T) * buffer_size);
+        this->ptr = ptr;
 
-        #pragma omp parallel for
-        for(uint64_t i = 0; i < buffer_size; i++) {
-            ptr[i] = value;
-        }
-
-        own_memory = true;
+        own_memory = false;
     }
 
     T* operator()() {
