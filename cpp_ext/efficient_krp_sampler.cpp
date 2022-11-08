@@ -14,6 +14,9 @@ class __attribute__((visibility("hidden"))) EfficientKRPSampler {
     ScratchBuffer scratch;
     Buffer<double> M;
     Buffer<double> lambda;
+
+    Buffer<double> h;
+    Buffer<double> scaled_h;
     vector<Buffer<double>> scaled_eigenvecs;
 
     vector<PartitionTree*> gram_trees;
@@ -29,7 +32,9 @@ public:
             U(U_matrices),
             scratch(R, J, R),
             M({U_matrices.size() + 1, R * R}),
-            lambda({U_matrices.size() + 1, R})
+            lambda({U_matrices.size() + 1, R}),
+            h({J, R}),
+            scaled_h({J, R})
     {    
         this->J = J;
         this->R = R;
@@ -92,7 +97,6 @@ public:
         // Pseudo-inverse via eigendecomposition, stored in the N+1'th slot of
         // the 2D M array.
 
-        // TODO: Should actually check the result of the LAPACK call! 
         LAPACKE_dsyev( CblasRowMajor, 
                         'V', 
                         'U', 
@@ -153,14 +157,6 @@ public:
                     }
                 }
                 transpose_square_in_place(M(k, 0), R);
-
-                /*for(uint32_t u = 0; u < R; u++) {
-                    for(uint32_t v = 0; v < R; v++) {
-                        cout << M[k * R2 + u * R + v]  << " ";
-                    }
-                    cout << endl;
-                }
-                cout << "--------------------------------------" << endl;*/
             }
         }
 
@@ -168,15 +164,37 @@ public:
             if(k != j) {
                 int offset = (k + 1 == j) ? k + 2 : k + 1;
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
-                for(uint32_t u = 0; u < R; u++) {
-                    for(uint32_t v = 0; v < R; v++) {
-                        cout << eigen_trees[k]->G[u * R + v] << " ";
-                    }
-                    cout << endl;
-                }
-                cout << "--------------------------------------" << endl;
+                eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G());
             }
         } 
+    }
+
+    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> samples) {
+        // Samples is an array of size N x J
+    
+        computeM(j);
+        std::fill(h(), h(J, R), 1.0);
+
+        for(uint32_t k = 0; k < N; k++) {
+            if(k != j) {
+                // Sample an eigenvector component of the mixture distribution 
+                std::copy(h(), h(J, R), scaled_h())
+
+                Buffer<uint64_t> row_buffer({J}, samples(k, 0))
+
+                PTSample(scaled_eigenvectors[k], 
+                        scaled_h,
+                        h,
+                        row_buffer 
+                        );
+
+                PTSample(U[k], 
+                        h,
+                        scaled_h,
+                        row_buffer 
+                        );
+            }
+        }
     }
 
     ~EfficientKRPSampler() {
