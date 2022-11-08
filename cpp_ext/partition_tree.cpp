@@ -27,9 +27,10 @@ public:
     void PTSample(py::array_t<double> U_py, 
             py::array_t<double> h_py,  
             py::array_t<double> scaled_h_py,
-            py::array_t<uint64_t> samples_py
+            py::array_t<uint64_t> samples_py,
+            py::array_t<double> random_draws_py 
             ) {
-        tree.PTSample(U_py, h_py, scaled_h_py, samples_py);
+        tree.PTSample(U_py, h_py, scaled_h_py, samples_py, random_draws_py);
     }
 
     void get_G0(py::array_t<double> M_buffer_py) {

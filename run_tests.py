@@ -68,10 +68,13 @@ def test_sampler(sampler_class):
 
     j = 3
     J = 120000
+
+    random_draws = np.random.rand(2, 3, J).astype(np.double)
+
     sampler = sampler_class(U, [F] * N, J)
 
-    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
-    #hist = np.bincount(samples.astype(np.int64))
+    samples = np.array(sampler.KRPDrawSamples_scalar(j, J, random_draws), dtype=np.uint64)
+    hist = np.bincount(samples.astype(np.int64))
     krp_materialized = krp(U[:-1])
 
     krp_q = la.qr(krp_materialized)[0]
@@ -85,17 +88,16 @@ def test_sampler(sampler_class):
 
     cp_als = CP_ALS(J, R, U)
     samples = np.zeros((N, J), dtype=np.uint64)
-    cp_als.KRPDrawSamples(j, samples)
+    cp_als.KRPDrawSamples(j, samples, random_draws)
 
     # Convert samples to a set of scalar indices
     scalar_indices = np.zeros(J, dtype=np.uint64)
-    current_exp = 0
-    for i in reversed(range(N)):
+    for i in range(N):
         if i != j:
-            scalar_indices += samples[i] * (I ** current_exp)
-            current_exp += 1
+            scalar_indices *= I
+            scalar_indices += samples[i] 
 
-    hist = np.bincount(scalar_indices.astype(np.int64))
+    #hist = np.bincount(scalar_indices.astype(np.int64))
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative Entropy: {np.sum(dist_err)}")
 

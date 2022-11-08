@@ -82,16 +82,18 @@ class EfficientKRPSampler:
                 print(print_buf)
                 M_buffer *= buf 
 
-    def Eigensample(self, k, h, scaled_h):
+    def Eigensample(self, k, h, scaled_h, random_draws):
         scaled_h[:] = h
         ik_idxs = np.zeros(self.J, dtype=np.uint64)
         self.eigen_trees[k].PTSample(
             self.scaled_eigvecs[k],
             scaled_h,
             h,
-            ik_idxs)
+            ik_idxs,
+            random_draws 
+            )
 
-    def Treesample(self, k, h, scaled_h, samples):
+    def Treesample(self, k, h, scaled_h, samples, random_draws):
         J = scaled_h.shape[0]
         ik_idxs = np.zeros(J, dtype=np.uint64)
 
@@ -99,13 +101,14 @@ class EfficientKRPSampler:
                 self.U[k], 
                 h,
                 scaled_h,
-                ik_idxs
+                ik_idxs,
+                random_draws
                 )
 
         samples *= self.U[k].shape[0]
         samples += ik_idxs
 
-    def KRPDrawSamples_scalar(self, j, J):
+    def KRPDrawSamples_scalar(self, j, J, random_draws):
         '''
         Draws J samples from the KRP excluding J. Returns the scalar
         indices of each sampled row in the Khatri-Rao product. 
@@ -119,7 +122,7 @@ class EfficientKRPSampler:
             if k == j:
                 continue 
 
-            self.Eigensample(k, h, scaled_h)
-            self.Treesample(k, h, scaled_h, samples)
+            self.Eigensample(k, h, scaled_h, random_draws[0, k].copy())
+            self.Treesample(k, h, scaled_h, samples, random_draws[1, k].copy())
 
         return samples
