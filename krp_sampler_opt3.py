@@ -72,14 +72,10 @@ class EfficientKRPSampler:
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
 
                 buf = np.zeros((self.R, self.R))
-                print_buf = np.zeros((self.R, self.R))
-                #print(self.scaled_eigvecs[k])
 
                 self.opt_trees[k].get_G0(buf)
                 buf = self.symmetrize(buf)
                 self.eigen_trees[k].multiply_against_numpy_buffer(buf)
-                self.eigen_trees[k].get_G0(print_buf)
-                print(print_buf)
                 M_buffer *= buf 
 
     def Eigensample(self, k, h, scaled_h, random_draws):
@@ -92,7 +88,6 @@ class EfficientKRPSampler:
             ik_idxs,
             random_draws 
             )
-        # print(f"Eigen Indexes: {ik_idxs}")
 
     def Treesample(self, k, h, scaled_h, samples, random_draws):
         J = scaled_h.shape[0]
@@ -105,8 +100,6 @@ class EfficientKRPSampler:
                 ik_idxs,
                 random_draws
                 )
-
-        # print(f"Tree Indexes: {ik_idxs}")
 
         samples *= self.U[k].shape[0]
         samples += ik_idxs
@@ -127,7 +120,6 @@ class EfficientKRPSampler:
             
             scaled_h[:] = h
             self.Eigensample(k, h, scaled_h, random_draws[0, k].copy())
-            #print(f"Random draws used: {random_draws[1, k]}")
             self.Treesample(k, h, scaled_h, samples, random_draws[1, k].copy())
 
         return samples

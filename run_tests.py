@@ -62,7 +62,7 @@ def test_tree(tree, sample_count):
 def test_sampler(sampler_class):
     N = 4
     I = 8
-    R = 4
+    R = 16
     F = 1
     U = [np.random.rand(I, R) for i in range(N)]
 
@@ -70,19 +70,15 @@ def test_sampler(sampler_class):
     J = 120000
 
     random_draws = np.random.rand(2, N, J).astype(np.double)
-
     sampler = sampler_class(U, [F] * N, J)
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J, random_draws), dtype=np.uint64)
-    print(samples)
-    #hist = np.bincount(samples.astype(np.int64))
+    hist = np.bincount(samples.astype(np.int64))
+
     krp_materialized = krp(U[:j] + U[j+1:])
     krp_q = la.qr(krp_materialized)[0]
 
     krp_norms = la.norm(krp_q, axis=1) ** 2
-    #plt.plot(krp_norms / np.sum(krp_norms), label="Ground Truth PDF")
-    #plt.plot(hist / np.sum(hist), label="PDF of Our Sampler")
-    #plt.legend()
 
     from cpp_ext.efficient_krp_sampler import CP_ALS 
 
@@ -97,12 +93,9 @@ def test_sampler(sampler_class):
             scalar_indices *= I
             scalar_indices += samples[i] 
 
-    print(scalar_indices)
-
-    hist = np.bincount(scalar_indices.astype(np.int64))
+    #hist = np.bincount(scalar_indices.astype(np.int64))
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
-    print(f"Relative Entropy: {np.sum(dist_err)}")
-    print("Finished!")
+    print(f"Relative entropy: {np.sum(dist_err)}")
 
 def test_CPPSampler():
     from cpp_ext.efficient_krp_sampler import CP_ALS 
