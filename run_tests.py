@@ -67,7 +67,7 @@ def test_sampler(sampler_class):
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3
-    J = 5
+    J = 120000
 
     random_draws = np.random.rand(2, N, J).astype(np.double)
 
@@ -97,11 +97,12 @@ def test_sampler(sampler_class):
         if i != j:
             scalar_indices *= I
             scalar_indices += samples[i] 
-            print(samples[i])
 
-    #hist = np.bincount(scalar_indices.astype(np.int64))
-    #dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
-    #print(f"Relative Entropy: {np.sum(dist_err)}")
+    print(scalar_indices)
+
+    hist = np.bincount(scalar_indices.astype(np.int64))
+    dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
+    print(f"Relative Entropy: {np.sum(dist_err)}")
     print("Finished!")
 
 def test_CPPSampler():

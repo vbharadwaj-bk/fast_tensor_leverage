@@ -281,12 +281,10 @@ public:
         Buffer<double*> &x_array = scratch.x_array;
         Buffer<double*> &y_array = scratch.y_array;
 
-        cout << "Random draws used: [";
         for(int64_t i = 0; i < J; i++) {
             //random_draws[i] = dis(gen);
-            cout << random_draws[i] << " ";
+            //cout << random_draws[i] << " ";
         }
-        cout << "]" << endl;
 
         #pragma omp parallel
 {
