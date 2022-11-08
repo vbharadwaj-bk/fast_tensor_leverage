@@ -160,11 +160,19 @@ public:
             }
         }
 
-        for(uint32_t k = 0; k < N; k++) {
-            if(k != j) {
-                int offset = (k + 1 == j) ? k + 2 : k + 1;
+        for(int k = N-1; k >= 0; k--) {
+            if((uint32_t) k != j) {
+                int offset = (k + 1 == (int) j) ? k + 2 : k + 1;
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
                 eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G);
+
+                for(uint32_t u = 0; u < R; u++) { 
+                    for(uint32_t v = 0; v < R; v++) {
+                        cout << eigen_trees[k]->G[u * R + v] << " ";
+                    }
+                    cout << endl;
+                }
+                cout << "---------------------------------" << endl;
             }
         } 
     }

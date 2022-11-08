@@ -70,7 +70,7 @@ def test_sampler(sampler_class):
     J = 120000
     sampler = sampler_class(U, [F] * N, J)
 
-    #samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
     #hist = np.bincount(samples.astype(np.int64))
     krp_materialized = krp(U[:-1])
 

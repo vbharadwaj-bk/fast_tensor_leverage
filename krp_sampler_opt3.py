@@ -72,13 +72,14 @@ class EfficientKRPSampler:
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
 
                 buf = np.zeros((self.R, self.R))
-                self.eigen_trees[k].get_G0(buf)
-                print(buf)
+                print_buf = np.zeros((self.R, self.R))
                 #print(self.scaled_eigvecs[k])
 
                 self.opt_trees[k].get_G0(buf)
                 buf = self.symmetrize(buf)
                 self.eigen_trees[k].multiply_against_numpy_buffer(buf)
+                self.eigen_trees[k].get_G0(print_buf)
+                print(print_buf)
                 M_buffer *= buf 
 
     def Eigensample(self, k, h, scaled_h):
