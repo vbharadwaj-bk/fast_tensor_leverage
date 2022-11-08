@@ -62,8 +62,8 @@ def test_tree(tree, sample_count):
 def test_sampler(sampler_class):
     N = 4
     I = 8
-    R = 16
-    F = 1
+    R = 4
+    F = 4
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 0
@@ -92,8 +92,9 @@ def test_sampler(sampler_class):
         if i != j:
             scalar_indices *= I
             scalar_indices += samples[i] 
+            print(f"C++ Tree Indices: {samples[i]}")
 
-    #hist = np.bincount(scalar_indices.astype(np.int64))
+    hist = np.bincount(scalar_indices.astype(np.int64))
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative entropy: {np.sum(dist_err)}")
 
