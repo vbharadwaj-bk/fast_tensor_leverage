@@ -63,10 +63,10 @@ def test_sampler(sampler_class):
     N = 4
     I = 8
     R = 4
-    F = 4
+    F = 1
     U = [np.random.rand(I, R) for i in range(N)]
 
-    j = 3
+    j = 0
     J = 120000
 
     random_draws = np.random.rand(2, N, J).astype(np.double)
@@ -76,8 +76,7 @@ def test_sampler(sampler_class):
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J, random_draws), dtype=np.uint64)
     print(samples)
     #hist = np.bincount(samples.astype(np.int64))
-    krp_materialized = krp(U[:-1])
-
+    krp_materialized = krp(U[:j] + U[j+1:])
     krp_q = la.qr(krp_materialized)[0]
 
     krp_norms = la.norm(krp_q, axis=1) ** 2
