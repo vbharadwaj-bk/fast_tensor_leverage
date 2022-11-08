@@ -54,6 +54,9 @@ class EfficientKRPSampler:
         G = self.symmetrize(chain_had_prod(lst))
         M_buffer = la.pinv(G)
 
+        #print(f"Python PINV: ")
+        #print(M_buffer)
+
         self.M = {}
         self.eigvecs = {}
         self.eigvals = {}
@@ -72,10 +75,15 @@ class EfficientKRPSampler:
                 self.eigen_trees[k].build_tree(self.scaled_eigvecs[k])
 
                 buf = np.zeros((self.R, self.R))
+                print_buf = np.zeros((self.R, self.R))
 
                 self.opt_trees[k].get_G0(buf)
                 buf = self.symmetrize(buf)
                 self.eigen_trees[k].multiply_against_numpy_buffer(buf)
+
+                self.eigen_trees[k].get_G0(print_buf)
+                #print(print_buf)
+
                 M_buffer *= buf 
 
     def Eigensample(self, k, h, scaled_h, random_draws):
@@ -103,6 +111,8 @@ class EfficientKRPSampler:
 
         samples *= self.U[k].shape[0]
         samples += ik_idxs
+        print(f"Python Tree indexes: {ik_idxs}")
+
 
     def KRPDrawSamples_scalar(self, j, J, random_draws):
         '''

@@ -130,6 +130,17 @@ public:
                     M(), 
                     R);
 
+        /*cout << "---------------------------------" << endl;
+        cout << "Pseudoinverse" << endl;
+        for(uint32_t u = 0; u < R; u++) { 
+            for(uint32_t v = 0; v < R; v++) {
+                cout << M[u * R + v] << " ";
+            }
+            cout << endl;
+        }
+        cout << "---------------------------------" << endl;*/
+
+
         for(uint32_t k = N - 1; k > 0; k--) {
             if(k != j) {
                 for(uint32_t i = 0; i < R2; i++) {
@@ -165,14 +176,6 @@ public:
                 int offset = (k + 1 == (int) j) ? k + 2 : k + 1;
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
                 eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G);
-
-                /*for(uint32_t u = 0; u < R; u++) { 
-                    for(uint32_t v = 0; v < R; v++) {
-                        cout << eigen_trees[k]->G[u * R + v] << " ";
-                    }
-                    cout << endl;
-                }
-                cout << "---------------------------------" << endl;*/
             }
         } 
     }
