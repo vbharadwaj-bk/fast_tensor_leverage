@@ -251,6 +251,20 @@ public:
             py::array_t<double> scaled_h_py,
             py::array_t<uint64_t> samples_py
             ) {
+
+        Buffer<double> U(U_py);
+        Buffer<double> h(h_py);
+        Buffer<double> scaled_h(scaled_h_py);
+        Buffer<uint64_t> samples(samples_py);
+
+        PTSample_internal(U, h, scaled_h, samples);
+    }
+
+    void PTSample_internal(Buffer<double> &U, 
+            Buffer<double> &h,
+            Buffer<double> &scaled_h,
+            Buffer<uint64_t> &samples
+            ) {
  
         Buffer<int64_t> &c = scratch.c;
         Buffer<double> &temp1 = scratch.temp1;
@@ -263,12 +277,6 @@ public:
         Buffer<double*> &a_array = scratch.a_array;
         Buffer<double*> &x_array = scratch.x_array;
         Buffer<double*> &y_array = scratch.y_array;
-
-
-        Buffer<double> U(U_py);
-        Buffer<double> h(h_py);
-        Buffer<double> scaled_h(scaled_h_py);
-        Buffer<uint64_t> samples(samples_py);
 
         for(int64_t i = 0; i < J; i++) {
             random_draws[i] = dis(gen);
