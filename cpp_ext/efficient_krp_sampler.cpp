@@ -108,12 +108,12 @@ public:
         for(uint32_t v = 0; v < R; v++) {
             if(lambda[v] > eigenvalue_tolerance) {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[N * R2 + u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
+                        M[N * R2 + u * R + R - 1 - v] = M[u * R + v] / sqrt(lambda[v]); 
                 }
             }
             else {
                 for(uint32_t u = 0; u < R; u++) {
-                        M[N * R2 + u * R + v] = 0.0; 
+                        M[N * R2 + u * R + R - 1 - v] = 0.0; 
                 }
             }
         }
@@ -166,13 +166,13 @@ public:
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
                 eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G);
 
-                for(uint32_t u = 0; u < R; u++) { 
+                /*for(uint32_t u = 0; u < R; u++) { 
                     for(uint32_t v = 0; v < R; v++) {
                         cout << eigen_trees[k]->G[u * R + v] << " ";
                     }
                     cout << endl;
                 }
-                cout << "---------------------------------" << endl;
+                cout << "---------------------------------" << endl;*/
             }
         } 
     }
@@ -181,7 +181,6 @@ public:
         // Samples is an array of size N x J 
         computeM(j);
         std::fill(h(), h(J, 0), 1.0);
-        cout << "Computed M" << endl;
 
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
@@ -200,11 +199,11 @@ public:
                         eigen_draws
                         );
 
-                cout << "Internal Row Buffer: [";
+                /*cout << "Internal Row Buffer: [";
                 for(uint32_t i = 0; i < J; i++) {
                     cout << row_buffer[i] << " ";
                 }
-                cout << "]" << endl << "---------------------" << endl; 
+                cout << "]" << endl << "---------------------" << endl;*/
 
                 gram_trees[k]->PTSample_internal(U[k], 
                         h,
@@ -213,11 +212,11 @@ public:
                         gram_draws
                         );
 
-                cout << "Tree Row Buffer: [";
+                /*cout << "Tree Row Buffer: [";
                 for(uint32_t i = 0; i < J; i++) {
                     cout << row_buffer[i] << " ";
                 }
-                cout << "]" << endl << "---------------------" << endl; 
+                cout << "]" << endl << "---------------------" << endl;*/
 
             }
         }

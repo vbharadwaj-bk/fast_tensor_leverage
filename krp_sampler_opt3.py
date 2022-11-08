@@ -92,7 +92,7 @@ class EfficientKRPSampler:
             ik_idxs,
             random_draws 
             )
-        print(f"Eigen Indexes: {ik_idxs}")
+        # print(f"Eigen Indexes: {ik_idxs}")
 
     def Treesample(self, k, h, scaled_h, samples, random_draws):
         J = scaled_h.shape[0]
@@ -106,7 +106,7 @@ class EfficientKRPSampler:
                 random_draws
                 )
 
-        print(f"Tree Indexes: {ik_idxs}")
+        # print(f"Tree Indexes: {ik_idxs}")
 
         samples *= self.U[k].shape[0]
         samples += ik_idxs
