@@ -170,8 +170,7 @@ public:
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> samples) {
-        // Samples is an array of size N x J
-    
+        // Samples is an array of size N x J 
         computeM(j);
         std::fill(h(), h(J, R), 1.0);
 
@@ -182,7 +181,7 @@ public:
 
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0));
 
-                /*eigen_trees[k]->PTSample_internal(scaled_eigenvecs[k], 
+                eigen_trees[k]->PTSample_internal(scaled_eigenvecs[k], 
                         scaled_h,
                         h,
                         row_buffer 
@@ -192,7 +191,7 @@ public:
                         h,
                         scaled_h,
                         row_buffer 
-                        );*/
+                        );
             }
         }
     }
@@ -218,12 +217,17 @@ public:
     void computeM(uint32_t j) {
         sampler.computeM(j);
     }
+    void KRPDrawSamples(uint32_t j, py::array_t<uint64_t> samples_py) {
+        Buffer<uint64_t> samples(samples_py);
+        sampler.KRPDrawSamples(j, samples); 
+    }
 };
 
 PYBIND11_MODULE(efficient_krp_sampler, m) {
   py::class_<CP_ALS>(m, "CP_ALS")
     .def(py::init<int64_t, int64_t, py::list>()) 
     .def("computeM", &CP_ALS::computeM)
+    .def("KRPDrawSamples", &CP_ALS::KRPDrawSamples)
     ;
 }
 
