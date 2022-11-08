@@ -70,8 +70,8 @@ def test_sampler(sampler_class):
     J = 120000
     sampler = sampler_class(U, [F] * N, J)
 
-    samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
-    hist = np.bincount(samples.astype(np.int64))
+    #samples = np.array(sampler.KRPDrawSamples_scalar(j, J), dtype=np.uint64)
+    #hist = np.bincount(samples.astype(np.int64))
     krp_materialized = krp(U[:-1])
 
     krp_q = la.qr(krp_materialized)[0]
@@ -81,6 +81,21 @@ def test_sampler(sampler_class):
     #plt.plot(hist / np.sum(hist), label="PDF of Our Sampler")
     #plt.legend()
 
+    from cpp_ext.efficient_krp_sampler import CP_ALS 
+
+    cp_als = CP_ALS(J, R, U)
+    samples = np.zeros((N, J), dtype=np.uint64)
+    cp_als.KRPDrawSamples(j, samples)
+
+    # Convert samples to a set of scalar indices
+    scalar_indices = np.zeros(J, dtype=np.uint64)
+    current_exp = 0
+    for i in reversed(range(N)):
+        if i != j:
+            scalar_indices += samples[i] * (I ** current_exp)
+            current_exp += 1
+
+    hist = np.bincount(scalar_indices.astype(np.int64))
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative Entropy: {np.sum(dist_err)}")
 
