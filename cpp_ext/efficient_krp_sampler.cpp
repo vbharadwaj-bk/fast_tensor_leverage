@@ -177,7 +177,7 @@ public:
         } 
     }
 
-    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples) {
+    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> &random_draws) {
         // Samples is an array of size N x J 
         computeM(j);
         std::fill(h(), h(J, 0), 1.0);
@@ -189,18 +189,22 @@ public:
                 std::copy(h(), h(J, 0), scaled_h());
 
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0));
+                Buffer<double> eigen_draws({J}, random_draws(k * J));
+                Buffer<double> gram_draws({J}, random_draws(N * J + k * J));
 
                 int offset = (k + 1 == j) ? k + 2 : k + 1;
                 eigen_trees[k]->PTSample_internal(scaled_eigenvecs[offset], 
                         scaled_h,
                         h,
-                        row_buffer 
+                        row_buffer,
+                        eigen_draws
                         );
 
                 gram_trees[k]->PTSample_internal(U[k], 
                         h,
                         scaled_h,
-                        row_buffer 
+                        row_buffer,
+                        gram_draws
                         );
             }
         }
@@ -227,9 +231,10 @@ public:
     void computeM(uint32_t j) {
         sampler.computeM(j);
     }
-    void KRPDrawSamples(uint32_t j, py::array_t<uint64_t> samples_py) {
+    void KRPDrawSamples(uint32_t j, py::array_t<uint64_t> samples_py, py::array_t<double> random_draws_py) {
         Buffer<uint64_t> samples(samples_py);
-        sampler.KRPDrawSamples(j, samples); 
+        Buffer<double> random_draws(random_draws_py);
+        sampler.KRPDrawSamples(j, samples, random_draws); 
     }
 };
 
