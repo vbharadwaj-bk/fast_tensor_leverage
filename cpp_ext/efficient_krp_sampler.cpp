@@ -169,19 +169,21 @@ public:
         } 
     }
 
-    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> samples) {
+    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples) {
         // Samples is an array of size N x J 
         computeM(j);
-        std::fill(h(), h(J, R), 1.0);
+        std::fill(h(), h(J, 0), 1.0);
+        cout << "Computed M" << endl;
 
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
                 // Sample an eigenvector component of the mixture distribution 
-                std::copy(h(), h(J, R), scaled_h());
+                std::copy(h(), h(J, 0), scaled_h());
 
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0));
 
-                eigen_trees[k]->PTSample_internal(scaled_eigenvecs[k], 
+                int offset = (k + 1 == j) ? k + 2 : k + 1;
+                eigen_trees[k]->PTSample_internal(scaled_eigenvecs[offset], 
                         scaled_h,
                         h,
                         row_buffer 
