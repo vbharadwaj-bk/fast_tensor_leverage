@@ -85,7 +85,7 @@ def test_sampler(sampler_class):
     print(f"Relative Entropy: {np.sum(dist_err)}")
 
 def test_CPPSampler():
-    from cpp_ext.efficient_krp_sampler import EfficientKRPSampler 
+    from cpp_ext.efficient_krp_sampler import CP_ALS 
     from krp_sampler_opt3 import EfficientKRPSampler as GTSampler
     N = 4
     I = 8
@@ -101,8 +101,9 @@ def test_CPPSampler():
     gt = GTSampler(U, [F] * N, J)
     gt.KRPDrawSamples_scalar(j, J)
 
-    sampler = EfficientKRPSampler(J, R, U)
-    sampler.computeM(j)
+    cp_als = CP_ALS(J, R, U)
+    cp_als.computeM(j)
+    print("Finished...")
 
 def benchmark_sampler(I, R):
     from krp_sampler_opt3 import EfficientKRPSampler

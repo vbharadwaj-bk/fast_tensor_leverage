@@ -164,7 +164,7 @@ public:
             if(k != j) {
                 int offset = (k + 1 == j) ? k + 2 : k + 1;
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
-                eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G());
+                eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G);
             }
         } 
     }
@@ -178,21 +178,21 @@ public:
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
                 // Sample an eigenvector component of the mixture distribution 
-                std::copy(h(), h(J, R), scaled_h())
+                std::copy(h(), h(J, R), scaled_h());
 
-                Buffer<uint64_t> row_buffer({J}, samples(k, 0))
+                Buffer<uint64_t> row_buffer({J}, samples(k, 0));
 
-                PTSample(scaled_eigenvectors[k], 
+                /*eigen_trees[k]->PTSample(scaled_eigenvecs[k], 
                         scaled_h,
                         h,
                         row_buffer 
                         );
 
-                PTSample(U[k], 
+                gram_trees[k]->PTSample(U[k], 
                         h,
                         scaled_h,
                         row_buffer 
-                        );
+                        );*/
             }
         }
     }
@@ -205,22 +205,25 @@ public:
     }
 }; 
 
-class __attribute__((visibility("hidden"))) EfficientSamplerWrapper {
+class __attribute__((visibility("hidden"))) CP_ALS {
 public:
-    unique_ptr<EfficientKRPSampler> obj;
-    EfficientSamplerWrapper(int64_t J, int64_t R, py::list U_py) {
-        NPBufferList<double> U(U_py);
-        obj.reset(new EfficientKRPSampler(J, R, U.buffers));
+    unique_ptr<NPBufferList<double>> U_py_bufs;
+    EfficientKRPSampler sampler;
+    CP_ALS(int64_t J, int64_t R, py::list U_py)
+    :
+    U_py_bufs(new NPBufferList<double>(U_py)),
+    sampler(J, R, (*U_py_bufs).buffers) 
+    {
     }
     void computeM(uint32_t j) {
-        obj->computeM(j);
+        sampler.computeM(j);
     }
 };
 
 PYBIND11_MODULE(efficient_krp_sampler, m) {
-  py::class_<EfficientSamplerWrapper>(m, "EfficientKRPSampler")
+  py::class_<CP_ALS>(m, "CP_ALS")
     .def(py::init<int64_t, int64_t, py::list>()) 
-    .def("computeM", &EfficientSamplerWrapper::computeM)
+    .def("computeM", &CP_ALS::computeM)
     ;
 }
 
