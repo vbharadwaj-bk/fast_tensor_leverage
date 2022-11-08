@@ -140,6 +140,6 @@ def run_benchmarks():
         json.dump(lst, outfile) 
 if __name__=='__main__':
     from krp_sampler_opt3 import EfficientKRPSampler
-    #test_sampler(EfficientKRPSampler)
-    test_CPPSampler()
+    test_sampler(EfficientKRPSampler)
+    #test_CPPSampler()
     #run_benchmarks() 

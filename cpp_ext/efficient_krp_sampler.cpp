@@ -182,13 +182,13 @@ public:
 
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0));
 
-                /*eigen_trees[k]->PTSample(scaled_eigenvecs[k], 
+                /*eigen_trees[k]->PTSample_internal(scaled_eigenvecs[k], 
                         scaled_h,
                         h,
                         row_buffer 
                         );
 
-                gram_trees[k]->PTSample(U[k], 
+                gram_trees[k]->PTSample_internal(U[k], 
                         h,
                         scaled_h,
                         row_buffer 
