@@ -49,7 +49,7 @@ public:
             assert(U[i].shape[1] == R);
             assert(n % R == 0);
             gram_trees.push_back(new PartitionTree(n, R, J, R, scratch));
-            eigen_trees.push_back(new PartitionTree(R, R, J, R, scratch));
+            eigen_trees.push_back(new PartitionTree(R, 1, J, R, scratch));
         }
 
         // Should move the data structure initialization to another routine,
@@ -200,12 +200,25 @@ public:
                         eigen_draws
                         );
 
+                cout << "Internal Row Buffer: [";
+                for(uint32_t i = 0; i < J; i++) {
+                    cout << row_buffer[i] << " ";
+                }
+                cout << "]" << endl << "---------------------" << endl; 
+
                 gram_trees[k]->PTSample_internal(U[k], 
                         h,
                         scaled_h,
                         row_buffer,
                         gram_draws
                         );
+
+                cout << "Tree Row Buffer: [";
+                for(uint32_t i = 0; i < J; i++) {
+                    cout << row_buffer[i] << " ";
+                }
+                cout << "]" << endl << "---------------------" << endl; 
+
             }
         }
     }

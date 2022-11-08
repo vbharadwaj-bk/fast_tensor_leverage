@@ -67,14 +67,15 @@ def test_sampler(sampler_class):
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 3
-    J = 120000
+    J = 5
 
-    random_draws = np.random.rand(2, 3, J).astype(np.double)
+    random_draws = np.random.rand(2, N, J).astype(np.double)
 
     sampler = sampler_class(U, [F] * N, J)
 
     samples = np.array(sampler.KRPDrawSamples_scalar(j, J, random_draws), dtype=np.uint64)
-    hist = np.bincount(samples.astype(np.int64))
+    print(samples)
+    #hist = np.bincount(samples.astype(np.int64))
     krp_materialized = krp(U[:-1])
 
     krp_q = la.qr(krp_materialized)[0]
@@ -96,10 +97,12 @@ def test_sampler(sampler_class):
         if i != j:
             scalar_indices *= I
             scalar_indices += samples[i] 
+            print(samples[i])
 
     #hist = np.bincount(scalar_indices.astype(np.int64))
-    dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
-    print(f"Relative Entropy: {np.sum(dist_err)}")
+    #dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
+    #print(f"Relative Entropy: {np.sum(dist_err)}")
+    print("Finished!")
 
 def test_CPPSampler():
     from cpp_ext.efficient_krp_sampler import CP_ALS 
