@@ -68,8 +68,8 @@ public:
      * Simple, unoptimized square-matrix in-place transpose.
     */
     void transpose_square_in_place(double* ptr, uint64_t n) {
-        for(uint64_t i = 0; i < N - 1; i++) {
-            for(uint64_t j = i + 1; j < N; j++) {
+        for(uint64_t i = 0; i < n - 1; i++) {
+            for(uint64_t j = i + 1; j < n; j++) {
                 double temp = ptr[i * n + j];
                 ptr[i * n + j] = ptr[j * n + i];
                 ptr[j * n + i] = temp;
@@ -145,7 +145,7 @@ public:
             if(k != j) {
                 for(uint32_t i = 0; i < R2; i++) {
                     M[k * R2 + i] *= M[i];   
-                } 
+                }
             }
         }
 
@@ -176,8 +176,21 @@ public:
                 int offset = (k + 1 == (int) j) ? k + 2 : k + 1;
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
                 eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G);
+
             }
         } 
+
+        for(uint32_t k = N; k > 0; k--) {
+                cout << "k: " << k << "---------------------------------" << endl;
+                for(uint32_t u = 0; u < R; u++) { 
+                    for(uint32_t v = 0; v < R; v++) {
+                        cout << M[k * R2 + u * R + v] << " ";
+                    }
+                    cout << endl;
+                }
+                cout << "---------------------------------" << endl;
+        }
+
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> &random_draws) {
