@@ -97,43 +97,23 @@ def test_sampler(sampler_class):
     dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
     print(f"Relative entropy: {np.sum(dist_err)}")
 
-def test_CPPSampler():
-    from cpp_ext.efficient_krp_sampler import CP_ALS 
-    from krp_sampler_opt3 import EfficientKRPSampler as GTSampler
-    N = 4
-    I = 8
-    R = 4
-    F = R
-
-    assert(I % R == 0)
-    U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
-
-    j = 3
-    J = 100000
-
-    gt = GTSampler(U, [F] * N, J)
-    gt.KRPDrawSamples_scalar(j, J)
-
-    cp_als = CP_ALS(J, R, U)
-    cp_als.computeM(j)
-    print("Finished...")
-
 def benchmark_sampler(I, R):
-    from krp_sampler_opt3 import EfficientKRPSampler
+    from cpp_ext.efficient_krp_sampler import CP_ALS 
     data = {}
     N = 4
-    F = R
-    U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
-
     j = 3
     J = 100000
+    U = [np.random.rand(I, R).astype(np.double) for i in range(N)]
+    samples = np.empty((N, J), dtype=np.uint64)
+
     start = time.time()
-    sampler = EfficientKRPSampler(U, [F] * N, J)
+    cp_als = CP_ALS(J, R, U)
+
     end = time.time()
     data["Construction Time"] = end - start
 
     start = time.time()
-    sampler.KRPDrawSamples_scalar(j, J)
+    cp_als.KRPDrawSamples(j, samples)
     end = time.time()
     data["Sampling Time"] = end - start
     data["I"] = I
@@ -142,9 +122,9 @@ def benchmark_sampler(I, R):
 
 def run_benchmarks():
     lst = []
-    R=4
+    R=32
     #for i in range(23, 24):
-    for i in range(5, 28):
+    for i in range(5, 27):
         res = benchmark_sampler(2 ** i, R)
         lst.append(res)
         print(res)
@@ -153,7 +133,6 @@ def run_benchmarks():
         json.dump(lst, outfile) 
 if __name__=='__main__':
     np.set_printoptions(precision=4)
-    from krp_sampler_opt3 import EfficientKRPSampler
-    test_sampler(EfficientKRPSampler)
-    #test_CPPSampler()
-    #run_benchmarks() 
+    #from krp_sampler_opt3 import EfficientKRPSampler
+    #test_sampler(EfficientKRPSampler)
+    run_benchmarks() 
