@@ -66,8 +66,8 @@ def test_sampler(sampler_class):
     F = 8
     U = [np.random.rand(I, R) for i in range(N)]
 
-    j = 0
-    J = 5 
+    j = 1
+    J = 120000
 
     random_draws = np.random.rand(2, N, J).astype(np.double)
     sampler = sampler_class(U, [F] * N, J)
@@ -84,7 +84,7 @@ def test_sampler(sampler_class):
 
     cp_als = CP_ALS(J, R, U)
     samples = np.zeros((N, J), dtype=np.uint64)
-    cp_als.KRPDrawSamples(j, samples, random_draws)
+    cp_als.KRPDrawSamples(j, samples)
 
     # Convert samples to a set of scalar indices
     scalar_indices = np.zeros(J, dtype=np.uint64)
@@ -92,11 +92,10 @@ def test_sampler(sampler_class):
         if i != j:
             scalar_indices *= I
             scalar_indices += samples[i] 
-            print(f"C++ Tree Indices: {samples[i]}")
 
     hist = np.bincount(scalar_indices.astype(np.int64))
-    #dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
-    #print(f"Relative entropy: {np.sum(dist_err)}")
+    dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
+    print(f"Relative entropy: {np.sum(dist_err)}")
 
 def test_CPPSampler():
     from cpp_ext.efficient_krp_sampler import CP_ALS 

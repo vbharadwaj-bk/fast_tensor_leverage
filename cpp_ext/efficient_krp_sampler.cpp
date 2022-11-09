@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <random>
 #include "common.h"
 #include "partition_tree.hpp"
 #include "lapacke.h"
@@ -23,6 +24,11 @@ class __attribute__((visibility("hidden"))) EfficientKRPSampler {
     vector<PartitionTree*> eigen_trees;
     double eigenvalue_tolerance;
 
+    // Related to random number generation 
+    std::random_device rd;  
+    std::mt19937 gen;
+    std::uniform_real_distribution<> dis;
+
 public:
     EfficientKRPSampler(
             uint64_t J, 
@@ -34,7 +40,10 @@ public:
             M({U_matrices.size() + 1, R * R}),
             lambda({U_matrices.size() + 1, R}),
             h({J, R}),
-            scaled_h({J, R})
+            scaled_h({J, R}),
+            rd(),
+            gen(rd()),
+            dis(0.0, 1.0) 
     {    
         this->J = J;
         this->R = R;
@@ -78,7 +87,6 @@ public:
     }
 
     void computeM(uint32_t j) {
-        // TODO: the original U matrices are freed!
         std::fill(M(N * R2), M((N + 1) * R2), 1.0);
         uint32_t last_buffer = N;
         for(int k = N - 1; k >= 0; k--) {
@@ -130,17 +138,6 @@ public:
                     M(), 
                     R);
 
-        /*cout << "---------------------------------" << endl;
-        cout << "Pseudoinverse" << endl;
-        for(uint32_t u = 0; u < R; u++) { 
-            for(uint32_t v = 0; v < R; v++) {
-                cout << M[u * R + v] << " ";
-            }
-            cout << endl;
-        }
-        cout << "---------------------------------" << endl;*/
-
-
         for(uint32_t k = N - 1; k > 0; k--) {
             if(k != j) {
                 for(uint32_t i = 0; i < R2; i++) {
@@ -176,24 +173,17 @@ public:
                 int offset = (k + 1 == (int) j) ? k + 2 : k + 1;
                 eigen_trees[k]->build_tree(scaled_eigenvecs[offset]);
                 eigen_trees[k]->multiply_matrices_against_provided(gram_trees[k]->G);
-
             }
         } 
-
-        for(uint32_t k = N; k > 0; k--) {
-                cout << "k: " << k << "---------------------------------" << endl;
-                for(uint32_t u = 0; u < R; u++) { 
-                    for(uint32_t v = 0; v < R; v++) {
-                        cout << M[k * R2 + u * R + v] << " ";
-                    }
-                    cout << endl;
-                }
-                cout << "---------------------------------" << endl;
-        }
-
     }
 
-    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> &random_draws) {
+    void fill_buffer_random_draws(double* data, uint64_t len) {
+        for(uint64_t i = 0; i < len; i++) {
+            data[i] = dis(gen);
+        }
+    }
+
+    void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
         // Samples is an array of size N x J 
         computeM(j);
         std::fill(h(), h(J, 0), 1.0);
@@ -202,38 +192,41 @@ public:
             if(k != j) {
                 // Sample an eigenvector component of the mixture distribution 
                 std::copy(h(), h(J, 0), scaled_h());
-
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0));
-                Buffer<double> eigen_draws({J}, random_draws(k * J));
-                Buffer<double> gram_draws({J}, random_draws(N * J + k * J));
-
                 int offset = (k + 1 == j) ? k + 2 : k + 1;
-                eigen_trees[k]->PTSample_internal(scaled_eigenvecs[offset], 
-                        scaled_h,
-                        h,
-                        row_buffer,
-                        eigen_draws
-                        );
 
-                /*cout << "Internal Row Buffer: [";
-                for(uint32_t i = 0; i < J; i++) {
-                    cout << row_buffer[i] << " ";
+                if(random_draws != nullptr) {
+                    Buffer<double> eigen_draws({J}, (*random_draws)(k * J));    
+                    eigen_trees[k]->PTSample_internal(scaled_eigenvecs[offset], 
+                            scaled_h,
+                            h,
+                            row_buffer,
+                            eigen_draws
+                            );
+                    Buffer<double> gram_draws({J}, (*random_draws)(N * J + k * J));
+                    gram_trees[k]->PTSample_internal(U[k], 
+                            h,
+                            scaled_h,
+                            row_buffer,
+                            gram_draws
+                            );
                 }
-                cout << "]" << endl << "---------------------" << endl;*/
-
-                gram_trees[k]->PTSample_internal(U[k], 
-                        h,
-                        scaled_h,
-                        row_buffer,
-                        gram_draws
-                        );
-
-                /*cout << "Tree Row Buffer: [";
-                for(uint32_t i = 0; i < J; i++) {
-                    cout << row_buffer[i] << " ";
+                else {
+                    fill_buffer_random_draws(scratch.random_draws(), J);
+                    eigen_trees[k]->PTSample_internal(scaled_eigenvecs[offset], 
+                            scaled_h,
+                            h,
+                            row_buffer,
+                            scratch.random_draws 
+                            );
+                    fill_buffer_random_draws(scratch.random_draws(), J);
+                    gram_trees[k]->PTSample_internal(U[k], 
+                            h,
+                            scaled_h,
+                            row_buffer,
+                            scratch.random_draws 
+                            );
                 }
-                cout << "]" << endl << "---------------------" << endl;*/
-
             }
         }
     }
@@ -259,10 +252,17 @@ public:
     void computeM(uint32_t j) {
         sampler.computeM(j);
     }
-    void KRPDrawSamples(uint32_t j, py::array_t<uint64_t> samples_py, py::array_t<double> random_draws_py) {
+
+    // Can expose this function for debugging
+    void KRPDrawSamples_explicit_random(uint32_t j, py::array_t<uint64_t> samples_py, py::array_t<double> random_draws_py) {
         Buffer<uint64_t> samples(samples_py);
         Buffer<double> random_draws(random_draws_py);
-        sampler.KRPDrawSamples(j, samples, random_draws); 
+        sampler.KRPDrawSamples(j, samples, &random_draws); 
+    }
+
+    void KRPDrawSamples(uint32_t j, py::array_t<uint64_t> samples_py) {
+        Buffer<uint64_t> samples(samples_py);
+        sampler.KRPDrawSamples(j, samples, nullptr); 
     }
 };
 
