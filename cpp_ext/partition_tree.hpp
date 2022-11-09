@@ -63,11 +63,6 @@ public:
 
     unique_ptr<Buffer<double>> G_unmultiplied;
 
-    // Related to random number generation 
-    std::random_device rd;  
-    std::mt19937 gen;
-    std::uniform_real_distribution<> dis;
-
     void execute_mkl_dsymv_batch() {
         #pragma omp for
         for(int64_t i = 0; i < J; i++) {
@@ -105,10 +100,7 @@ public:
 
     PartitionTree(uint32_t n, uint32_t F, uint64_t J, uint64_t R, ScratchBuffer &scr)
         :   G({2 * divide_and_roundup(n, F) - 1, R * R}),
-            scratch(scr),
-            rd(),
-            gen(rd()),
-            dis(0.0, 1.0) 
+            scratch(scr)
         {
         assert(n % F == 0);
         this->n = n;
@@ -129,10 +121,6 @@ public:
         uint32_t nodes_at_partial_level_div2 = (node_count - nodes_upto_lfill) / 2;
         complete_level_offset = nodes_before_lfill - nodes_at_partial_level_div2;
         G_unmultiplied.reset(nullptr);
-
-    //std::random_device rd;  // Will be used to obtain a seed for the random number engine
-    //std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
-    //std::uniform_real_distribution<> dis(1.0, 2.0);
     }
 
     bool is_leaf(int64_t c) {
@@ -280,11 +268,6 @@ public:
         Buffer<double*> &a_array = scratch.a_array;
         Buffer<double*> &x_array = scratch.x_array;
         Buffer<double*> &y_array = scratch.y_array;
-
-        for(int64_t i = 0; i < J; i++) {
-            //random_draws[i] = dis(gen);
-            //cout << random_draws[i] << " ";
-        }
 
         #pragma omp parallel
 {
