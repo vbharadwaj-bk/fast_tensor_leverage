@@ -79,10 +79,13 @@ class EfficientKRPSampler:
 
                 self.opt_trees[k].get_G0(buf)
                 buf = self.symmetrize(buf)
-                self.eigen_trees[k].multiply_against_numpy_buffer(buf)
 
-                self.eigen_trees[k].get_G0(print_buf)
-                #print(print_buf)
+                #self.eigen_trees[k].get_G0(print_buf)
+                #print(f"Python Buffer: {print_buf}")
+                print(W)
+                print(self.scaled_eigvecs[k])
+
+                self.eigen_trees[k].multiply_against_numpy_buffer(buf)
 
                 M_buffer *= buf 
 

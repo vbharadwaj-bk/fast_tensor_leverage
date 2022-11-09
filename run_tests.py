@@ -62,12 +62,12 @@ def test_tree(tree, sample_count):
 def test_sampler(sampler_class):
     N = 4
     I = 8
-    R = 4
-    F = 4
+    R = 8
+    F = 8
     U = [np.random.rand(I, R) for i in range(N)]
 
     j = 0
-    J = 120000
+    J = 5 
 
     random_draws = np.random.rand(2, N, J).astype(np.double)
     sampler = sampler_class(U, [F] * N, J)
@@ -95,8 +95,8 @@ def test_sampler(sampler_class):
             print(f"C++ Tree Indices: {samples[i]}")
 
     hist = np.bincount(scalar_indices.astype(np.int64))
-    dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
-    print(f"Relative entropy: {np.sum(dist_err)}")
+    #dist_err = rel_entr(hist / np.sum(hist), krp_norms / np.sum(krp_norms))
+    #print(f"Relative entropy: {np.sum(dist_err)}")
 
 def test_CPPSampler():
     from cpp_ext.efficient_krp_sampler import CP_ALS 
@@ -153,6 +153,7 @@ def run_benchmarks():
     with open(f"outputs/bench_rank{R}.json", "w") as outfile:
         json.dump(lst, outfile) 
 if __name__=='__main__':
+    np.set_printoptions(precision=4)
     from krp_sampler_opt3 import EfficientKRPSampler
     test_sampler(EfficientKRPSampler)
     #test_CPPSampler()
