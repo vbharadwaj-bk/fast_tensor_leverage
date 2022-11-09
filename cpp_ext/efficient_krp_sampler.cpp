@@ -6,6 +6,7 @@
 #include "common.h"
 #include "partition_tree.hpp"
 #include "lapacke.h"
+#include "omp.h"
 
 using namespace std;
 
@@ -276,6 +277,32 @@ public:
         Buffer<uint64_t> samples(samples_py);
         sampler.KRPDrawSamples(j, samples, nullptr); 
     }
+
+    // Convenience method for RHS sampling 
+    void materialize_downsampled_rhs(py::array_t<uint64_t> samples_py, 
+        uint64_t j,
+        py::array_t<double> result_py 
+        ) {
+
+        // Assume sample matrix is N x J, result is J x R
+        Buffer<uint64_t> samples(samples_py);
+        uint64_t num_samples = samples.shape[1];
+        Buffer<double> result(result_py);
+        std::fill(result(), result(J, 0), 1.0);
+
+        #pragma omp parallel for
+        for(int i = 0; i < num_samples; i++) {
+            for(int k = 0; k < N; k++) {
+                if(k != j) {
+                    for(uint32_t u = 0; u < R; u++) {
+                        result[i * R + u] *= U[samples[k * num_samples + i] * R + u];
+                    }
+                } 
+            }
+        }
+
+    }
+
 };
 
 PYBIND11_MODULE(efficient_krp_sampler, m) {
