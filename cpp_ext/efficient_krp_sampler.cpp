@@ -88,9 +88,13 @@ public:
 
     void computeM(uint32_t j) {
         std::fill(M(N * R2), M((N + 1) * R2), 1.0);
+
+        #pragma omp parallel
+{
         uint32_t last_buffer = N;
         for(int k = N - 1; k >= 0; k--) {
             if((uint32_t) k != j) {
+                #pragma omp for
                 for(uint32_t i = 0; i < R2; i++) {
                     M[k * R2 + i] = gram_trees[k]->G[i] * M[(last_buffer * R2) + i];   
                 } 
@@ -98,9 +102,11 @@ public:
                 last_buffer = k;
             }
         }
+}
 
-        // Handles the case where the first matrix is left out of the KRP 
-        std::copy(M(last_buffer, 0), M(last_buffer, R2), M());
+        if(j == 0) {
+            std::copy(M(1, 0), M(1, R2), M());
+        }
 
         // Pseudo-inverse via eigendecomposition, stored in the N+1'th slot of
         // the 2D M array.
@@ -113,6 +119,7 @@ public:
                         R, 
                         lambda() );
 
+        #pragma omp parallel for
         for(uint32_t v = 0; v < R; v++) {
             if(lambda[v] > eigenvalue_tolerance) {
                 for(uint32_t u = 0; u < R; u++) {
@@ -138,8 +145,11 @@ public:
                     M(), 
                     R);
 
+        #pragma omp parallel
+{
         for(uint32_t k = N - 1; k > 0; k--) {
             if(k != j) {
+                #pragma omp for
                 for(uint32_t i = 0; i < R2; i++) {
                     M[k * R2 + i] *= M[i];   
                 }
@@ -147,6 +157,7 @@ public:
         }
 
         // Eigendecompose each of the gram matrices 
+        #pragma omp for
         for(uint32_t k = N; k > 0; k--) {
             if(k != j) {
                 if(k < N) {
@@ -167,6 +178,7 @@ public:
                 transpose_square_in_place(M(k, 0), R);
             }
         }
+}
 
         for(int k = N-1; k >= 0; k--) {
             if((uint32_t) k != j) {
