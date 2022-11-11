@@ -41,12 +41,6 @@ public:
         info = arr_py.request();
         ptr = static_cast<T*>(info.ptr);
     }
-
-    /*NumpyArray(py::object obj, string attr_name) {
-        py::array_t<T> arr_py = obj.attr(attr_name.c_str()).cast<py::array_t<T>>();
-        info = arr_py.request();
-        ptr = static_cast<T*>(info.ptr);
-    }*/
 };
 
 //#pragma GCC visibility push(hidden)
@@ -104,10 +98,8 @@ public:
     }
 
     Buffer(initializer_list<uint64_t> args, T* ptr) {
-        uint64_t buffer_size = 1;
         vector<uint64_t> shape;
         for(uint64_t i : args) {
-            buffer_size *= i;
             shape.push_back(i);
         }
 

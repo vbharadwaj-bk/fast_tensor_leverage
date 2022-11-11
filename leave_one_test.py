@@ -30,7 +30,7 @@ def chain_had_prod(matrices):
 def execute_leave_one_tests():
     I = 4
     N = 4
-    J = 10000
+    J = 1000
     R = 2
     j = 3
     U_lhs = [np.random.rand(I, R) for _ in range(N)]
@@ -68,16 +68,11 @@ def execute_leave_one_tests():
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    true_soln = U_rhs[j] @ elwise_prod
+    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
     approx_soln = weighted_rhs.T @ weighted_lhs @ g_pinv
 
     numpy_soln, _, _, _ = la.lstsq(full_lhs, full_rhs, rcond=None)
     numpy_soln = numpy_soln.T
-
-    print(true_soln)
-    print(approx_soln)
-    print(numpy_soln)
-
 
 if __name__=='__main__':
     execute_leave_one_tests()
