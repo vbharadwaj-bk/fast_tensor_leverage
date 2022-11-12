@@ -27,11 +27,20 @@ def chain_had_prod(matrices):
         res *= mat
     return res
 
-def execute_leave_one_tests():
-    I = 4
+def inner_prod(U, V):
+    elwise_prod = chain_had_prod([U[i].T @ V[i] for i in range(len(U))])
+    return np.sum(elwise_prod)
+
+def compute_diff_norm(U, V):
+    return np.sqrt(inner_prod(U, U) + inner_prod(V, V) - 2 * inner_prod(U, V))
+
+def materialize_4prod(U):
+    return np.einsum('ir,jr,kr,lr->ijkl', U[0], U[1], U[2], U[3])
+
+def execute_leave_one_test(I, R, J, data):
+    #I = 4
     N = 4
-    J = 1000
-    R = 2
+    #R = 2
     j = 3
     U_lhs = [np.random.rand(I, R) for _ in range(N)]
     U_rhs = [np.random.rand(I, R) for _ in range(N)]
@@ -47,13 +56,6 @@ def execute_leave_one_tests():
     g_pinv = symmetrize(g_pinv)
     g = la.pinv(g_pinv)
     leverage_score_sum = np.sum(g_pinv * g)
-
-    # True leverage score sum
-    full_lhs = krp(U_lhs[:j] + U_lhs[j+1:])
-    full_rhs = krp(U_rhs[:j] + U_rhs[j+1:]) @ U_rhs[j].T
-
-    #krp_q = la.qr(krp_materialized)[0]
-    #krp_norms = la.norm(krp_q, axis=1) ** 2
 
     leverage_scores = np.sum((sampled_rows @ g_pinv) * sampled_rows, axis=1)
     weights = 1.0 / np.sqrt(leverage_scores * J / leverage_score_sum)
@@ -71,11 +73,23 @@ def execute_leave_one_tests():
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
     approx_soln = weighted_rhs.T @ weighted_lhs @ g_pinv
 
-    numpy_soln, _, _, _ = la.lstsq(full_lhs, full_rhs, rcond=None)
-    numpy_soln = numpy_soln.T
+    U_lhs[j] = true_soln
+    true_residual = compute_diff_norm(U_lhs, U_rhs)
+    print(np.sqrt(true_residual))
+
+    U_lhs[j] = approx_soln 
+    approx_residual = compute_diff_norm(U_lhs, U_rhs)
+    ratio = (approx_residual - true_residual) / true_residual
+    data.append({"I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio})
+    print(data[-1])
 
 if __name__=='__main__':
-    execute_leave_one_tests()
+    data = []
+    for i in range(5, 17):
+        execute_leave_one_test(2 ** i, 32, 10000, data)
+
+    with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
+        json.dump(data, outfile) 
 
 
 

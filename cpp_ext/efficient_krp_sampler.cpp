@@ -112,6 +112,8 @@ public:
         // Pseudo-inverse via eigendecomposition, stored in the N+1'th slot of
         // the 2D M array.
 
+        // edc: version that uses divide and conquer
+
         LAPACKE_dsyev( CblasRowMajor, 
                         'V', 
                         'U', 
