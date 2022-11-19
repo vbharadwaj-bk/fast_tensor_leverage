@@ -9,7 +9,7 @@
 #include <chrono>
 #include "common.h"
 #include "omp.h"
-#include "mkl.h"
+#include "cblas.h"
 
 using namespace std;
 

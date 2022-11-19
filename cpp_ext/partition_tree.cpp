@@ -52,8 +52,8 @@ PYBIND11_MODULE(partition_tree, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2b', '-fopenmp', '-O3']
-cfg['extra_link_args'] = ['-fopenmp', '-O3']
+cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-O3']
+cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-O3']
 cfg['dependencies'] = ['common.h', 'partition_tree.hpp'] 
 %>
 */
