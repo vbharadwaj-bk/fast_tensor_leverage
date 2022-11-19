@@ -84,13 +84,15 @@ def execute_leave_one_test(I, R, J, data):
     print(data[-1])
 
 if __name__=='__main__':
-    data = []
-    for i in range(5, 17):
-        execute_leave_one_test(2 ** i, 32, 10000, data)
+    #data = []
+    #for i in range(5, 17):
+    #    execute_leave_one_test(2 ** i, 32, 10000, data)
 
-    with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
-        json.dump(data, outfile) 
+    #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
+    #    json.dump(data, outfile) 
+    from cpp_ext.als_module import *
 
-
-
+    low_rank = LowRankTensor(5)
+    als = ALS()
+    als.test(low_rank)
 
