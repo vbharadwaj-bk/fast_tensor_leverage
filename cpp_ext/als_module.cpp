@@ -22,8 +22,8 @@ public:
             ) {
         
         Buffer<uint64_t> samples(samples_py);
-        Buffer<uint64_t> lhs(lhs_py);
-        Buffer<uint64_t> result_py(lhs_py);
+        Buffer<double> lhs(lhs_py);
+        Buffer<double> result(result_py);
 
         execute_downsampled_mttkrp(
                 samples, 
@@ -37,10 +37,10 @@ public:
 class __attribute__((visibility("hidden"))) LowRankTensor : public Tensor {
 public:
     unique_ptr<NPBufferList<double>> U_py_bufs;
-    int64_t R, J;
+    uint64_t R, J;
     Buffer<double> partial_evaluation; 
 
-    LowRankTensor(int64_t R, int64_t J, py::list U_py)
+    LowRankTensor(uint64_t R, uint64_t J, py::list U_py)
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
     partial_evaluation({J, R})
@@ -55,8 +55,7 @@ public:
         ) {
 
         // Assume sample matrix is N x J, result is J x R
-        Buffer<uint64_t> samples(samples_py);
-        std::fill(partial_evaluation(), partial_evaluation(num_samples, 0), 1.0);
+        std::fill(partial_evaluation(), partial_evaluation(J, 0), 1.0);
 
         uint32_t N = U_py_bufs->length;
 
@@ -65,7 +64,7 @@ public:
             for(uint32_t k = 0; k < N; k++) {
                 if(k != j) {
                     for(uint32_t u = 0; u < R; u++) {
-                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples[k * num_samples + i] * R + u];
+                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples[k * J + i] * R + u];
                     }
                 } 
             }
@@ -75,7 +74,7 @@ public:
     void execute_downsampled_mttkrp(
             Buffer<uint64_t> &samples, 
             Buffer<double> &lhs,
-            int64_t j,
+            uint64_t j,
             Buffer<double> &result
             ) {
         cout << "Hello world!" << endl;
@@ -85,15 +84,15 @@ public:
 class __attribute__((visibility("hidden"))) ALS {
 public:
     void test(Tensor &t) {
-        t.execute_downsampled_mttkrp();
+        //t.execute_downsampled_mttkrp();
     }
 };
 
 PYBIND11_MODULE(als_module, m) {
-    py::class_<Tensor>(m, "Tensor")
-        .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py);
+    py::class_<Tensor>(m, "Tensor");
+        //.def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py);
     py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
-        .def(py::init<int>());
+        .def(py::init<uint64_t, uint64_t, py::list>());
     py::class_<ALS>(m, "ALS")
         .def(py::init<>()) 
         .def("test", &ALS::test); 

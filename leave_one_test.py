@@ -38,7 +38,7 @@ def materialize_4prod(U):
     return np.einsum('ir,jr,kr,lr->ijkl', U[0], U[1], U[2], U[3])
 
 def execute_leave_one_test(I, R, J, data):
-    from cpp_ext.als_module import Tensor, LowRankTensor, Test
+    from cpp_ext.als_module import Tensor, LowRankTensor, ALS
     print("Import Successful!")
 
     N = 4
