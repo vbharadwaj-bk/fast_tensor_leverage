@@ -73,10 +73,12 @@ def execute_leave_one_test(I, R, J, data):
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
 
-    low_rank_ten = LowRankTensor(R, J, U_rhs)
+    low_rank_ten = LowRankTensor(R, J, I, U_rhs)
     mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
     low_rank_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res)
-    print(mttkrp_res)
+    print(partial_evaluation @ U_rhs[j].T)
+    #print(mttkrp_res)
+    #print(unweighted_rhs)
 
     approx_soln = unweighted_rhs.T @ weighted_lhs @ g_pinv
 
@@ -87,11 +89,12 @@ def execute_leave_one_test(I, R, J, data):
     approx_residual = compute_diff_norm(U_lhs, U_rhs)
     ratio = (approx_residual - true_residual) / true_residual
     data.append({"I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio})
+    print(data[-1])
 
 if __name__=='__main__':
     data = []
     for i in range(3, 4):
-        execute_leave_one_test(2 ** i, 32, 10000, data)
+        execute_leave_one_test(2 ** i, 4, 5, data)
 
     #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
     #    json.dump(data, outfile) 
