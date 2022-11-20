@@ -61,32 +61,36 @@ def execute_leave_one_test(I, R, J, data):
     leverage_scores = np.sum((sampled_rows @ g_pinv) * sampled_rows, axis=1)
     weights = 1.0 / np.sqrt(leverage_scores * J / leverage_score_sum)
 
-    weighted_lhs = np.einsum('i,ij->ij', weights, sampled_rows)
+    weighted_lhs = np.einsum('i,ij->ij', weights ** 2, sampled_rows)
 
     rhs_implicit = CP_Decomposition(R, U_rhs)
     partial_evaluation = np.zeros((J, R))
     rhs_implicit.materialize_partial_evaluation(samples, j, partial_evaluation)
     unweighted_rhs = partial_evaluation @ U_rhs[j].T
-    weighted_rhs = np.einsum('i,ij->ij', weights, unweighted_rhs)
+    #weighted_rhs = np.einsum('i,ij->ij', weights, unweighted_rhs)
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
-    approx_soln = weighted_rhs.T @ weighted_lhs @ g_pinv
+
+    low_rank_ten = LowRankTensor(R, J, U_rhs)
+    mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
+    low_rank_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res)
+    print(mttkrp_res)
+
+    approx_soln = unweighted_rhs.T @ weighted_lhs @ g_pinv
 
     U_lhs[j] = true_soln
     true_residual = compute_diff_norm(U_lhs, U_rhs)
-    print(np.sqrt(true_residual))
 
     U_lhs[j] = approx_soln 
     approx_residual = compute_diff_norm(U_lhs, U_rhs)
     ratio = (approx_residual - true_residual) / true_residual
     data.append({"I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio})
-    print(data[-1])
 
 if __name__=='__main__':
     data = []
-    for i in range(5, 6):
+    for i in range(3, 4):
         execute_leave_one_test(2 ** i, 32, 10000, data)
 
     #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
