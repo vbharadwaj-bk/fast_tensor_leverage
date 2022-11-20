@@ -60,8 +60,8 @@ public:
         this->J = J;
         this->R = R;
         this->N = U_py_bufs->length;
-        for(int i = 0; i < N; i++) {
-            dims.push_back(info.shape[0]);
+        for(uint32_t i = 0; i < N; i++) {
+            dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
     }
 
@@ -104,7 +104,7 @@ public:
             1.0,
             partial_evaluation(row_pos, 0),
             R,
-            U_py_bufs->buffers[k](),
+            U_py_bufs->buffers[j](),
             R,
             0.0,
             temp_buf(),
@@ -131,7 +131,19 @@ public:
         std::fill(result(), result(dims[j], 0), 0.0);
 
         for(uint64_t i = 0; i < J; i += max_rhs_rows) {
+            uint64_t max_range = min(i + max_rhs_rows, J);
+            uint32_t rows = (uint32_t) (max_range - i);
+
             materialize_rhs(samples, j, i);
+
+            cout << "--------------------------------" << endl;
+            for(uint32_t k = 0; k < rows; k++) {
+                for(uint32_t p = 0; p < dims[j]; p++) {
+                    cout << temp_buf[k * dims[j] + p] << " ";
+                }
+                cout << endl;
+            }
+            cout << "--------------------------------" << endl;
 
             cblas_dgemm(
                 CblasRowMajor,
@@ -139,11 +151,11 @@ public:
                 CblasNoTrans,
                 (uint32_t) dims[j],
                 (uint32_t) R,
-                (uint32_t) max_rhs_rows,
+                (uint32_t) rows,
                 1.0,
                 temp_buf(),
                 (uint32_t) dims[j],
-                lhs(row_pos, 0),
+                lhs(i, 0),
                 (uint32_t) R,
                 1.0,
                 result(),
@@ -165,7 +177,7 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
         .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py);
     py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
-        .def(py::init<uint64_t, uint64_t, py::list>());
+        .def(py::init<uint64_t, uint64_t, uint64_t, py::list>());
     py::class_<ALS>(m, "ALS")
         .def(py::init<>()) 
         .def("test", &ALS::test); 
