@@ -70,15 +70,24 @@ def execute_leave_one_test(I, R, J, data):
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
 
-    low_rank_ten = LowRankTensor(R, J, 17, U_rhs)
+    check_g_pinv = la.pinv(chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j]))
+
+    lst = [U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j]
+    prev = np.ones((5, 5))
+    for el in reversed(lst): 
+        print(el[:5, :5] * prev)
+        prev = prev * el[:5, :5]
+
+    true_soln = U_rhs[j] @ elwise_prod.T @ check_g_pinv
+
+    #low_rank_ten = LowRankTensor(R, J, 17, U_rhs)
     #mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
     #low_rank_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
     #print(mttkrp_res)
     #print(unweighted_rhs.T @ weighted_lhs)
 
-    approx_soln = unweighted_rhs.T @ weighted_lhs @ g_pinv
+    approx_soln = unweighted_rhs.T @ weighted_lhs @ g_pinv 
     #approx_soln = mttkrp_res @ g_pinv
 
     U_lhs[j] = true_soln
