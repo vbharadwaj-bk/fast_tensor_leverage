@@ -39,7 +39,6 @@ def materialize_4prod(U):
 
 def execute_leave_one_test(I, R, J, data):
     from cpp_ext.als_module import Tensor, LowRankTensor, ALS
-    print("Import Successful!")
 
     N = 4
     j = 3
@@ -74,12 +73,13 @@ def execute_leave_one_test(I, R, J, data):
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
 
     low_rank_ten = LowRankTensor(R, J, 17, U_rhs)
-    mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
-    low_rank_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
-    print(mttkrp_res)
-    print(unweighted_rhs.T @ weighted_lhs)
+    #mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
+    #low_rank_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
+    #print(mttkrp_res)
+    #print(unweighted_rhs.T @ weighted_lhs)
 
     approx_soln = unweighted_rhs.T @ weighted_lhs @ g_pinv
+    #approx_soln = mttkrp_res @ g_pinv
 
     U_lhs[j] = true_soln
     true_residual = compute_diff_norm(U_lhs, U_rhs)
@@ -93,7 +93,7 @@ def execute_leave_one_test(I, R, J, data):
 if __name__=='__main__':
     data = []
     for i in range(3, 4):
-        execute_leave_one_test(2 ** i, 8, 1000, data)
+        execute_leave_one_test(2 ** i, 32, 1000, data)
 
     #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
     #    json.dump(data, outfile) 

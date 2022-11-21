@@ -136,15 +136,6 @@ public:
 
             materialize_rhs(samples, j, i);
 
-            /*cout << "--------------------------------" << endl;
-            for(uint32_t k = 0; k < rows; k++) {
-                for(uint32_t p = 0; p < dims[j]; p++) {
-                    cout << temp_buf[k * dims[j] + p] << " ";
-                }
-                cout << endl;
-            }
-            cout << "--------------------------------" << endl;*/
-
             cblas_dgemm(
                 CblasRowMajor,
                 CblasTrans,
