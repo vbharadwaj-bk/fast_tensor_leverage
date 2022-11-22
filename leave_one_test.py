@@ -62,12 +62,6 @@ def execute_leave_one_test(I, R, J, data):
 
     weighted_lhs = np.einsum('i,ij->ij', weights ** 2, sampled_rows)
 
-    rhs_implicit = CP_Decomposition(R, U_rhs)
-    partial_evaluation = np.zeros((J, R))
-    rhs_implicit.materialize_partial_evaluation(samples, j, partial_evaluation)
-    unweighted_rhs = partial_evaluation @ U_rhs[j].T
-    #weighted_rhs = np.einsum('i,ij->ij', weights, unweighted_rhs)
-
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 

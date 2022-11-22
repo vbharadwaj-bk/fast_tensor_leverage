@@ -94,12 +94,12 @@ public:
     void computeM(uint32_t j) {
         std::fill(M(N * R2), M((N + 1) * R2), 1.0);
 
-        //#pragma omp parallel
+        #pragma omp parallel
 {
         uint32_t last_buffer = N;
         for(int k = N - 1; k >= 0; k--) {
             if((uint32_t) k != j) {
-                //#pragma omp for
+                #pragma omp for
                 for(uint32_t i = 0; i < R2; i++) {
                     M[k * R2 + i] = gram_trees[k]->G[i] * M[(last_buffer * R2) + i];   
                 } 
