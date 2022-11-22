@@ -102,9 +102,6 @@ public:
         :   G({2 * divide_and_roundup(n, F) - 1, R * R}),
             scratch(scr)
         {
-        if(F > n) {
-            F = n;
-        }
         this->n = n;
         this->F = F;
         this->J = J;
@@ -370,7 +367,7 @@ public:
                 }
 
                 a_array[i] = U(leaf_idx * F, 0);
-                y_array[i] = q(i, 0);
+                y_array[i] = q(i * F);
             }
 
             execute_mkl_dgemv_batch();
