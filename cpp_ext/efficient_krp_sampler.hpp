@@ -104,15 +104,13 @@ public:
 
                 last_buffer = k;
 
-
                 for(uint32_t i = 0; i < 5; i++) {
                     for(uint32_t j = 0; j < 5; j++) {
-                        //cout << M[k * R2 + i * R + j] << " ";
+                        cout << M[k * R2 + i * R + j] << " ";
                     }
                     cout << endl;
                 }
                 cout << "--------------------------------" << endl;
-
             }
         }
 }

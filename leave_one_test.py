@@ -70,8 +70,9 @@ def execute_leave_one_test(I, R, J, data):
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-
     check_g_pinv = la.pinv(chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j]))
+
+    print(la.norm(check_g_pinv - g_pinv))
 
     lst = [U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j]
     prev = np.ones((5, 5))
@@ -101,8 +102,8 @@ def execute_leave_one_test(I, R, J, data):
 
 if __name__=='__main__':
     data = []
-    for i in range(3, 4):
-        execute_leave_one_test(2 ** i, 32, 1000, data)
+    for i in range(4, 5):
+        execute_leave_one_test(2 ** i, 32, 10000, data)
 
     #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
     #    json.dump(data, outfile) 
