@@ -60,7 +60,9 @@ public:
             assert(U[i].shape.size() == 2);
             assert(U[i].shape[1] == R);
             assert(n % R == 0);
-            gram_trees.push_back(new PartitionTree(n, R, J, R, scratch));
+
+            uint64_t F = R < n ? R : n;
+            gram_trees.push_back(new PartitionTree(n, F, J, R, scratch));
             eigen_trees.push_back(new PartitionTree(R, 1, J, R, scratch));
         }
 
