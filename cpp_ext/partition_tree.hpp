@@ -102,7 +102,9 @@ public:
         :   G({2 * divide_and_roundup(n, F) - 1, R * R}),
             scratch(scr)
         {
-        assert(n % F == 0);
+        if(F > n) {
+            F = n;
+        }
         this->n = n;
         this->F = F;
         this->J = J;
