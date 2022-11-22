@@ -34,32 +34,53 @@ def inner_prod(U, V):
 def compute_diff_norm(U, V):
     return np.sqrt(inner_prod(U, U) + inner_prod(V, V) - 2 * inner_prod(U, V))
 
-def materialize_4prod(U):
-    return np.einsum('ir,jr,kr,lr->ijkl', U[0], U[1], U[2], U[3])
+def larsen_kolda_sample(U, j, J, R):
+    samples = np.zeros((len(U), J), dtype=np.uint64)
+    sampled_rows = np.ones((J, R), dtype=np.double)
+    # Simple version of the Larsen & Kolda sampler 
+    gram_matrices = [U[i].T @ U[i] for i in range(len(U))]
 
-def execute_leave_one_test(I, R, J, data):
+    rng = np.random.default_rng()
+
+    for i in range(len(U)):
+        buf = U[i] @ gram_matrices[i]
+        buf *= U[i]
+        leverage_scores = np.sum(buf, axis=1)
+        C = np.sum(leverage_scores) 
+        leverage_scores /= C
+        if i != j:
+            samples[i] = rng.choice(U[i].shape[0], size=J, p=leverage_scores) 
+            sampled_rows *= U[i][samples[i]]
+
+    return samples, sampled_rows
+
+def cp_als_sample(U, j, J, R):
+    cp_als = CP_ALS(J, R, U)
+    samples = np.zeros((len(U), J), dtype=np.uint64)
+    sampled_rows = np.zeros((J, R), dtype=np.double)
+    cp_als.KRPDrawSamples(j, samples, sampled_rows)
+
+    return samples, sampled_rows
+
+def execute_leave_one_test(I, R, J, data, N=4):
     from cpp_ext.als_module import Tensor, LowRankTensor, ALS
-
-    N = 4
     j = 3
     U_lhs = [np.random.rand(I, R) for _ in range(N)]
     U_rhs = [np.random.rand(I, R) for _ in range(N)]
 
-    cp_als = CP_ALS(J, R, U_lhs)
-    samples = np.zeros((N, J), dtype=np.uint64)
-    sampled_rows = np.zeros((J, R), dtype=np.double)
-    g_pinv = np.zeros((R, R))
+    #cp_als = CP_ALS(J, R, U_lhs)
+    #samples = np.zeros((N, J), dtype=np.uint64)
+    #sampled_rows = np.zeros((J, R), dtype=np.double) 
 
-    print("Starting evaluation...")
-    cp_als.KRPDrawSamples(j, samples, sampled_rows)
-    cp_als.get_G_pinv(g_pinv)
-    g_pinv = symmetrize(g_pinv)
-    g = la.pinv(g_pinv)
+    samples, sampled_rows = larsen_kolda_sample(U_lhs, j, J, R)
+    #samples, sampled_rows = cp_als_sample(U_lhs, j, J, R)
+
+    g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
+    g_pinv = la.pinv(g)
     leverage_score_sum = np.sum(g_pinv * g)
 
     leverage_scores = np.sum((sampled_rows @ g_pinv) * sampled_rows, axis=1)
     weights = 1.0 / np.sqrt(leverage_scores * J / leverage_score_sum)
-
     weighted_lhs = np.einsum('i,ij->ij', weights ** 2, sampled_rows)
 
     # Compute the true solution 
@@ -82,7 +103,7 @@ def execute_leave_one_test(I, R, J, data):
 
 if __name__=='__main__':
     data = []
-    for i in range(4, 5):
+    for i in range(4, 20):
         execute_leave_one_test(2 ** i, 32, 10000, data)
 
     #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
