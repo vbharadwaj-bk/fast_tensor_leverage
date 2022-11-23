@@ -34,6 +34,26 @@ def inner_prod(U, V):
 def compute_diff_norm(U, V):
     return np.sqrt(inner_prod(U, U) + inner_prod(V, V) - 2 * inner_prod(U, V))
 
+def uniform_sample(U, j, J, R):
+    samples = np.zeros((len(U), J), dtype=np.uint64)
+    sampled_rows = np.ones((J, R), dtype=np.double)
+    # Simple version of the Larsen & Kolda sampler 
+    gram_matrices = [U[i].T @ U[i] for i in range(len(U))]
+
+    rng = np.random.default_rng()
+
+    for i in range(len(U)):
+        buf = U[i] @ gram_matrices[i]
+        buf *= U[i]
+        leverage_scores = np.sum(buf, axis=1)
+        C = np.sum(leverage_scores) 
+        leverage_scores /= C
+        if i != j:
+            samples[i] = rng.choice(U[i].shape[0], size=J) 
+            sampled_rows *= U[i][samples[i]]
+
+    return samples, sampled_rows, 'uniform'
+
 def larsen_kolda_sample(U, j, J, R):
     samples = np.zeros((len(U), J), dtype=np.uint64)
     sampled_rows = np.ones((J, R), dtype=np.double)
@@ -52,28 +72,21 @@ def larsen_kolda_sample(U, j, J, R):
             samples[i] = rng.choice(U[i].shape[0], size=J, p=leverage_scores) 
             sampled_rows *= U[i][samples[i]]
 
-    return samples, sampled_rows
+    return samples, sampled_rows, 'larsen_kolda'
 
-def cp_als_sample(U, j, J, R):
+def fast_leverage_sample(U, j, J, R):
     cp_als = CP_ALS(J, R, U)
     samples = np.zeros((len(U), J), dtype=np.uint64)
     sampled_rows = np.zeros((J, R), dtype=np.double)
     cp_als.KRPDrawSamples(j, samples, sampled_rows)
 
-    return samples, sampled_rows
+    return samples, sampled_rows, 'fast_tensor_leverage'
 
-def execute_leave_one_test(I, R, J, data, N=4):
+def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     from cpp_ext.als_module import Tensor, LowRankTensor, ALS
-    j = 3
-    U_lhs = [np.random.rand(I, R) for _ in range(N)]
-    U_rhs = [np.random.rand(I, R) for _ in range(N)]
+    j = N-1
 
-    #cp_als = CP_ALS(J, R, U_lhs)
-    #samples = np.zeros((N, J), dtype=np.uint64)
-    #sampled_rows = np.zeros((J, R), dtype=np.double) 
-
-    samples, sampled_rows = larsen_kolda_sample(U_lhs, j, J, R)
-    #samples, sampled_rows = cp_als_sample(U_lhs, j, J, R)
+    samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
 
     g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
     g_pinv = la.pinv(g)
@@ -98,18 +111,33 @@ def execute_leave_one_test(I, R, J, data, N=4):
     U_lhs[j] = approx_soln 
     approx_residual = compute_diff_norm(U_lhs, U_rhs)
     ratio = (approx_residual - true_residual) / true_residual
-    data.append({"I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio})
+    data.append({"N": len(U_lhs), "I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio, 'alg': algorithm})
     print(data[-1])
 
 if __name__=='__main__':
     data = []
-    for i in range(4, 20):
-        execute_leave_one_test(2 ** i, 32, 10000, data)
+    R = 32 
+    #for i in range(4, 19):
+    #    for N in [3]:
+    #        U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+    #        U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+    #        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, uniform_sample, N)
+    #        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, larsen_kolda_sample, N)
+    #        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, fast_leverage_sample, N)
 
-    #with open(f"outputs/leave_one_rank_tests.json", "w") as outfile:
+    #with open(f"outputs/increasing_i_comparison.json", "w") as outfile:
     #    json.dump(data, outfile) 
 
-    #low_rank = LowRankTensor(5)
-    #als = ALS()
-    #als.test(low_rank)
+    data = []
+    i = 2 ** 16
+    for N in [4, 5, 6]:
+        for R in [4, 8, 16, 32, 64]: 
+            U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+            U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, uniform_sample, N)
+            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, larsen_kolda_sample, N)
+            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, fast_leverage_sample, N)
+
+    with open(f"outputs/n_r_comparison.json", "w") as outfile:
+        json.dump(data, outfile) 
 
