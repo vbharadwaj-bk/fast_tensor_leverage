@@ -117,21 +117,21 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 if __name__=='__main__':
     data = []
     R = 32 
-    #for i in range(4, 19):
-    #    for N in [3]:
-    #        U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
-    #        U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
-    #        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, uniform_sample, N)
-    #        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, larsen_kolda_sample, N)
-    #        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, fast_leverage_sample, N)
+    for i in range(4, 19):
+        for N in [3]:
+            U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+            U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, uniform_sample, N)
+            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, larsen_kolda_sample, N)
+            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, 32, 10000, data, fast_leverage_sample, N)
 
-    #with open(f"outputs/increasing_i_comparison.json", "w") as outfile:
-    #    json.dump(data, outfile) 
+    with open(f"outputs/increasing_i_comparison.json", "w") as outfile:
+        json.dump(data, outfile) 
 
     data = []
-    i = 2 ** 16
+    i = 16
     for N in [4, 5, 6]:
-        for R in [4, 8, 16, 32, 64]: 
+        for R in [4, 8, 16, 32, 64, 128]: 
             U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
             U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
             execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, uniform_sample, N)
@@ -140,4 +140,18 @@ if __name__=='__main__':
 
     with open(f"outputs/n_r_comparison.json", "w") as outfile:
         json.dump(data, outfile) 
+
+    data = []
+    i = 16
+    R = 32
+    for N in [2, 3, 4, 5, 6, 7, 8]:
+        U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+        U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
+        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, uniform_sample, N)
+        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, larsen_kolda_sample, N)
+        execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, fast_leverage_sample, N)
+
+    with open(f"outputs/n_comparison.json", "w") as outfile:
+        json.dump(data, outfile) 
+
 
