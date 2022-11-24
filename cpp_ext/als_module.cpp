@@ -3,6 +3,7 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
+#include "efficient_krp_sampler.hpp"
 
 using namespace std;
 
@@ -40,6 +41,7 @@ class __attribute__((visibility("hidden"))) LowRankTensor : public Tensor {
 public:
     vector<uint64_t> dims;
     unique_ptr<NPBufferList<double>> U_py_bufs;
+    vector<Buffer<double>> &U;
     uint32_t N;
     uint64_t R, J;
     uint64_t max_rhs_rows;
@@ -54,6 +56,7 @@ public:
         py::list U_py)
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
+    U(U_py_bufs->buffers),
     partial_evaluation({J, R})
     {
         this->max_rhs_rows = max_rhs_rows;
@@ -68,6 +71,7 @@ public:
     LowRankTensor(uint64_t R, py::list U_py)
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
+    U(U_py_bufs->buffers),
     partial_evaluation({1})
     {
         this->R = R;
@@ -173,11 +177,21 @@ class __attribute__((visibility("hidden"))) ALS {
 public:
     LowRankTensor &cp_decomp;
     Tensor &ground_truth;
+    unique_ptr<EfficientKRPSampler> sampler;
+
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
         cp_decomp(cp_dec),
         ground_truth(gt)    
     {
         // Empty 
+    }
+
+    void initialize_ds_als(uint64_t J) {
+        sampler.reset(new EfficientKRPSampler(J, cp_decomp.R, cp_decomp.U));
+    }
+
+    void execute_ds_als_update(uint64_t j, bool renormalize) {
+        // TODO: Need to write this function! 
     }
 };
 
@@ -189,8 +203,10 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, py::list>());
         ;
     py::class_<ALS>(m, "ALS")
-        .def(py::init<LowRanktensor&, Tensor&>()); 
-        //.def("test", &ALS::test);
+        .def(py::init<LowRankTensor&, Tensor&>()) 
+        .def("initialize_ds_als", &ALS::initialize_ds_als) 
+        .def("execute_ds_als_update", &ALS::execute_ds_als_update)
+        ;
 }
 
 /*
