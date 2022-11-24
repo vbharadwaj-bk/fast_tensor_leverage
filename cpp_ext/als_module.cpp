@@ -65,6 +65,18 @@ public:
         }
     }
 
+    LowRankTensor(uint64_t R, py::list U_py)
+    :
+    U_py_bufs(new NPBufferList<double>(U_py)),
+    partial_evaluation({1})
+    {
+        this->R = R;
+        this->N = U_py_bufs->length;
+        for(uint32_t i = 0; i < N; i++) {
+            dims.push_back(U_py_bufs->buffers[i].shape[0]);
+        }
+    }
+
     // Convenience method for RHS sampling 
     void materialize_partial_evaluation(Buffer<uint64_t> &samples, 
         uint64_t j) {
@@ -159,8 +171,13 @@ public:
 
 class __attribute__((visibility("hidden"))) ALS {
 public:
-    void test(Tensor &t) {
-        //t.execute_downsampled_mttkrp();
+    LowRankTensor &cp_decomp;
+    Tensor &ground_truth;
+    ALS(LowRankTensor &cp_dec, Tensor &gt) : 
+        cp_decomp(cp_dec),
+        ground_truth(gt)    
+    {
+        // Empty 
     }
 };
 
@@ -168,10 +185,12 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
         .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py);
     py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
-        .def(py::init<uint64_t, uint64_t, uint64_t, py::list>());
+        .def(py::init<uint64_t, uint64_t, uint64_t, py::list>()) 
+        .def(py::init<uint64_t, py::list>());
+        ;
     py::class_<ALS>(m, "ALS")
-        .def(py::init<>()) 
-        .def("test", &ALS::test); 
+        .def(py::init<LowRanktensor&, Tensor&>()); 
+        //.def("test", &ALS::test);
 }
 
 /*

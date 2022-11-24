@@ -82,10 +82,6 @@ PYBIND11_MODULE(efficient_krp_sampler, m) {
     .def("KRPDrawSamples", &CP_ALS::KRPDrawSamples)
     .def("get_G_pinv", &CP_ALS::get_G_pinv)
     ;
-
-  py::class_<CP_Decomposition>(m, "CP_Decomposition")
-    .def(py::init<int64_t, py::list>()) 
-    .def("materialize_partial_evaluation", &CP_Decomposition::materialize_partial_evaluation);
 }
 
 /*

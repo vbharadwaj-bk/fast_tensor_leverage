@@ -5,7 +5,7 @@ import time
 import json
 
 import cppimport.import_hook
-from cpp_ext.efficient_krp_sampler import CP_ALS, CP_Decomposition 
+from cpp_ext.efficient_krp_sampler import CP_ALS 
 
 def symmetrize(buf):
     return np.triu(buf, 1) + np.triu(buf, 1).T + np.diag(np.diag(buf))
