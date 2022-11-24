@@ -86,6 +86,13 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     from cpp_ext.als_module import Tensor, LowRankTensor, ALS
     j = N-1
 
+    lhs_ten = LowRankTensor(R, U_lhs)
+    rhs_ten = LowRankTensor(R, U_rhs)
+    als = ALS(lhs_ten, rhs_ten)
+    als.initialize_ds_als(J) 
+
+    print("Constructed ALS Sampler...")
+
     samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
 
     g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
