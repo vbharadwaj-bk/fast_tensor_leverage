@@ -350,12 +350,17 @@ public:
         );
 
         // Multiply result by sigma^(-1) of the CP
-        // decomposition
+        // decomposition. Assumes that sigma is correct
+        // upon entry to this function. 
         #pragma omp parallel for collapse(2)
         for(uint32_t u = 0; u < Ij; u++) {
             for(uint32_t v = 0; v < R; v++) {
                 cp_decomp.U[j][u * R + v] /= sigma[v]; 
             }
+        }
+
+        if(renormalize) {
+            cp_decomp.renormalize_columns(j);
         }
 
     }
