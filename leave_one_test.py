@@ -89,7 +89,11 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     lhs_ten = LowRankTensor(R, U_lhs)
     rhs_ten = LowRankTensor(R, J, 10000, U_rhs)
     als = ALS(lhs_ten, rhs_ten)
-    als.initialize_ds_als(J)  
+    als.initialize_ds_als(J)
+
+    lhs_ten.renormalize_columns(-1)
+    print(la.norm(U_lhs[0], axis=0))
+    exit(1)
 
     samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
 
@@ -130,9 +134,10 @@ if __name__=='__main__':
         for N in [3]:
             U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
             U_rhs = [np.random.rand(2 ** i, R) for _ in range(N)]
-            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, uniform_sample, N)
-            execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, larsen_kolda_sample, N)
+            #execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, uniform_sample, N)
+            #execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, larsen_kolda_sample, N)
             execute_leave_one_test(U_lhs, U_rhs, 2 ** i, R, 10000, data, fast_leverage_sample, N)
+            break
 
     with open(f"outputs/increasing_i_comparison.json", "w") as outfile:
         json.dump(data, outfile) 
