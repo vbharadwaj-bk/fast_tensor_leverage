@@ -173,25 +173,112 @@ public:
     }
 };
 
+void compute_DAGAT(double* A, double* G, 
+        double* res, uint64_t J, uint64_t R) {
+
+    Buffer<double> temp({J, R});
+
+    cblas_dsymm(
+        CblasRowMajor,
+        CblasRight,
+        CblasUpper,
+        (uint32_t) J,
+        (uint32_t) R,
+        1.0,
+        G,
+        R,
+        A,
+        R,
+        0.0,
+        temp(),
+        R
+    );
+
+    for(uint32_t i = 0; i < J; i++) {
+        res[i] = 0.0;
+        for(uint32_t j = 0; j < R; j++) {
+            res[i] += A[i * R + j] * temp[i * R + j];
+        }
+    }
+}
+
 class __attribute__((visibility("hidden"))) ALS {
 public:
     LowRankTensor &cp_decomp;
     Tensor &ground_truth;
+
+    // These fields used only for sampling 
+    uint64_t J;
     unique_ptr<EfficientKRPSampler> sampler;
+    unique_ptr<Buffer<uint64_t>> samples;
 
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
         cp_decomp(cp_dec),
         ground_truth(gt)    
     {
-        // Empty 
+        // Empty
     }
 
     void initialize_ds_als(uint64_t J) {
         sampler.reset(new EfficientKRPSampler(J, cp_decomp.R, cp_decomp.U));
+        samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
     }
 
-    void execute_ds_als_update(uint64_t j, bool renormalize) {
-        // TODO: Need to write this function! 
+    void execute_ds_als_update(uint32_t j, 
+            bool renormalize,
+            bool update_sampler 
+            ) {
+        
+        uint64_t Ij = cp_decomp.U[j].shape[0];
+        uint64_t R = cp_decomp.R; 
+        uint64_t J = sampler->J;
+
+        Buffer<double> mttkrp_res({Ij, R});
+        Buffer<double> weights({J});
+
+        sampler->KRPDrawSamples(j, *samples, nullptr);
+
+        compute_DAGAT(
+            sampler->h(),
+            sampler->M(),
+            weights(),
+            J,
+            R
+        );
+
+        for(uint32_t i = 0; i < J; i++) {
+            weights[i] = (double) R / (weights[i] * J);
+        }
+
+        for(uint32_t i = 0; i < J; i++) {
+            for(uint32_t t = 0; t < R; t++) {
+                sampler->h[i * R + t] *= weights[i]; 
+            }
+        }
+
+        ground_truth.execute_downsampled_mttkrp(
+                *samples, 
+                sampler->h,
+                j,
+                mttkrp_res 
+                );
+
+        // Multiply gram matrix result by the pseudo-inverse
+        cblas_dsymm(
+            CblasRowMajor,
+            CblasRight,
+            CblasUpper,
+            (uint32_t) Ij,
+            (uint32_t) R,
+            1.0,
+            sampler->M(),
+            R,
+            mttkrp_res(),
+            R,
+            0.0,
+            cp_decomp.U[j](),
+            R
+        );
     }
 };
 
@@ -212,8 +299,8 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-O3']
-cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-O3']
+cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-g']
+cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-g']
 cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp'] 
 %>
 */
