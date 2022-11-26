@@ -40,7 +40,7 @@ public:
     :        
             U(U_matrices),
             scratch(R, J, R),
-            M({U_matrices.size() + 1, R * R}),
+            M({U_matrices.size() + 2, R * R}),
             lambda({U_matrices.size() + 1, R}),
             h({J, R}),
             scaled_h({J, R}),
@@ -112,6 +112,9 @@ public:
         if(j == 0) {
             std::copy(M(1, 0), M(1, R2), M());
         }
+
+        // Store the originla matrix in slot N + 2 
+        std::copy(M(), M(R2), M((N + 1) * R2));
 
         // Pseudo-inverse via eigendecomposition, stored in the N+1'th slot of
         // the 2D M array.
