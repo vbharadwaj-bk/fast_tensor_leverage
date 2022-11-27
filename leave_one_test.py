@@ -27,12 +27,13 @@ def chain_had_prod(matrices):
         res *= mat
     return res
 
-def inner_prod(U, V):
+def inner_prod(U, V, sigma_U, sigma_V):
     elwise_prod = chain_had_prod([U[i].T @ V[i] for i in range(len(U))])
+    elwise_prod *= np.outer(sigma_U, sigma_V)
     return np.sum(elwise_prod)
 
-def compute_diff_norm(U, V):
-    return np.sqrt(inner_prod(U, U) + inner_prod(V, V) - 2 * inner_prod(U, V))
+def compute_diff_norm(U, V, sigma_U, sigma_V):
+    return np.sqrt(inner_prod(U, U, sigma_U, sigma_U) + inner_prod(V, V, sigma_V, sigma_V) - 2 * inner_prod(U, V, sigma_U, sigma_V))
 
 def uniform_sample(U, j, J, R):
     samples = np.zeros((len(U), J), dtype=np.uint64)
@@ -91,10 +92,6 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     als = ALS(lhs_ten, rhs_ten)
     als.initialize_ds_als(J)
 
-    lhs_ten.renormalize_columns(-1)
-    print(la.norm(U_lhs[0], axis=0))
-    exit(1)
-
     samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
 
     g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
@@ -109,23 +106,31 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 
 
-    low_rank_ten = LowRankTensor(R, J, 17, U_rhs)
     mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
-    low_rank_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
+    rhs_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
+
+    sigma_lhs = np.zeros(R, dtype=np.double) 
+    sigma_rhs = np.zeros(R, dtype=np.double) 
 
     approx_soln = mttkrp_res @ g_pinv
     U_lhs[j][:] = true_soln
-    true_residual = compute_diff_norm(U_lhs, U_rhs)
+
+    lhs_ten.get_sigma(sigma_lhs)
+    rhs_ten.get_sigma(sigma_rhs)
+    true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
 
     if algorithm == 'fast_tensor_leverage':
         als.execute_ds_als_update(j, False, False) 
     else:
         U_lhs[j] = approx_soln 
 
-    approx_residual = compute_diff_norm(U_lhs, U_rhs)
+    lhs_ten.get_sigma(sigma_lhs)
+    rhs_ten.get_sigma(sigma_rhs)
+    approx_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
     ratio = (approx_residual - true_residual) / true_residual
     data.append({"N": len(U_lhs), "I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio, 'alg': algorithm})
     print(data[-1])
+    exit(1)
 
 if __name__=='__main__':
     data = []

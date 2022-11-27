@@ -182,6 +182,11 @@ public:
         delete rhs_buf; 
     }
 
+    void get_sigma(py::array_t<double> sigma_py_out) {
+        Buffer<double> sigma_py(sigma_py_out);
+        std::copy(sigma(), sigma(R), sigma_py());
+    }
+
     // Pass j = -1 to renormalize all factor matrices.
     // The array sigma is always updated 
     void renormalize_columns(int j) {
@@ -240,8 +245,6 @@ public:
 } 
     }
 };
-
-void 
 
 void compute_DAGAT(double* A, double* G, 
         double* res, uint64_t J, uint64_t R) {
@@ -358,7 +361,7 @@ public:
         #pragma omp parallel for collapse(2)
         for(uint32_t u = 0; u < Ij; u++) {
             for(uint32_t v = 0; v < R; v++) {
-                cp_decomp.U[j][u * R + v] /= sigma[v]; 
+                cp_decomp.U[j][u * R + v] /= cp_decomp.sigma[v]; 
             }
         }
 
@@ -378,6 +381,7 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::list>()) 
         .def(py::init<uint64_t, py::list>())
+        .def("get_sigma", &LowRankTensor::get_sigma)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
