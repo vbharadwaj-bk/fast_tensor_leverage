@@ -241,6 +241,8 @@ public:
     }
 };
 
+void 
+
 void compute_DAGAT(double* A, double* G, 
         double* res, uint64_t J, uint64_t R) {
 
@@ -262,6 +264,7 @@ void compute_DAGAT(double* A, double* G,
         R
     );
 
+    #pragma omp parallel for 
     for(uint32_t i = 0; i < J; i++) {
         res[i] = 0.0;
         for(uint32_t j = 0; j < R; j++) {
@@ -361,6 +364,9 @@ public:
 
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
+        }
+        if(update_sampler) {
+            sampler->update_sampler(j);
         }
 
     }

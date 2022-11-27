@@ -79,6 +79,14 @@ public:
     }
 
     /*
+    * Updates the j'th gram tree when the factor matrix is
+    * updated. 
+    */
+    void update_sampler(uint64_t j) {
+        gram_trees[j]->build_tree(U[j]); 
+    }
+
+    /*
      * Simple, unoptimized square-matrix in-place transpose.
     */
     void transpose_square_in_place(double* ptr, uint64_t n) {
