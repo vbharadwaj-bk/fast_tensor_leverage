@@ -80,7 +80,9 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     rhs_ten = LowRankTensor(R, J, 10000, U_rhs)
 
     rhs_ten.renormalize_columns(-1)
+    sigma_lhs = np.zeros(R, dtype=np.double) 
     sigma_rhs = np.zeros(R, dtype=np.double) 
+    lhs_ten.get_sigma(sigma_lhs)
     rhs_ten.get_sigma(sigma_rhs)
 
     als = ALS(lhs_ten, rhs_ten)
@@ -98,12 +100,11 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    true_soln = U_rhs[j] @ elwise_prod.T @ (g_pinv @ np.diag(sigma_rhs))
+    elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
+    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
 
     mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
     rhs_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
-
-    sigma_lhs = np.zeros(R, dtype=np.double) 
 
     approx_soln = mttkrp_res @ g_pinv
     U_lhs[j][:] = true_soln
