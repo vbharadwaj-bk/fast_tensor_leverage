@@ -82,6 +82,8 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     sigma_lhs = np.zeros(R, dtype=np.double) 
     sigma_rhs = np.zeros(R, dtype=np.double) 
 
+    #rhs_ten.renormalize_columns(-1)
+
     lhs_ten.get_sigma(sigma_lhs, j)
     rhs_ten.get_sigma(sigma_rhs, -1)
 
@@ -99,31 +101,17 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 
     print(true_soln)
 
-    old_norms = la.norm(U_lhs[j], axis=0)
-
-    print(la.norm(U_lhs[0], axis=0))
-    print(la.norm(U_lhs[1], axis=0))
-    print(la.norm(U_lhs[2], axis=0))
-
-    lhs_ten.renormalize_columns(0)
-    print("Renormalized!")
-
+    #lhs_ten.renormalize_columns(-1)
     lhs_ten.get_sigma(sigma_lhs, j)
-    rhs_ten.get_sigma(sigma_rhs, -1)
-
-    print(la.norm(U_lhs[0], axis=0))
-    print(la.norm(U_lhs[1], axis=0))
-    print(la.norm(U_lhs[2], axis=0))
-    print(sigma_lhs)
 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
-    other_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
+    other_soln = U_rhs[j] @ elwise_prod.T @ g_pinv #@ np.diag(sigma_lhs ** -1)
     print(other_soln)
 
     U_lhs[j][:] = true_soln
-    lhs_ten.renormalize_columns(j)
-    lhs_ten.get_sigma(sigma_lhs, j)
+    #lhs_ten.renormalize_columns(j)
+    #lhs_ten.get_sigma(sigma_lhs, j)
 
     true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
 
