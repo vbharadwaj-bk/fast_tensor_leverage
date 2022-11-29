@@ -82,8 +82,6 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     sigma_lhs = np.zeros(R, dtype=np.double) 
     sigma_rhs = np.zeros(R, dtype=np.double) 
 
-    #rhs_ten.renormalize_columns(-1)
-
     lhs_ten.get_sigma(sigma_lhs, j)
     rhs_ten.get_sigma(sigma_rhs, -1)
 
@@ -102,7 +100,9 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     print(true_soln)
 
     #lhs_ten.renormalize_columns(-1)
+    rhs_ten.renormalize_columns(-1)
     lhs_ten.get_sigma(sigma_lhs, j)
+    rhs_ten.get_sigma(sigma_rhs, -1)
 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     elwise_prod *= np.outer(sigma_lhs, sigma_rhs)

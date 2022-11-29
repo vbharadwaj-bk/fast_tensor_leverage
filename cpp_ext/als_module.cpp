@@ -97,9 +97,7 @@ public:
     // Convenience method for RHS sampling 
     void materialize_partial_evaluation(Buffer<uint64_t> &samples, 
         uint64_t j) {
-
-        // Assume sample matrix is N x J, result is J x R
-        //std::fill(partial_evaluation(), partial_evaluation(J, 0), 1.0);
+        get_sigma(sigma, -1);
 
         #pragma omp parallel for 
         for(uint32_t i = 0; i < J; i++) {
