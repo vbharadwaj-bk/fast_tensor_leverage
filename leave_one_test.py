@@ -82,18 +82,8 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     sigma_lhs = np.zeros(R, dtype=np.double) 
     sigma_rhs = np.zeros(R, dtype=np.double) 
 
-    lhs_ten.get_sigma(sigma_lhs)
-    rhs_ten.get_sigma(sigma_rhs)
-    test1 = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
-    print(test1)
-
-    rhs_ten.renormalize_columns(-1)
-    #lhs_ten.renormalize_columns(-1)
-
-    lhs_ten.get_sigma(sigma_lhs)
-    rhs_ten.get_sigma(sigma_rhs)
-    test2 = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
-    print(test2)
+    lhs_ten.get_sigma(sigma_lhs, j)
+    rhs_ten.get_sigma(sigma_rhs, -1)
 
     g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
     g_pinv = la.pinv(g)
@@ -105,11 +95,35 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    elwise_prod *= np.outer(np.ones(R), sigma_rhs)
-    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1) 
+    elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
+    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 
+    print(true_soln)
+
+    old_norms = la.norm(U_lhs[j], axis=0)
+
+    print(la.norm(U_lhs[0], axis=0))
+    print(la.norm(U_lhs[1], axis=0))
+    print(la.norm(U_lhs[2], axis=0))
+
+    lhs_ten.renormalize_columns(0)
+    print("Renormalized!")
+
+    lhs_ten.get_sigma(sigma_lhs, j)
+    rhs_ten.get_sigma(sigma_rhs, -1)
+
+    print(la.norm(U_lhs[0], axis=0))
+    print(la.norm(U_lhs[1], axis=0))
+    print(la.norm(U_lhs[2], axis=0))
+    print(sigma_lhs)
+
+    elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
+    elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
+    other_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
+    print(other_soln)
+
     U_lhs[j][:] = true_soln
-    #lhs_ten.renormalize_columns(j)
-    #lhs_ten.get_sigma(sigma_lhs)
+    lhs_ten.renormalize_columns(j)
+    lhs_ten.get_sigma(sigma_lhs, j)
 
     true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
 
@@ -125,8 +139,8 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
         approx_soln = mttkrp_res @ g_pinv
         U_lhs[j] = approx_soln 
 
-    lhs_ten.get_sigma(sigma_lhs)
-    rhs_ten.get_sigma(sigma_rhs)
+    lhs_ten.get_sigma(sigma_lhs, 0)
+    rhs_ten.get_sigma(sigma_rhs, -1)
 
     approx_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
     ratio = (approx_residual - true_residual) / true_residual
@@ -136,7 +150,7 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 
 if __name__=='__main__':
     data = []
-    R = 32
+    R = 4
     for i in range(4, 19):
         for N in [3]:
             U_lhs = [np.random.rand(2 ** i, R) for _ in range(N)]
