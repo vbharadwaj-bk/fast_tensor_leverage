@@ -79,42 +79,50 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     lhs_ten = LowRankTensor(R, U_lhs)
     rhs_ten = LowRankTensor(R, J, 10000, U_rhs)
 
-    rhs_ten.renormalize_columns(-1)
     sigma_lhs = np.zeros(R, dtype=np.double) 
     sigma_rhs = np.zeros(R, dtype=np.double) 
+
     lhs_ten.get_sigma(sigma_lhs)
     rhs_ten.get_sigma(sigma_rhs)
+    test1 = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
+    print(test1)
+
+    rhs_ten.renormalize_columns(-1)
+    #lhs_ten.renormalize_columns(-1)
+
+    lhs_ten.get_sigma(sigma_lhs)
+    rhs_ten.get_sigma(sigma_rhs)
+    test2 = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
+    print(test2)
+
+    g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
+    g_pinv = la.pinv(g)
 
     als = ALS(lhs_ten, rhs_ten)
     als.initialize_ds_als(J)
 
     samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
 
-    g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
-    g_pinv = la.pinv(g)
-
-    leverage_scores = np.sum((sampled_rows @ g_pinv) * sampled_rows, axis=1)
-    weights = 1.0 / (leverage_scores * J / R)
-
-    weighted_lhs = np.einsum('i,ij->ij', weights, sampled_rows)
-
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
-    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv
-
-    mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
-    rhs_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
-
-    approx_soln = mttkrp_res @ g_pinv
+    elwise_prod *= np.outer(np.ones(R), sigma_rhs)
+    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1) 
     U_lhs[j][:] = true_soln
+    #lhs_ten.renormalize_columns(j)
+    #lhs_ten.get_sigma(sigma_lhs)
 
-    lhs_ten.get_sigma(sigma_lhs)
     true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
 
     if algorithm == 'fast_tensor_leverage':
         als.execute_ds_als_update(j, True, False) 
     else:
+        leverage_scores = np.sum((sampled_rows @ g_pinv) * sampled_rows, axis=1)
+        weights = 1.0 / (leverage_scores * J / R)
+        weighted_lhs = np.einsum('i,ij->ij', weights, sampled_rows)
+
+        mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
+        rhs_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
+        approx_soln = mttkrp_res @ g_pinv
         U_lhs[j] = approx_soln 
 
     lhs_ten.get_sigma(sigma_lhs)
