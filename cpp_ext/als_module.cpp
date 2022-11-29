@@ -186,9 +186,25 @@ public:
         delete rhs_buf; 
     }
 
-    void get_sigma(py::array_t<double> sigma_py_out) {
+    /*
+    * Returns the product of all column norms, except for the
+    * one specified by the parameter. If the parameter is -1,
+    * the product of all column norms is returned. 
+    */
+    void get_sigma(Buffer<double> &sigma_out, int j) {
+        std::fill(sigma_out(), sigma_out(R), 1.0);
+        for(uint32_t i = 0; i < N; i++) {
+            if((int) i != j) {
+                for(uint32_t v = 0; v < R; v++) { 
+                    sigma_out[v] *= col_norms[i * R + v];
+                }
+            }
+        }
+    }
+
+    void get_sigma_py(py::array_t<double> sigma_py_out, int j) {
         Buffer<double> sigma_py(sigma_py_out);
-        std::copy(sigma(), sigma(R), sigma_py());
+        get_sigma(sigma_py, j);
     }
 
     // Pass j = -1 to renormalize all factor matrices.
@@ -237,12 +253,6 @@ public:
                         U[i][u * R + v] /= col_norms[i * R + v];
                     }
                 }
-
-            }
-
-            #pragma omp for
-            for(uint32_t v = 0; v < R; v++) { 
-                sigma[v] *= col_norms[i * R + v];
             }
         }
 }
@@ -358,6 +368,8 @@ public:
             R
         );
 
+        cp_decomp.get_sigma(cp_decomp.sigma, j);
+
         // Multiply result by sigma^(-1) of the CP
         // decomposition. Assumes that sigma is correct
         // upon entry to this function. 
@@ -383,7 +395,7 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::list>()) 
         .def(py::init<uint64_t, py::list>())
-        .def("get_sigma", &LowRankTensor::get_sigma)
+        .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
