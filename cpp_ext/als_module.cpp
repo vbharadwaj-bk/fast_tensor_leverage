@@ -374,7 +374,6 @@ public:
         if(update_sampler) {
             sampler->update_sampler(j);
         }
-
     }
 };
 
