@@ -10,17 +10,6 @@ from cpp_ext.efficient_krp_sampler import CP_ALS
 def symmetrize(buf):
     return np.triu(buf, 1) + np.triu(buf, 1).T + np.diag(np.diag(buf))
 
-def krp(mats):
-    if len(mats) == 1:
-        return mats[0]
-    else:
-        running_mat = np.einsum('ik,jk->ijk', mats[0], mats[1]).reshape((mats[0].shape[0] * mats[1].shape[0], mats[0].shape[1]))
-        
-        for i in range(2, len(mats)):
-            running_mat = np.einsum('ik,jk->ijk', running_mat, mats[i]).reshape((running_mat.shape[0] * mats[i].shape[0], mats[0].shape[1]))
-
-        return running_mat
-
 def chain_had_prod(matrices):
     res = np.ones(matrices[0].shape)
     for mat in matrices:
@@ -89,6 +78,11 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 
     lhs_ten = LowRankTensor(R, U_lhs)
     rhs_ten = LowRankTensor(R, J, 10000, U_rhs)
+
+    rhs_ten.renormalize_columns(-1)
+    sigma_rhs = np.zeros(R, dtype=np.double) 
+    rhs_ten.get_sigma(sigma_rhs)
+
     als = ALS(lhs_ten, rhs_ten)
     als.initialize_ds_als(J)
 
@@ -104,28 +98,27 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 
     # Compute the true solution 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 
+    true_soln = U_rhs[j] @ elwise_prod.T @ (g_pinv @ np.diag(sigma_rhs))
 
     mttkrp_res = np.zeros(U_lhs[j].shape, dtype=np.double)
     rhs_ten.execute_downsampled_mttkrp_py(samples, weighted_lhs, j, mttkrp_res) 
 
     sigma_lhs = np.zeros(R, dtype=np.double) 
-    sigma_rhs = np.zeros(R, dtype=np.double) 
 
     approx_soln = mttkrp_res @ g_pinv
     U_lhs[j][:] = true_soln
 
     lhs_ten.get_sigma(sigma_lhs)
-    rhs_ten.get_sigma(sigma_rhs)
     true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
 
     if algorithm == 'fast_tensor_leverage':
-        als.execute_ds_als_update(j, False, False) 
+        als.execute_ds_als_update(j, True, False) 
     else:
         U_lhs[j] = approx_soln 
 
     lhs_ten.get_sigma(sigma_lhs)
     rhs_ten.get_sigma(sigma_rhs)
+
     approx_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
     ratio = (approx_residual - true_residual) / true_residual
     data.append({"N": len(U_lhs), "I": I, "R": R, "J": J, "true_residual": true_residual, "approx_residual": approx_residual, 'ratio': ratio, 'alg': algorithm})

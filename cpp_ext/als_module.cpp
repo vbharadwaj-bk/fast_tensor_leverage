@@ -64,11 +64,13 @@ public:
     sigma({R}),
     col_norms({(uint64_t) U_py_bufs->length, R})
     {
-        std::fill(sigma(), sigma(R), 1.0);
         this->max_rhs_rows = max_rhs_rows;
         this->J = J;
         this->R = R;
         this->N = U_py_bufs->length;
+
+        std::fill(sigma(), sigma(R), 1.0);
+        std::fill(col_norms(), col_norms(N * R), 1.0);
         for(uint32_t i = 0; i < N; i++) {
             dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
@@ -83,9 +85,10 @@ public:
     sigma({R}),
     col_norms({(uint64_t) U_py_bufs->length, R})
     {
-        std::fill(sigma(), sigma(R), 1.0);
         this->R = R;
         this->N = U_py_bufs->length;
+        std::fill(sigma(), sigma(R), 1.0);
+        std::fill(col_norms(), col_norms(N * R), 1.0);
         for(uint32_t i = 0; i < N; i++) {
             dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
@@ -96,10 +99,11 @@ public:
         uint64_t j) {
 
         // Assume sample matrix is N x J, result is J x R
-        std::fill(partial_evaluation(), partial_evaluation(J, 0), 1.0);
+        //std::fill(partial_evaluation(), partial_evaluation(J, 0), 1.0);
 
         #pragma omp parallel for 
         for(uint32_t i = 0; i < J; i++) {
+            std::copy(sigma(), sigma(R), partial_evaluation(i * R));
             for(uint32_t k = 0; k < N; k++) {
                 if(k != j) {
                     for(uint32_t u = 0; u < R; u++) {
@@ -225,7 +229,6 @@ public:
                 #pragma omp for
                 for(uint32_t v = 0; v < R; v++) { 
                     col_norms[i * R + v] = sqrt(col_norms[i * R + v]);
-                    sigma[v] *= col_norms[i * R + v];
                 }
 
                 #pragma omp for collapse(2)
@@ -242,7 +245,7 @@ public:
                 sigma[v] *= col_norms[i * R + v];
             }
         }
-} 
+}
     }
 };
 
