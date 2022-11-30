@@ -89,7 +89,6 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     g_pinv = la.pinv(g)
 
     als = ALS(lhs_ten, rhs_ten)
-    als.initialize_ds_als(J)
 
     samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
 
@@ -99,21 +98,27 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 
     print(true_soln)
 
-    #lhs_ten.renormalize_columns(-1)
+    lhs_ten.renormalize_columns(-1)
     rhs_ten.renormalize_columns(-1)
     lhs_ten.get_sigma(sigma_lhs, j)
     rhs_ten.get_sigma(sigma_rhs, -1)
 
+    als.initialize_ds_als(J)
+
+    #print(g_pinv)
+    g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
+    g_pinv = la.pinv(g)
+    #print(g_pinv)
+
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
-    other_soln = U_rhs[j] @ elwise_prod.T @ g_pinv #@ np.diag(sigma_lhs ** -1)
+    elwise_prod *= np.outer(np.ones(R), sigma_rhs)
+    other_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
     print(other_soln)
 
     U_lhs[j][:] = true_soln
-    #lhs_ten.renormalize_columns(j)
-    #lhs_ten.get_sigma(sigma_lhs, j)
-
     true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
+    lhs_ten.renormalize_columns(-1)
+    #lhs_ten.get_sigma(sigma_lhs, j)
 
     if algorithm == 'fast_tensor_leverage':
         als.execute_ds_als_update(j, True, False) 
@@ -127,7 +132,7 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
         approx_soln = mttkrp_res @ g_pinv
         U_lhs[j] = approx_soln 
 
-    lhs_ten.get_sigma(sigma_lhs, 0)
+    lhs_ten.get_sigma(sigma_lhs, -1)
     rhs_ten.get_sigma(sigma_rhs, -1)
 
     approx_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
