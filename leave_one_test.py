@@ -85,18 +85,9 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
     lhs_ten.get_sigma(sigma_lhs, j)
     rhs_ten.get_sigma(sigma_rhs, -1)
 
-    g = chain_had_prod([U_lhs[i].T @ U_lhs[i] for i in range(N) if i != j])
-    g_pinv = la.pinv(g)
-
     als = ALS(lhs_ten, rhs_ten)
 
     samples, sampled_rows, algorithm = sample_function(U_lhs, j, J, R)
-
-    # Compute the true solution 
-    elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
-    elwise_prod *= np.outer(sigma_lhs, sigma_rhs)
-    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv 
-    print(true_soln)
 
     lhs_ten.renormalize_columns(-1)
     rhs_ten.renormalize_columns(-1)
@@ -112,8 +103,7 @@ def execute_leave_one_test(U_lhs, U_rhs, I, R, J, data, sample_function, N):
 
     elwise_prod = chain_had_prod([U_lhs[i].T @ U_rhs[i] for i in range(N) if i != j])
     elwise_prod *= np.outer(np.ones(R), sigma_rhs)
-    other_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
-    print(other_soln)
+    true_soln = U_rhs[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
 
     U_lhs[j][:] = true_soln
     true_residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
