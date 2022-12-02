@@ -313,7 +313,7 @@ public:
             bool renormalize,
             bool update_sampler 
             ) {
-        
+
         uint64_t Ij = cp_decomp.U[j].shape[0];
         uint64_t R = cp_decomp.R; 
         uint64_t J = sampler->J;
@@ -404,8 +404,8 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-O3']
-cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-O3']
+cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-Ofast']
+cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-Ofast']
 cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp'] 
 %>
 */
