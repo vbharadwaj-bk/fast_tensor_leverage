@@ -19,4 +19,7 @@ def inner_prod(U, V, sigma_U, sigma_V):
     return np.sum(elwise_prod)
 
 def compute_diff_norm(U, V, sigma_U, sigma_V):
-    return np.sqrt(inner_prod(U, U, sigma_U, sigma_U) + inner_prod(V, V, sigma_V, sigma_V) - 2 * inner_prod(U, V, sigma_U, sigma_V))
+    val = inner_prod(U, U, sigma_U, sigma_U) + inner_prod(V, V, sigma_V, sigma_V) - 2 * inner_prod(U, V, sigma_U, sigma_V)
+    val = max(val, 0.0)
+    return np.sqrt(val)
+        
