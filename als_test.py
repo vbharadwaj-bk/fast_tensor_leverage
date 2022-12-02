@@ -15,7 +15,7 @@ class PyLowRank:
         if init_method=="uniform":
             self.N = len(dims)
             self.R = R
-            self.U = [np.random.rand(divide_and_roundup(i, R), R) for i in dims]
+            self.U = [np.random.normal(size=(divide_and_roundup(i, R), R)) for i in dims]
             if allow_rhs_mttkrp:
                 self.ten = LowRankTensor(R, J, 10000, self.U)
             else:
@@ -64,9 +64,14 @@ def als(lhs, rhs, J):
             als.execute_ds_als_update(j, True, True)
 
             residual_approx = lhs.compute_diff_resid(rhs)
-            print(f"Ratio: {residual_approx / residual}")
+            if residual > 0:
+                ratio = residual_approx / residual
+            else:
+                ratio = 1.0
 
-        print(f"Residual: {residual}")
+            #print(f"Condition #: {la.cond(g)}")
+            print(f"Ratio: {ratio}")
+            #print(f"Residual: {residual}")
 
 if __name__=='__main__':
     i = 9
