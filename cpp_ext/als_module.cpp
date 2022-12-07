@@ -394,7 +394,7 @@ public:
         //#pragma omp parallel for
         for(uint32_t i = 0; i < J; i++) {
             weights[i] = (double) R / (weights[i] * J);
-        }
+        } 
 
         #pragma omp parallel for
         for(uint32_t i = 0; i < J; i++) {
@@ -427,8 +427,7 @@ public:
                 mttkrp_res 
                 );
 
-        //std::fill(cp_decomp.U[j](), cp_decomp.U[j](Ij * R), 0.0);
-        //std::copy(mttkrp_res(), mttkrp_res(Ij * R), cp_decomp.U[j]());
+        std::copy(mttkrp_res(), mttkrp_res(Ij * R), cp_decomp.U[j]());
 
         // Multiply gram matrix result by the pseudo-inverse
         /*cblas_dsymm(

@@ -133,7 +133,6 @@ als.initialize_ds_als(J)
 als.execute_ds_als_update(problem['j'], False, False, lhs_ds, samples)
 
 linear_idxs = samples[0] * I + samples[1]
-lhs_ds = lhs[linear_idxs]
 rhs_ds = rhs[linear_idxs]
 
 weights = np.sqrt(leverage_scores[linear_idxs] * J)
@@ -142,7 +141,12 @@ weights = 1.0 / weights
 lhs_ds = np.diag(weights) @ lhs_ds
 rhs_ds = np.diag(weights) @ rhs_ds
 
-res = la.lstsq(lhs_ds, rhs_ds, rcond=None)[0].T
+p = la.pinv(lhs_ds.T @ lhs_ds)
+print(p)
+
+#res = la.lstsq(lhs_ds, rhs_ds, rcond=None)[0].T
+res = rhs_ds.T @ lhs_ds @ p 
+#res = problem['lhs'][problem['j']] @ la.pinv(lhs_ds.T @ lhs_ds)
 res = res @ np.diag(sigma_lhs ** -1)
 
 #res = problem['lhs'][problem['j']]
