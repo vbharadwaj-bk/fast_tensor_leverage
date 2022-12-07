@@ -133,7 +133,7 @@ rhs_ten = LowRankTensor(r, J, 10000, problem['rhs'])
 
 als = ALS(lhs_ten, rhs_ten)
 als.initialize_ds_als(J)
-als.execute_ds_als_update(problem['j'], False, False, lhs_ds, samples)
+als.execute_ds_als_update(problem['j'], False, False)
 
 linear_idxs = samples[0] * I + samples[1]
 rhs_ds = rhs[linear_idxs]

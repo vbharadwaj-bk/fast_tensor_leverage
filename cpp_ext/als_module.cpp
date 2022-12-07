@@ -363,9 +363,7 @@ public:
 
     void execute_ds_als_update(uint32_t j, 
             bool renormalize,
-            bool update_sampler,
-            py::array_t<double> h_out_py,
-            py::array_t<uint64_t> samples_out_py
+            bool update_sampler
             ) {
 
         uint64_t Ij = cp_decomp.U[j].shape[0];
@@ -375,13 +373,8 @@ public:
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> weights({J});
         Buffer<double> pinv({R, R});
-        Buffer<double> h_out(h_out_py);
-        Buffer<uint64_t> samples_out(samples_out_py);
 
         sampler->KRPDrawSamples(j, *samples, nullptr);
-
-        std::copy(sampler->h(), sampler->h(J * R), h_out());
-        std::copy((*samples)(), (*samples)(J * sampler->N), samples_out());
 
         compute_DAGAT(
             sampler->h(),
@@ -405,13 +398,13 @@ public:
 
         std::fill(pinv(),  pinv(R * R), 0.0);
         compute_pinv(sampler->h, pinv);
-        for(uint32_t u = 0; u < R; u++) {
+        /*for(uint32_t u = 0; u < R; u++) {
             for(uint32_t v = 0; v < R; v++) {
                 cout << pinv[u * R + v] << " ";
             }
             cout << endl;
         }
-        cout << "------------------------------" << endl;
+        cout << "------------------------------" << endl;*/
 
         #pragma omp parallel for
         for(uint32_t i = 0; i < J; i++) {
@@ -426,8 +419,6 @@ public:
                 j,
                 mttkrp_res 
                 );
-
-        std::copy(mttkrp_res(), mttkrp_res(Ij * R), cp_decomp.U[j]());
 
         // Multiply gram matrix result by the pseudo-inverse
         cblas_dsymm(
@@ -447,7 +438,6 @@ public:
             R
         );
 
-        /*
         cp_decomp.get_sigma(cp_decomp.sigma, j);
 
         // Multiply result by sigma^(-1) of the CP
@@ -459,7 +449,6 @@ public:
                 cp_decomp.U[j][u * R + v] /= cp_decomp.sigma[v]; 
             }
         }
-        */
 
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
