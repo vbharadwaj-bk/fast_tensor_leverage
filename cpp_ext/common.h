@@ -82,7 +82,6 @@ public:
 
     Buffer(initializer_list<uint64_t> args) {
         uint64_t buffer_size = 1;
-        vector<uint64_t> shape;
         for(uint64_t i : args) {
             buffer_size *= i;
             shape.push_back(i);
@@ -98,7 +97,6 @@ public:
     }
 
     Buffer(initializer_list<uint64_t> args, T* ptr) {
-        vector<uint64_t> shape;
         for(uint64_t i : args) {
             shape.push_back(i);
         }

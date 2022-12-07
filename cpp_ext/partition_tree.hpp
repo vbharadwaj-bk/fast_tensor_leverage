@@ -163,7 +163,7 @@ public:
             cblas_dsyrk(CblasRowMajor, 
                         CblasUpper, 
                         CblasTrans,
-		                R,
+                        R,
                         F, 
                         1.0, 
                         (const double*) a_array[i], 
@@ -404,8 +404,8 @@ public:
             samples[i] = res + idx * F;
             
             for(int64_t j = 0; j < R; j++) {
-                h[i * R + j] *= U[(res + idx * F) * R + j]; 
-            }
+                h[i * R + j] *= U[(res + idx * F) * R + j];
+            }  
         }
 }
     }

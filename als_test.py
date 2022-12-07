@@ -3,12 +3,14 @@ import numpy.linalg as la
 import matplotlib.pyplot as plt
 import time
 import json
+import pickle
 
 from common import *
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
 from cpp_ext.als_module import Tensor, LowRankTensor, ALS
+from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
     def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="uniform"):
@@ -38,13 +40,16 @@ class PyLowRank:
 
 
 def als(lhs, rhs, J):
+    data = []
+
     als = ALS(lhs.ten, rhs.ten)
     als.initialize_ds_als(J)
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual}")
-    for i in range(20):
+    for i in range(30):
         for j in range(lhs.N):
+
             sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(lhs.R, dtype=np.double)
             lhs.ten.get_sigma(sigma_lhs, j)
             rhs.ten.get_sigma(sigma_rhs, -1)
@@ -60,8 +65,12 @@ def als(lhs, rhs, J):
             lhs.ten.renormalize_columns(j)
 
             residual = lhs.compute_diff_resid(rhs)
+            #als.execute_ds_als_update(j, True, True)
 
-            als.execute_ds_als_update(j, True, True)
+
+            
+
+
 
             residual_approx = lhs.compute_diff_resid(rhs)
             if residual > 0:
@@ -71,13 +80,27 @@ def als(lhs, rhs, J):
 
             #print(f"Condition #: {la.cond(g)}")
             print(f"Ratio: {ratio}")
-            #print(f"Residual: {residual}")
+            print(f"Residual: {residual}")
+            data_entry = {}
+            data_entry["ratio"] = ratio
+            data_entry["lhs"] = lhs.U
+            data_entry["rhs"] = rhs.U
+            data_entry["sigma_lhs"] = sigma_lhs
+            data_entry["sigma_rhs"] = sigma_rhs
+            data_entry["true_soln"] = true_soln
+            data_entry["j"] = j 
+            data.append(data_entry)
+
+    #with open('data/lstsq_problems.pickle', 'wb') as handle:
+    #    pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    #print("Dumped data pickle")
 
 if __name__=='__main__':
-    i = 9
+    i = 6
     R = 4
     N = 3
-    J = 100000
+    J = 400000
     lhs = PyLowRank([2 ** i] * N, R)
     lhs.ten.renormalize_columns(-1)
     rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J)
