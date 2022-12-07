@@ -430,7 +430,7 @@ public:
         std::copy(mttkrp_res(), mttkrp_res(Ij * R), cp_decomp.U[j]());
 
         // Multiply gram matrix result by the pseudo-inverse
-        /*cblas_dsymm(
+        cblas_dsymm(
             CblasRowMajor,
             CblasRight,
             CblasUpper,
@@ -445,19 +445,21 @@ public:
             0.0,
             cp_decomp.U[j](),
             R
-        );*/
+        );
 
-        //cp_decomp.get_sigma(cp_decomp.sigma, j);
+        /*
+        cp_decomp.get_sigma(cp_decomp.sigma, j);
 
         // Multiply result by sigma^(-1) of the CP
         // decomposition. Assumes that sigma is correct
         // upon entry to this function. 
-        /*#pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2)
         for(uint32_t u = 0; u < Ij; u++) {
             for(uint32_t v = 0; v < R; v++) {
                 cp_decomp.U[j][u * R + v] /= cp_decomp.sigma[v]; 
             }
-        }*/
+        }
+        */
 
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
