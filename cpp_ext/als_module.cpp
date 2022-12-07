@@ -309,6 +309,58 @@ public:
         samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
     }
 
+    void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
+        uint64_t R = in.shape[1];
+        double eigenvalue_tolerance = 0.0;
+        Buffer<double> M({R, R});
+        Buffer<double> lambda({R});
+        // Compute pseudo-inverse of the input matrix through dsyrk and eigendecomposition  
+        cblas_dsyrk(CblasRowMajor, 
+                    CblasUpper, 
+                    CblasTrans,
+                    R,
+                    in.shape[0], 
+                    1.0, 
+                    in(), 
+                    R, 
+                    0.0, 
+                    M(), 
+                    R);
+
+        LAPACKE_dsyev( CblasRowMajor, 
+                        'V', 
+                        'U', 
+                        R,
+                        M(), 
+                        R, 
+                        lambda() );
+
+        for(uint32_t v = 0; v < R; v++) {
+            if(lambda[v] > eigenvalue_tolerance) {
+                for(uint32_t u = 0; u < R; u++) {
+                    M[u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
+                }
+            }
+            else {
+                for(uint32_t u = 0; u < R; u++) {
+                    M[u * R + v] = 0.0; 
+                }
+            }
+        }
+
+        cblas_dsyrk(CblasRowMajor, 
+                    CblasUpper, 
+                    CblasNoTrans,
+                    R,
+                    R, 
+                    1.0, 
+                    (const double*) M(), 
+                    R, 
+                    0.0, 
+                    out(), 
+                    R);
+    }
+
     void execute_ds_als_update(uint32_t j, 
             bool renormalize,
             bool update_sampler 
@@ -320,6 +372,7 @@ public:
 
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> weights({J});
+        Buffer<double> pinv({R, R});
 
         sampler->KRPDrawSamples(j, *samples, nullptr);
 
@@ -331,6 +384,7 @@ public:
             R
         );
 
+        //#pragma omp parallel for
         for(uint32_t i = 0; i < J; i++) {
             weights[i] = (double) R / (weights[i] * J);
         }
@@ -338,7 +392,24 @@ public:
         #pragma omp parallel for
         for(uint32_t i = 0; i < J; i++) {
             for(uint32_t t = 0; t < R; t++) {
-                sampler->h[i * R + t] *= weights[i]; 
+                sampler->h[i * R + t] *= sqrt(weights[i]); 
+            }
+        }
+
+        std::fill(pinv(),  pinv(R * R), 0.0);
+        compute_pinv(sampler->h, pinv);
+        for(uint32_t u = 0; u < R; u++) {
+            for(uint32_t v = 0; v < R; v++) {
+                cout << pinv[u * R + v] << " ";
+            }
+            cout << endl;
+        }
+        cout << "------------------------------" << endl;
+
+        #pragma omp parallel for
+        for(uint32_t i = 0; i < J; i++) {
+            for(uint32_t t = 0; t < R; t++) {
+                sampler->h[i * R + t] *= sqrt(weights[i]); 
             }
         }
 
@@ -349,34 +420,38 @@ public:
                 mttkrp_res 
                 );
 
+        std::fill(cp_decomp.U[j](), cp_decomp.U[j](Ij * R), 0.0);
+        //std::copy(mttkrp_res(), mttkrp_res(Ij * R), cp_decomp.U[j]());
+
         // Multiply gram matrix result by the pseudo-inverse
-        cblas_dsymm(
+        /*cblas_dsymm(
             CblasRowMajor,
             CblasRight,
             CblasUpper,
             (uint32_t) Ij,
             (uint32_t) R,
             1.0,
-            sampler->M(),
+            //sampler->M(),
+            pinv(),
             R,
             mttkrp_res(),
             R,
             0.0,
             cp_decomp.U[j](),
             R
-        );
+        );*/
 
-        cp_decomp.get_sigma(cp_decomp.sigma, j);
+        //cp_decomp.get_sigma(cp_decomp.sigma, j);
 
         // Multiply result by sigma^(-1) of the CP
         // decomposition. Assumes that sigma is correct
         // upon entry to this function. 
-        #pragma omp parallel for collapse(2)
+        /*#pragma omp parallel for collapse(2)
         for(uint32_t u = 0; u < Ij; u++) {
             for(uint32_t v = 0; v < R; v++) {
                 cp_decomp.U[j][u * R + v] /= cp_decomp.sigma[v]; 
             }
-        }
+        }*/
 
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
