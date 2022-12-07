@@ -47,7 +47,7 @@ def als(lhs, rhs, J):
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual}")
-    for i in range(30):
+    for i in range(80):
         for j in range(lhs.N):
 
             sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(lhs.R, dtype=np.double)
@@ -62,7 +62,7 @@ def als(lhs, rhs, J):
             true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
 
             lhs.U[j][:] = true_soln
-            #lhs.ten.renormalize_columns(j)
+            lhs.ten.renormalize_columns(j)
 
             residual = lhs.compute_diff_resid(rhs)
             als.execute_ds_als_update(j, True, True) 
@@ -92,9 +92,9 @@ def als(lhs, rhs, J):
     #print("Dumped data pickle")
 
 if __name__=='__main__':
-    i = 10
-    R = 4
-    N = 3
+    i = 15
+    R = 32
+    N = 4
     J = 10000
     lhs = PyLowRank([2 ** i] * N, R)
     lhs.ten.renormalize_columns(-1)
