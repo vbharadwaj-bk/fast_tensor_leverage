@@ -150,11 +150,13 @@ print(p)
 #res = la.lstsq(lhs_ds, rhs_ds, rcond=None)[0].T
 #res = rhs_ds.T @ lhs_ds @ p 
 
-print(problem['lhs'][problem['j']])
-print(rhs_ds.T @ lhs_ds)
+#print(problem['lhs'][problem['j']])
+#print(rhs_ds.T @ lhs_ds)
 
-res = problem['lhs'][problem['j']] @ p 
+res = problem['lhs'][problem['j']]
 res = res @ np.diag(sigma_lhs ** -1)
+
+#res = problem['lhs'][problem['j']]
 
 #res = problem['lhs'][problem['j']]
 print("Final Test Solution")
