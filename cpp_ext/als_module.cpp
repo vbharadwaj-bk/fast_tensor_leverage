@@ -363,7 +363,9 @@ public:
 
     void execute_ds_als_update(uint32_t j, 
             bool renormalize,
-            bool update_sampler 
+            bool update_sampler,
+            py::array_t<double> h_out_py,
+            py::array_t<uint64_t> samples_out_py
             ) {
 
         uint64_t Ij = cp_decomp.U[j].shape[0];
@@ -373,8 +375,13 @@ public:
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> weights({J});
         Buffer<double> pinv({R, R});
+        Buffer<double> h_out(h_out_py);
+        Buffer<uint64_t> samples_out(samples_out_py);
 
         sampler->KRPDrawSamples(j, *samples, nullptr);
+
+        std::copy(sampler->h(), sampler->h(J * R), h_out());
+        std::copy((*samples)(), (*samples)(J * sampler->N), samples_out());
 
         compute_DAGAT(
             sampler->h(),
@@ -420,7 +427,7 @@ public:
                 mttkrp_res 
                 );
 
-        std::fill(cp_decomp.U[j](), cp_decomp.U[j](Ij * R), 0.0);
+        //std::fill(cp_decomp.U[j](), cp_decomp.U[j](Ij * R), 0.0);
         //std::copy(mttkrp_res(), mttkrp_res(Ij * R), cp_decomp.U[j]());
 
         // Multiply gram matrix result by the pseudo-inverse
