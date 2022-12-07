@@ -125,6 +125,9 @@ res = res.T @ np.diag(sigma_lhs ** -1)
 
 print(la.norm(lhs @ np.diag(sigma_lhs) @ res.T - rhs))
 
+# Need to get the RHS tensor into good shape.
+problem['rhs'][0] = problem['rhs'][0] @ np.diag(sigma_rhs)
+
 lhs_ten = LowRankTensor(r, problem['lhs'])
 rhs_ten = LowRankTensor(r, J, 10000, problem['rhs'])
 
@@ -145,8 +148,12 @@ p = la.pinv(lhs_ds.T @ lhs_ds)
 print(p)
 
 #res = la.lstsq(lhs_ds, rhs_ds, rcond=None)[0].T
-res = rhs_ds.T @ lhs_ds @ p 
-#res = problem['lhs'][problem['j']] @ la.pinv(lhs_ds.T @ lhs_ds)
+#res = rhs_ds.T @ lhs_ds @ p 
+
+print(problem['lhs'][problem['j']])
+print(rhs_ds.T @ lhs_ds)
+
+res = problem['lhs'][problem['j']] @ p 
 res = res @ np.diag(sigma_lhs ** -1)
 
 #res = problem['lhs'][problem['j']]
