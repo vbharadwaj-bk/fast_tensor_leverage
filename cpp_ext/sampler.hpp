@@ -5,7 +5,6 @@
 #include <cassert>
 #include <random>
 #include "common.h"
-#include "partition_tree.hpp"
 #include "omp.h"
 #include "cblas.h"
 #include "lapacke.h"
@@ -17,12 +16,111 @@ public:
     uint64_t N, J, R, R2;
     vector<Buffer<double>> &U;
     Buffer<double> h;
+    Buffer<double> weights;
+
+    // Related to random number generation 
+    std::random_device rd;  
+    std::mt19937 gen;
 
     Sampler(uint64_t J, 
             uint64_t R, 
             vector<Buffer<double>> &U_matrices) : 
         U(U_matrices),
-        h({J, R}) {
-        // Empty 
+        h({J, R}),
+        weights({J}),
+        rd(),
+        gen(rd())
+        {
+        this->N = U.size();
+        this->J = J;
+        this->R = R;
+        R2 = R * R;
     }
+
+    virtual void update_sampler(uint64_t j) = 0;
+    virtual void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) = 0;
+
+    //void fill_h_by_samples(Buffer<U) TODO: Need to finish writing this method! 
 };
+
+void compute_DAGAT(double* A, double* G, 
+        double* res, uint64_t J, uint64_t R) {
+
+    Buffer<double> temp({J, R});
+
+    cblas_dsymm(
+        CblasRowMajor,
+        CblasRight,
+        CblasUpper,
+        (uint32_t) J,
+        (uint32_t) R,
+        1.0,
+        G,
+        R,
+        A,
+        R,
+        0.0,
+        temp(),
+        R
+    );
+
+    #pragma omp parallel for 
+    for(uint32_t i = 0; i < J; i++) {
+        res[i] = 0.0;
+        for(uint32_t j = 0; j < R; j++) {
+            res[i] += A[i * R + j] * temp[i * R + j];
+        }
+    }
+}
+
+void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
+    uint64_t R = in.shape[1];
+    double eigenvalue_tolerance = 0.0;
+    Buffer<double> M({R, R});
+    Buffer<double> lambda({R});
+    // Compute pseudo-inverse of the input matrix through dsyrk and eigendecomposition  
+    cblas_dsyrk(CblasRowMajor, 
+                CblasUpper, 
+                CblasTrans,
+                R,
+                in.shape[0], 
+                1.0, 
+                in(), 
+                R, 
+                0.0, 
+                M(), 
+                R);
+
+    LAPACKE_dsyev( CblasRowMajor, 
+                    'V', 
+                    'U', 
+                    R,
+                    M(), 
+                    R, 
+                    lambda() );
+
+    for(uint32_t v = 0; v < R; v++) {
+        if(lambda[v] > eigenvalue_tolerance) {
+            for(uint32_t u = 0; u < R; u++) {
+                M[u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
+            }
+        }
+        else {
+            for(uint32_t u = 0; u < R; u++) {
+                M[u * R + v] = 0.0; 
+            }
+        }
+    }
+
+    cblas_dsyrk(CblasRowMajor, 
+                CblasUpper, 
+                CblasNoTrans,
+                R,
+                R, 
+                1.0, 
+                (const double*) M(), 
+                R, 
+                0.0, 
+                out(), 
+                R);
+}
