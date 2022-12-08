@@ -27,8 +27,6 @@ public:
     double eigenvalue_tolerance;
 
     // Related to random number generation 
-    std::random_device rd;  
-    std::mt19937 gen;
     std::uniform_real_distribution<> dis;
 
     EfficientKRPSampler(
@@ -41,22 +39,15 @@ public:
             M({U_matrices.size() + 2, R * R}),
             lambda({U_matrices.size() + 1, R}),
             scaled_h({J, R}),
-            rd(),
-            gen(rd()),
             dis(0.0, 1.0) 
     {    
-        this->J = J;
-        this->R = R;
-        this->N = U.size();
-
         eigenvalue_tolerance = 0.0; // Tolerance of eigenvalues for symmetric PINV 
-        R2 = R * R;
-
+    
         for(uint32_t i = 0; i < N; i++) {
             uint32_t n = U[i].shape[0];
             assert(U[i].shape.size() == 2);
             assert(U[i].shape[1] == R);
-            assert(n % R == 0);
+            assert(n % R == 0);  // Should check these assertions!
 
             uint64_t F = R < n ? R : n;
             gram_trees.push_back(new PartitionTree(n, F, J, R, scratch));
@@ -253,6 +244,19 @@ public:
                             );
                 }
             }
+        }
+
+        // Compute the weights associated with the samples
+        compute_DAGAT(
+            h(),
+            M(),
+            weights(),
+            J,
+            R);
+
+        #pragma omp parallel for 
+        for(uint32_t i = 0; i < J; i++) {
+            weights[i] = (double) R / (weights[i] * J);
         }
     }
 

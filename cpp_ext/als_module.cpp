@@ -3,6 +3,7 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
+#include "sampler.hpp"
 #include "efficient_krp_sampler.hpp"
 
 using namespace std;
@@ -257,36 +258,6 @@ public:
     }
 };
 
-void compute_DAGAT(double* A, double* G, 
-        double* res, uint64_t J, uint64_t R) {
-
-    Buffer<double> temp({J, R});
-
-    cblas_dsymm(
-        CblasRowMajor,
-        CblasRight,
-        CblasUpper,
-        (uint32_t) J,
-        (uint32_t) R,
-        1.0,
-        G,
-        R,
-        A,
-        R,
-        0.0,
-        temp(),
-        R
-    );
-
-    #pragma omp parallel for 
-    for(uint32_t i = 0; i < J; i++) {
-        res[i] = 0.0;
-        for(uint32_t j = 0; j < R; j++) {
-            res[i] += A[i * R + j] * temp[i * R + j];
-        }
-    }
-}
-
 class __attribute__((visibility("hidden"))) ALS {
 public:
     LowRankTensor &cp_decomp;
@@ -294,7 +265,7 @@ public:
 
     // These fields used only for sampling 
     uint64_t J;
-    unique_ptr<EfficientKRPSampler> sampler;
+    unique_ptr<Sampler> sampler;
     unique_ptr<Buffer<uint64_t>> samples;
 
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
@@ -309,58 +280,6 @@ public:
         samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
     }
 
-    void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
-        uint64_t R = in.shape[1];
-        double eigenvalue_tolerance = 0.0;
-        Buffer<double> M({R, R});
-        Buffer<double> lambda({R});
-        // Compute pseudo-inverse of the input matrix through dsyrk and eigendecomposition  
-        cblas_dsyrk(CblasRowMajor, 
-                    CblasUpper, 
-                    CblasTrans,
-                    R,
-                    in.shape[0], 
-                    1.0, 
-                    in(), 
-                    R, 
-                    0.0, 
-                    M(), 
-                    R);
-
-        LAPACKE_dsyev( CblasRowMajor, 
-                        'V', 
-                        'U', 
-                        R,
-                        M(), 
-                        R, 
-                        lambda() );
-
-        for(uint32_t v = 0; v < R; v++) {
-            if(lambda[v] > eigenvalue_tolerance) {
-                for(uint32_t u = 0; u < R; u++) {
-                    M[u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
-                }
-            }
-            else {
-                for(uint32_t u = 0; u < R; u++) {
-                    M[u * R + v] = 0.0; 
-                }
-            }
-        }
-
-        cblas_dsyrk(CblasRowMajor, 
-                    CblasUpper, 
-                    CblasNoTrans,
-                    R,
-                    R, 
-                    1.0, 
-                    (const double*) M(), 
-                    R, 
-                    0.0, 
-                    out(), 
-                    R);
-    }
-
     void execute_ds_als_update(uint32_t j, 
             bool renormalize,
             bool update_sampler
@@ -371,40 +290,24 @@ public:
         uint64_t J = sampler->J;
 
         Buffer<double> mttkrp_res({Ij, R});
-        Buffer<double> weights({J});
         Buffer<double> pinv({R, R});
 
         sampler->KRPDrawSamples(j, *samples, nullptr);
 
-        compute_DAGAT(
-            sampler->h(),
-            sampler->M(),
-            weights(),
-            J,
-            R
-        );
-
-        #pragma omp parallel
-{
-        #pragma omp for
-        for(uint32_t i = 0; i < J; i++) {
-            weights[i] = (double) R / (weights[i] * J);
-        } 
-
-        #pragma omp for collapse(2) 
+        #pragma omp parallel for collapse(2) 
         for(uint32_t i = 0; i < J; i++) {
             for(uint32_t t = 0; t < R; t++) {
-                sampler->h[i * R + t] *= sqrt(weights[i]); 
+                sampler->h[i * R + t] *= sqrt(sampler->weights[i]); 
             }
         }
-}
+
         std::fill(pinv(),  pinv(R * R), 0.0);
         compute_pinv(sampler->h, pinv);
 
         #pragma omp parallel for collapse(2)
         for(uint32_t i = 0; i < J; i++) {
             for(uint32_t t = 0; t < R; t++) {
-                sampler->h[i * R + t] *= sqrt(weights[i]); 
+                sampler->h[i * R + t] *= sqrt(sampler->weights[i]); 
             }
         }
 
