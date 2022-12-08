@@ -5,6 +5,7 @@
 #include <cassert>
 #include <random>
 #include "common.h"
+#include "sampler.hpp"
 #include "partition_tree.hpp"
 #include "omp.h"
 #include "cblas.h"
@@ -12,15 +13,12 @@
 
 using namespace std;
 
-class __attribute__((visibility("hidden"))) EfficientKRPSampler {
+class __attribute__((visibility("hidden"))) EfficientKRPSampler: public Sampler {
 public:
-    uint64_t N, J, R, R2;
-    vector<Buffer<double>> &U;
     ScratchBuffer scratch;
     Buffer<double> M;
     Buffer<double> lambda;
 
-    Buffer<double> h;
     Buffer<double> scaled_h;
     vector<Buffer<double>> scaled_eigenvecs;
 
@@ -37,12 +35,11 @@ public:
             uint64_t J, 
             uint64_t R, 
             vector<Buffer<double>> &U_matrices)
-    :        
-            U(U_matrices),
+    :       
+            Sampler(J, R, U_matrices),
             scratch(R, J, R),
             M({U_matrices.size() + 2, R * R}),
             lambda({U_matrices.size() + 1, R}),
-            h({J, R}),
             scaled_h({J, R}),
             rd(),
             gen(rd()),

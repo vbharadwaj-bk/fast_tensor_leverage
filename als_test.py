@@ -38,7 +38,6 @@ class PyLowRank:
 
         return residual
 
-
 def als(lhs, rhs, J):
     data = []
 
@@ -49,7 +48,6 @@ def als(lhs, rhs, J):
     print(f"Residual: {residual}")
     for i in range(80):
         for j in range(lhs.N):
-
             sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(lhs.R, dtype=np.double)
             lhs.ten.get_sigma(sigma_lhs, j)
             rhs.ten.get_sigma(sigma_rhs, -1)
@@ -74,9 +72,10 @@ def als(lhs, rhs, J):
                 ratio = 1.0
 
             #print(f"Condition #: {la.cond(g)}")
-            print(f"Ratio: {ratio}")
-            print(f"Residual: {residual}")
+            print(f"Ratio: {ratio}, Residual: {residual}")
             data_entry = {}
+            data_entry["exact_solve_residual"] = residual
+            data_entry["approx_solve_residual"] = residual_approx
             data_entry["ratio"] = ratio
             data_entry["lhs"] = lhs.U
             data_entry["rhs"] = rhs.U
