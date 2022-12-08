@@ -17,7 +17,7 @@ class PyLowRank:
         if init_method=="gaussian":
             self.N = len(dims)
             self.R = R
-            self.U = [np.random.normal(size=(divide_and_roundup(i, R), R)) for i in dims]
+            self.U = [np.random.normal(size=(divide_and_roundup(i, R) * R, R)) for i in dims]
             if allow_rhs_mttkrp:
                 self.ten = LowRankTensor(R, J, 10000, self.U)
             else:
@@ -42,7 +42,7 @@ def als(lhs, rhs, J):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, "efficient")
+    als.initialize_ds_als(J, "uniform")
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual}")
