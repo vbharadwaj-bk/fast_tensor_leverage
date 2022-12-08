@@ -1,9 +1,11 @@
 //cppimport
 #include <iostream>
+#include <string>
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
 #include "sampler.hpp"
+#include "uniform_sampler.hpp"
 #include "efficient_krp_sampler.hpp"
 
 using namespace std;
@@ -275,8 +277,14 @@ public:
         // Empty
     }
 
-    void initialize_ds_als(uint64_t J) {
-        sampler.reset(new EfficientKRPSampler(J, cp_decomp.R, cp_decomp.U));
+    void initialize_ds_als(uint64_t J, std::string sampler_type) {
+        if(sampler_type == "efficient") {
+            sampler.reset(new EfficientKRPSampler(J, cp_decomp.R, cp_decomp.U));
+        }
+        else if(sampler_type == "uniform") {
+            sampler.reset(new UniformSampler(J, cp_decomp.R, cp_decomp.U));
+        }
+
         samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
     }
 

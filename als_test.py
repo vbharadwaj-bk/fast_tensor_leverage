@@ -42,7 +42,7 @@ def als(lhs, rhs, J):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J)
+    als.initialize_ds_als(J, "efficient")
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual}")
@@ -91,9 +91,9 @@ def als(lhs, rhs, J):
     #print("Dumped data pickle")
 
 if __name__=='__main__':
-    i = 15
-    R = 32
-    N = 4
+    i = 7
+    R = 4
+    N = 3
     J = 10000
     lhs = PyLowRank([2 ** i] * N, R)
     lhs.ten.renormalize_columns(-1)
