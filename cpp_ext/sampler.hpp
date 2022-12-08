@@ -40,7 +40,26 @@ public:
     virtual void update_sampler(uint64_t j) = 0;
     virtual void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) = 0;
 
-    //void fill_h_by_samples(Buffer<U) TODO: Need to finish writing this method! 
+    /*
+    * Fills the h matrix based on an array of samples. Can be bypassed if KRPDrawSamples computes
+    * h during its execution.
+    */
+    void fill_h_by_samples(Buffer<uint64_t> &samples, uint64_t j) {
+        std::fill(h(), h(J * R), 1.0);
+        for(uint32_t k = 0; k < N; k++) {
+            if(k != j) {
+                Buffer<uint64_t> row_buffer({J}, samples(k, 0)); // View into a row of the samples array
+
+                #pragma omp parallel for 
+                for(uint64_t i = 0; i < J; i++) {
+                    uint64_t sample = row_buffer[i];
+                    for(uint64_t u = 0; u < R; u++) {
+                        h[i * R + u] *= U[k][sample * R + u];
+                    }
+                }
+            }
+        }
+    } 
 };
 
 void compute_DAGAT(double* A, double* G, 

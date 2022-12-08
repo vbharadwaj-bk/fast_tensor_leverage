@@ -35,7 +35,9 @@ public:
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
                 uint64_t Ij = U[k].shape[0];
+
                 logsum += log((double) Ij);
+
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0)); // View into a row of the samples array
                 std::uniform_int_distribution<uint64_t> dis(0, Ij);
 
@@ -52,5 +54,7 @@ public:
         for(uint64_t i = 0; i < J; i++) {
             weights[i] = weight; 
         }
+
+        fill_h_by_samples(samples, j);
     }
 };
