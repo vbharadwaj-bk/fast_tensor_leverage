@@ -13,8 +13,8 @@ from cpp_ext.als_module import Tensor, LowRankTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
-    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="uniform"):
-        if init_method=="uniform":
+    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian"):
+        if init_method=="gaussian":
             self.N = len(dims)
             self.R = R
             self.U = [np.random.normal(size=(divide_and_roundup(i, R), R)) for i in dims]

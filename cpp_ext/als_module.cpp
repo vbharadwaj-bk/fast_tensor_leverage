@@ -384,29 +384,24 @@ public:
             R
         );
 
-        //#pragma omp parallel for
+        #pragma omp parallel
+{
+        #pragma omp for
         for(uint32_t i = 0; i < J; i++) {
             weights[i] = (double) R / (weights[i] * J);
         } 
 
-        #pragma omp parallel for
+        #pragma omp for collapse(2) 
         for(uint32_t i = 0; i < J; i++) {
             for(uint32_t t = 0; t < R; t++) {
                 sampler->h[i * R + t] *= sqrt(weights[i]); 
             }
         }
-
+}
         std::fill(pinv(),  pinv(R * R), 0.0);
         compute_pinv(sampler->h, pinv);
-        /*for(uint32_t u = 0; u < R; u++) {
-            for(uint32_t v = 0; v < R; v++) {
-                cout << pinv[u * R + v] << " ";
-            }
-            cout << endl;
-        }
-        cout << "------------------------------" << endl;*/
 
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for(uint32_t i = 0; i < J; i++) {
             for(uint32_t t = 0; t < R; t++) {
                 sampler->h[i * R + t] *= sqrt(weights[i]); 
@@ -428,7 +423,6 @@ public:
             (uint32_t) Ij,
             (uint32_t) R,
             1.0,
-            //sampler->M(),
             pinv(),
             R,
             mttkrp_res(),
