@@ -16,7 +16,7 @@ using namespace std;
 */
 class __attribute__((visibility("hidden"))) UniformSampler: public Sampler {
 public:
-    EfficientKRPSampler(
+    UniformSampler(
             uint64_t J, 
             uint64_t R, 
             vector<Buffer<double>> &U_matrices)
@@ -41,14 +41,16 @@ public:
 
                 // Random number generation not parallelized on CPU, since it is cheap 
                 for(uint64_t i = 0; i < J; i++) {
-                    row_buffer[i] = dis();
+                    row_buffer[i] = dis(gen);
                 }
             }
         }
+        logsum -= log((double) J);
+        double weight = exp(logsum);
 
         #pragma omp parallel for
         for(uint64_t i = 0; i < J; i++) {
-            weights[i] = 
+            weights[i] = weight; 
         }
     }
-}
+};
