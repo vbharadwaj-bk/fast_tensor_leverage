@@ -100,9 +100,9 @@ def als(lhs, rhs, J):
 if __name__=='__main__':
     i = 13
     R = 16
-    N = 5
+    N = 4
     J = 20000
-    lhs = PyLowRank([2 ** i] * N, 2 * R)
+    lhs = PyLowRank([2 ** i] * N, R)
     lhs.ten.renormalize_columns(-1)
     rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J)
     rhs.ten.renormalize_columns(-1)
