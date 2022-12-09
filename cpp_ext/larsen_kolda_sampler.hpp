@@ -13,14 +13,14 @@
 using namespace std;
 
 /*
-* Implements the Larsen and Kolda sampler. 
+* Larsen / Kolda leverage score sampler 
 */
 class __attribute__((visibility("hidden"))) LarsenKoldaSampler : public Sampler {
 public:
 
     vector<Buffer<double>> factor_leverage;
     Buffer<double> leverage_sums;
-    vector<unique_ptr<std::discrete_distribution>> distributions;
+    vector<unique_ptr<std::discrete_distribution<uint64_t>>> distributions;
 
     LarsenKoldaSampler(
             uint64_t J, 
@@ -28,7 +28,7 @@ public:
             vector<Buffer<double>> &U_matrices)
     :       
             Sampler(J, R, U_matrices),
-            leverage_sums(N)
+            leverage_sums({N})
     {
         for(uint32_t k = 0; k < N; k++) {
             uint64_t Ij = U[k].shape[0];
@@ -41,15 +41,18 @@ public:
     void update_sampler(uint64_t j) {
         Buffer<double> pinv({R, R});
         compute_pinv(U[j], pinv);
-        compute_DAGAT(U[j](), pinv(), factor_leverage[k](), U[j].shape[0], R);
-        distributions[j].reset(factor_leverage[j](), factor_leverage[j](U[j].shape[0]));
+        compute_DAGAT(U[j](), pinv(), factor_leverage[j](), U[j].shape[0], R);
+        distributions[j].reset(new discrete_distribution<uint64_t>(factor_leverage[j](), 
+                                                factor_leverage[j](U[j].shape[0])));
 
         leverage_sums[j] = 0.0;
 
-        #pragma omp parallel for reduction(+: leverage_sums[j])
+        double total = 0.0;
+        #pragma omp parallel for reduction(+: total)
         for(uint64_t i = 0; i < U[j].shape[0]; i++) {
-            leverage_sums[j] += factor_leverage[j][i];
+            total += factor_leverage[j][i];
         }
+        leverage_sums[j] = total;
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
@@ -57,10 +60,10 @@ public:
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
                 Buffer<uint64_t> row_buffer({J}, samples(k, 0)); // View into a row of the samples array
-
+                std::discrete_distribution<uint64_t> &dist = (*(distributions[k]));
                 // Random number generation not parallelized on CPU, since it is cheap 
                 for(uint64_t i = 0; i < J; i++) {
-                    uint64_t sample = distributions[k](gen);
+                    uint64_t sample = dist(gen);
                     row_buffer[i] = sample;
                     weights[i] += log(factor_leverage[k][sample]) - log(leverage_sums[k]);
                 }
