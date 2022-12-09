@@ -47,7 +47,7 @@ def als(lhs, rhs, J):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, "uniform")
+    als.initialize_ds_als(J, "larsen_kolda")
 
     rhs_norm = rhs.compute_norm()
 

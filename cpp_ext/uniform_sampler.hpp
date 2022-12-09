@@ -50,11 +50,7 @@ public:
         logsum -= log((double) J);
         double weight = exp(logsum);
 
-        #pragma omp parallel for
-        for(uint64_t i = 0; i < J; i++) {
-            weights[i] = weight; 
-        }
-
+        std::fill(weights(), weights(J), weight);
         fill_h_by_samples(samples, j);
     }
 };
