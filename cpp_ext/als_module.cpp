@@ -167,21 +167,22 @@ public:
 
             materialize_rhs(samples, j, i);
 
+            // Need to fix this when the ranks are different! 
             cblas_dgemm(
                 CblasRowMajor,
                 CblasTrans,
                 CblasNoTrans,
                 (uint32_t) dims[j],
-                (uint32_t) R,
+                (uint32_t) lhs.shape[1],
                 (uint32_t) rows,
                 1.0,
                 temp_buf(),
                 (uint32_t) dims[j],
                 lhs(i, 0),
-                (uint32_t) R,
+                (uint32_t) lhs.shape[1],
                 1.0,
                 result(),
-                (uint32_t) R
+                (uint32_t) lhs.shape[1]
             );
         }
         delete rhs_buf; 
@@ -309,8 +310,8 @@ public:
             }
         }
 
-        std::fill(pinv(),  pinv(R * R), 0.0);
-        compute_pinv(sampler->h, pinv);
+        std::fill(pinv(), pinv(R * R), 0.0);
+        compute_pinv(sampler->h, pinv);  
 
         #pragma omp parallel for collapse(2)
         for(uint32_t i = 0; i < J; i++) {
