@@ -29,7 +29,7 @@ class PyLowRank:
         '''
         Computes the residual of the difference between two low-rank tensors.
         '''
-        sigma_lhs, sigma_rhs = np.zeros(self.R, dtype=np.double), np.zeros(self.R, dtype=np.double)
+        sigma_lhs, sigma_rhs = np.zeros(self.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
         U_lhs = self.U
         self.ten.get_sigma(sigma_lhs, -1)
         U_rhs = rhs_ten.U
@@ -38,17 +38,24 @@ class PyLowRank:
 
         return residual
 
+    def compute_norm(self):
+        sigma_lhs = np.zeros(self.R, dtype=np.double)
+        self.ten.get_sigma(sigma_lhs, -1)
+        return np.sqrt(inner_prod(self.U, self.U, sigma_lhs, sigma_lhs))
+
 def als(lhs, rhs, J):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
     als.initialize_ds_als(J, "uniform")
 
+    rhs_norm = rhs.compute_norm()
+
     residual = lhs.compute_diff_resid(rhs)
-    print(f"Residual: {residual}")
+    print(f"Residual: {residual / rhs_norm}")
     for i in range(80):
         for j in range(lhs.N):
-            sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(lhs.R, dtype=np.double)
+            sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
             lhs.ten.get_sigma(sigma_lhs, j)
             rhs.ten.get_sigma(sigma_rhs, -1)
 
@@ -56,23 +63,23 @@ def als(lhs, rhs, J):
             g_pinv = la.pinv(g) 
 
             elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
-            elwise_prod *= np.outer(np.ones(R), sigma_rhs)
+            elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs)
             true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
 
             lhs.U[j][:] = true_soln
             lhs.ten.renormalize_columns(j)
-
             residual = lhs.compute_diff_resid(rhs)
-            als.execute_ds_als_update(j, True, True) 
 
+            als.execute_ds_als_update(j, True, True) 
             residual_approx = lhs.compute_diff_resid(rhs)
+
             if residual > 0:
                 ratio = residual_approx / residual
             else:
                 ratio = 1.0
 
             #print(f"Condition #: {la.cond(g)}")
-            print(f"Ratio: {ratio}, Residual: {residual}")
+            print(f"Ratio: {ratio}, Residual: {residual / rhs_norm}")
             data_entry = {}
             data_entry["exact_solve_residual"] = residual
             data_entry["approx_solve_residual"] = residual_approx
@@ -91,11 +98,11 @@ def als(lhs, rhs, J):
     #print("Dumped data pickle")
 
 if __name__=='__main__':
-    i = 7
-    R = 4
-    N = 3
-    J = 10000
-    lhs = PyLowRank([2 ** i] * N, R)
+    i = 13
+    R = 16
+    N = 5
+    J = 20000
+    lhs = PyLowRank([2 ** i] * N, 2 * R)
     lhs.ten.renormalize_columns(-1)
     rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J)
     rhs.ten.renormalize_columns(-1)
