@@ -44,58 +44,58 @@ class PyLowRank:
         self.ten.get_sigma(sigma_lhs, -1)
         return np.sqrt(inner_prod(self.U, self.U, sigma_lhs, sigma_lhs))
 
-def als(lhs, rhs, J):
+def als(lhs, rhs, J, method, iter):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, "efficient")
+    als.initialize_ds_als(J, method)
 
     rhs_norm = rhs.compute_norm()
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual / rhs_norm}")
-    for i in range(100):
-        for j in range(lhs.N):
-            sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
-            lhs.ten.get_sigma(sigma_lhs, j)
-            rhs.ten.get_sigma(sigma_rhs, -1)
+    try:
+        for i in range(iter):
+            for j in range(lhs.N):
+                sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
+                lhs.ten.get_sigma(sigma_lhs, j)
+                rhs.ten.get_sigma(sigma_rhs, -1)
 
-            g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
-            g_pinv = la.pinv(g) 
+                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
+                g_pinv = la.pinv(g) 
 
-            elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
-            elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs)
-            true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
+                elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
+                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs)
+                true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
 
-            lhs.U[j][:] = true_soln
-            lhs.ten.renormalize_columns(j)
-            residual = lhs.compute_diff_resid(rhs)
+                lhs.U[j][:] = true_soln
+                lhs.ten.renormalize_columns(j)
+                residual = lhs.compute_diff_resid(rhs)
 
-            als.execute_ds_als_update(j, True, True) 
-            residual_approx = lhs.compute_diff_resid(rhs)
+                als.execute_ds_als_update(j, True, True) 
+                residual_approx = lhs.compute_diff_resid(rhs)
 
-            if residual > 0:
-                ratio = residual_approx / residual
-            else:
-                ratio = 1.0
+                if residual > 0:
+                    ratio = residual_approx / residual
+                else:
+                    ratio = 1.0
 
-            #print(f"Condition #: {la.cond(g)}")
-            print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}")
-            data_entry = {}
-            data_entry["exact_solve_residual"] = residual
-            data_entry["approx_solve_residual"] = residual_approx
-            data_entry["exact_solve_residual_norm"] = residual / rhs_norm
-            data_entry["approx_solve_residual_norm"] = residual_approx / rhs_norm
-            data_entry["rhs_norm"] = rhs_norm
-            data_entry["ratio"] = ratio
-            data_entry["j"] = j 
-            #data_entry["lhs"] = lhs.U
-            #data_entry["rhs"] = rhs.U
-            #data_entry["sigma_lhs"] = sigma_lhs
-            #data_entry["sigma_rhs"] = sigma_rhs
-            #data_entry["true_soln"] = true_soln
-            
-            data.append(data_entry)
+                #print(f"Condition #: {la.cond(g)}")
+                print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}")
+                data_entry = {}
+                data_entry["exact_solve_residual"] = residual
+                data_entry["approx_solve_residual"] = residual_approx
+                data_entry["exact_solve_residual_normalized"] = residual / rhs_norm
+                data_entry["approx_solve_residual_normalized"] = residual_approx / rhs_norm
+                data_entry["rhs_norm"] = rhs_norm
+                data_entry["ratio"] = ratio
+                data_entry["j"] = j 
+                
+                data.append(data_entry)
+        return data 
+    except:
+        print("Caught SVD unconverged exception, terminating and returning trace...")
+        return data
 
     #with open('data/lstsq_problems.pickle', 'wb') as handle:
     #    pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -107,9 +107,21 @@ if __name__=='__main__':
     R = 32
     N = 5
     J = 20000
-    lhs = PyLowRank([2 ** i] * N, 2 * R, seed=923845)
-    lhs.ten.renormalize_columns(-1)
-    rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J, seed=29348)
-    rhs.ten.renormalize_columns(-1)
 
-    als(lhs, rhs, J)
+    trial_count = 5
+    iterations = 25
+    result = {"I": 2 ** i, "R" : R, "N": N, "J": J}
+
+    samplers = ["uniform", "larsen_kolda", "efficient"]
+
+    for sampler in samplers:
+        result[sampler] = []
+        for trial in range(trial_count): 
+            lhs = PyLowRank([2 ** i] * N, 2 * R, seed=923845)
+            lhs.ten.renormalize_columns(-1)
+            rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J, seed=29348)
+            rhs.ten.renormalize_columns(-1)
+            result[sampler].append(als(lhs, rhs, J, sampler, iterations))
+
+    with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:
+        json.dump(result, outfile, indent=4)
