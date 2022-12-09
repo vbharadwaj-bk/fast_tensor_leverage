@@ -13,11 +13,12 @@ from cpp_ext.als_module import Tensor, LowRankTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
-    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian"):
+    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=42):
         if init_method=="gaussian":
+            rng = np.random.default_rng(seed)
             self.N = len(dims)
             self.R = R
-            self.U = [np.random.normal(size=(divide_and_roundup(i, R) * R, R)) for i in dims]
+            self.U = [rng.normal(size=(divide_and_roundup(i, R) * R, R)) for i in dims]
             if allow_rhs_mttkrp:
                 self.ten = LowRankTensor(R, J, 10000, self.U)
             else:
@@ -47,13 +48,13 @@ def als(lhs, rhs, J):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, "larsen_kolda")
+    als.initialize_ds_als(J, "efficient")
 
     rhs_norm = rhs.compute_norm()
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual / rhs_norm}")
-    for i in range(80):
+    for i in range(100):
         for j in range(lhs.N):
             sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
             lhs.ten.get_sigma(sigma_lhs, j)
@@ -79,17 +80,21 @@ def als(lhs, rhs, J):
                 ratio = 1.0
 
             #print(f"Condition #: {la.cond(g)}")
-            print(f"Ratio: {ratio}, Residual: {residual / rhs_norm}")
+            print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}")
             data_entry = {}
             data_entry["exact_solve_residual"] = residual
             data_entry["approx_solve_residual"] = residual_approx
+            data_entry["exact_solve_residual_norm"] = residual / rhs_norm
+            data_entry["approx_solve_residual_norm"] = residual_approx / rhs_norm
+            data_entry["rhs_norm"] = rhs_norm
             data_entry["ratio"] = ratio
-            data_entry["lhs"] = lhs.U
-            data_entry["rhs"] = rhs.U
-            data_entry["sigma_lhs"] = sigma_lhs
-            data_entry["sigma_rhs"] = sigma_rhs
-            data_entry["true_soln"] = true_soln
             data_entry["j"] = j 
+            #data_entry["lhs"] = lhs.U
+            #data_entry["rhs"] = rhs.U
+            #data_entry["sigma_lhs"] = sigma_lhs
+            #data_entry["sigma_rhs"] = sigma_rhs
+            #data_entry["true_soln"] = true_soln
+            
             data.append(data_entry)
 
     #with open('data/lstsq_problems.pickle', 'wb') as handle:
@@ -99,12 +104,12 @@ def als(lhs, rhs, J):
 
 if __name__=='__main__':
     i = 13
-    R = 16
-    N = 4
+    R = 32
+    N = 5
     J = 20000
-    lhs = PyLowRank([2 ** i] * N, R)
+    lhs = PyLowRank([2 ** i] * N, 2 * R, seed=923845)
     lhs.ten.renormalize_columns(-1)
-    rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J)
+    rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J, seed=29348)
     rhs.ten.renormalize_columns(-1)
 
     als(lhs, rhs, J)
