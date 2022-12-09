@@ -6,6 +6,7 @@
 #include "lapacke.h"
 #include "sampler.hpp"
 #include "uniform_sampler.hpp"
+#include "larsen_kolda_sampler.hpp"
 #include "efficient_krp_sampler.hpp"
 
 using namespace std;
@@ -281,6 +282,9 @@ public:
     void initialize_ds_als(uint64_t J, std::string sampler_type) {
         if(sampler_type == "efficient") {
             sampler.reset(new EfficientKRPSampler(J, cp_decomp.R, cp_decomp.U));
+        }
+        else if(sampler_type == "larsen_kolda") {
+            sampler.reset(new LarsenKoldaSampler(J, cp_decomp.R, cp_decomp.U));
         }
         else if(sampler_type == "uniform") {
             sampler.reset(new UniformSampler(J, cp_decomp.R, cp_decomp.U));
