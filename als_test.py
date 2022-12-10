@@ -62,6 +62,7 @@ def als(lhs, rhs, J, method, iter):
                 rhs.ten.get_sigma(sigma_rhs, -1)
 
                 g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
+                print(la.cond(g))
                 g_pinv = la.pinv(g) 
 
                 elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
@@ -112,7 +113,7 @@ if __name__=='__main__':
     iterations = 25
     result = {"I": 2 ** i, "R" : R, "N": N, "J": J}
 
-    samplers = ["uniform", "larsen_kolda", "efficient"]
+    samplers = ["efficient"]
 
     for sampler in samplers:
         result[sampler] = []
@@ -123,5 +124,5 @@ if __name__=='__main__':
             rhs.ten.renormalize_columns(-1)
             result[sampler].append(als(lhs, rhs, J, sampler, iterations))
 
-    with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:
-        json.dump(result, outfile, indent=4)
+    #with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:
+    #    json.dump(result, outfile, indent=4)

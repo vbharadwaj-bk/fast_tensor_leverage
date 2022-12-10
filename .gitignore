@@ -5,6 +5,7 @@ test_project/build/*
 .vscode/*
 outputs/*
 data/*
+cpp_ext/sparsehash/*
 
 visualization/*
 
