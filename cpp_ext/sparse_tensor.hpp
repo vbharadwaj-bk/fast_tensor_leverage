@@ -149,32 +149,6 @@ public:
     uint64_t nnz = vals.info.shape[0];
 
     for(int j = 0; j < dim; j++) {
-      vector<int> processor_assignments(nnz, 0);
-      int* assignment_ptr = processor_assignments.data();
-      vector<uint64_t> send_counts(proc_count, 0);
-
-      int row_divisor = row_divisors.ptr[j];
-
-      for(uint64_t i = 0; i < nnz; i++) {
-          int processor = row_order_to_procs.ptrs[j][idxs.ptrs[j][i] / row_divisor];
-          assignment_ptr[i] = processor; 
-          send_counts[processor]++;
-      }
-
-      recv_idxs.emplace_back();
-      recv_values.emplace_back();
-      tensor_alltoallv_vector_result(
-          dim,
-          proc_count,
-          nnz,
-          idxs,
-          vals,
-          processor_assignments,
-          send_counts,
-          recv_idxs[j],
-          recv_values[j]
-          );
-
       lookups.emplace_back(dim, j, 
           recv_idxs[j].data(), 
           recv_values[j].data(), 
@@ -187,11 +161,34 @@ public:
   }
 };
 
-template<typename IDX_T, typename VAL_T>
+/*
+* By default, we assume this is a tensor with uint32_t index variables
+* and double-precision values. 
+*/
 class __attribute__((visibility("hidden"))) SparseTensor {
 public:
-    SparseTensor() {
-        // Empty for now...
+    Buffer<uint32_t> indices;
+    Buffer<double> values;
+    vector<HashIdxLookup<IDX_T, VAL_T>> lookups;
+
+    uint64_t N, nnz;
+
+    SparseTensor(py::array_t<uint32_t> indices_py, py::array_t<double> values_py)
+    :
+    indices(indices_py),
+    values(values_py)
+    {
+      nnz = indices.shape[0]; 
+      N = indices.shape[1]; 
+
+      for(uint64_t j = 0; j < N; j++) {
+        lookups.emplace_back(N, j, 
+            indices.data(), 
+            values.data(), 
+            nnz;
+      }
+
+      // Sorting nonzeros would be good here...
     }
 
     void execute_downsampled_mttkrp(
@@ -199,5 +196,8 @@ public:
             Buffer<double> &lhs,
             uint64_t j,
             Buffer<double> &result
-            ) = 0;
+            ) {
+
+      // Empty - TODO: need to write this function!
+    }
 };
