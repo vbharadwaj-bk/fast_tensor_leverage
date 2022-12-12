@@ -120,6 +120,7 @@ public:
     }
   }
 
+  /*
   void lookup_and_append(IDX_T r_idx, double weight, IDX_T* buf, COOSparse<IDX_T, VAL_T> &res) {
     auto pair_loc = lookup_table->find(buf);
     if(pair_loc != lookup_table->end()) {
@@ -131,34 +132,7 @@ public:
       }  
     }
   }
-};
-
-template<typename IDX_T, typename VAL_T>
-class TensorSlicer {
-public:
-  vector<HashIdxLookup<IDX_T, VAL_T>> lookups;
-
-  TensorSlicer(py::list idxs_py, py::array_t<VAL_T> vals_py) {
-    NumpyList<IDX_T> idxs(idxs_py);
-    NumpyArray<VAL_T> vals(vals_py);
-    NumpyArray<int> row_divisors(row_divisors_py);
-    NumpyList<int> row_order_to_procs(row_order_to_procs_py);
-    uint64_t proc_count = row_order_to_procs.infos[0].shape[0];
-
-    int dim = idxs.length;
-    uint64_t nnz = vals.info.shape[0];
-
-    for(int j = 0; j < dim; j++) {
-      lookups.emplace_back(dim, j, 
-          recv_idxs[j].data(), 
-          recv_values[j].data(), 
-          recv_values[j].size());
-    }
-  }
-
-  void lookup_and_append(IDX_T r_idx, double weight, IDX_T* buf, int mode_to_leave, COOSparse<IDX_T, VAL_T> &res) {
-    lookups[mode_to_leave].lookup_and_append(r_idx, weight, buf, res); 
-  }
+  */
 };
 
 /*
@@ -169,7 +143,7 @@ class __attribute__((visibility("hidden"))) SparseTensor {
 public:
     Buffer<uint32_t> indices;
     Buffer<double> values;
-    vector<HashIdxLookup<IDX_T, VAL_T>> lookups;
+    vector<HashIdxLookup<uint32_t, double>> lookups;
 
     uint64_t N, nnz;
 
