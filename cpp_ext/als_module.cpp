@@ -4,6 +4,7 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
+#include "hashing.hpp"
 #include "sampler.hpp"
 #include "tensor.hpp"
 #include "sparse_tensor.hpp"
@@ -12,7 +13,11 @@
 #include "larsen_kolda_sampler.hpp"
 #include "efficient_krp_sampler.hpp"
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 using namespace std;
+namespace py = pybind11;
 
 class __attribute__((visibility("hidden"))) ALS {
 public:
@@ -140,8 +145,8 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-Ofast']
-cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-Ofast']
+cfg['extra_compile_args'] = ['--std=c++2a', '-I/home/vbharadw/OpenBLAS_install/include', '-fopenmp', '-Ofast']
+cfg['extra_link_args'] = ['-L/home/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-Ofast']
 cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp'] 
 %>
 */
