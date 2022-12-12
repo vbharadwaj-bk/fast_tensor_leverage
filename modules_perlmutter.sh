@@ -1,5 +1,5 @@
-export CC=gcc
-export CXX=g++
+export CC=CC
+export CXX=CC
 
 export OMP_MAX_ACTIVE_LEVELS=2 
-export OMP_NUM_THREADS=128
+export OMP_NUM_THREADS=64

@@ -6,6 +6,7 @@
 #include "cblas.h"
 #include "lapacke.h"
 #include "tensor.hpp"
+#include "hashing.hpp"
 #include "sparsehash/dense_hash_map"
 
 using namespace std;
@@ -157,9 +158,9 @@ public:
 
       for(uint64_t j = 0; j < N; j++) {
         lookups.emplace_back(N, j, 
-            indices.data(), 
-            values.data(), 
-            nnz;
+            indices(), 
+            values(), 
+            nnz);
       }
 
       // Sorting nonzeros would be good here...
