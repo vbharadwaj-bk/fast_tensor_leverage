@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 import time
 import json
 import pickle
+import h5py
 
 from common import *
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
-from cpp_ext.als_module import Tensor, LowRankTensor, ALS
+from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
@@ -43,6 +44,34 @@ class PyLowRank:
         sigma_lhs = np.zeros(self.R, dtype=np.double)
         self.ten.get_sigma(sigma_lhs, -1)
         return np.sqrt(inner_prod(self.U, self.U, sigma_lhs, sigma_lhs))
+
+class PySparseTensor:
+    def __init__(self, filename, preprocessing=None):
+        print("Loading sparse tensor...")
+        f = h5py.File(filename, 'r')
+
+        self.max_idxs = f['MAX_MODE_SET'][:]
+        self.min_idxs = f['MIN_MODE_SET'][:]
+        self.dim = len(self.max_idxs)
+
+        # The tensor must have at least one mode
+        self.nnz = len(f['MODE_0']) 
+
+        self.tensor_idxs = []
+
+        for i in range(self.dim): 
+            self.tensor_idxs.append(f[f'MODE_{i}'][:] - self.min_idxs[i])
+
+        self.values = f['VALUES'][:]
+
+        if preprocessing is not None:
+            if preprocessing == "log_count":
+                self.values = np.log(self.values + 1.0)
+            else:
+                print(f"Unknown preprocessing option '{preprocessing}' specified!")
+                exit(1)
+
+        print("Finished loading sparse tensor...")
 
 def als(lhs, rhs, J, method, iter):
     data = []
@@ -108,6 +137,9 @@ if __name__=='__main__':
     R = 32
     N = 5
     J = 20000
+
+    sparse_tensor = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5")
+    exit(1)
 
     trial_count = 5
     iterations = 25

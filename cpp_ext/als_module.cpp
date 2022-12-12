@@ -4,8 +4,9 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
-#include "tensor.hpp"
 #include "sampler.hpp"
+#include "tensor.hpp"
+#include "sparse_tensor.hpp"
 #include "low_rank_tensor.hpp"
 #include "uniform_sampler.hpp"
 #include "larsen_kolda_sampler.hpp"
@@ -128,6 +129,8 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
+    py::class_<SparseTensor, Tensor>(m, "SparseTensor")
+        .def(py::init<py::array_t<uint32_t>, py::array_t<double>>());
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
@@ -139,6 +142,6 @@ PYBIND11_MODULE(als_module, m) {
 setup_pybind11(cfg)
 cfg['extra_compile_args'] = ['--std=c++2b', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-Ofast']
 cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-Ofast']
-cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp'] 
+cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp'] 
 %>
 */
