@@ -17,9 +17,10 @@ class PyLowRank:
     def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=42):
         if init_method=="gaussian":
             rng = np.random.default_rng(seed)
+            self.dims = [divide_and_roundup(i, R) * R for i in dims]
             self.N = len(dims)
             self.R = R
-            self.U = [rng.normal(size=(divide_and_roundup(i, R) * R, R)) for i in dims]
+            self.U = [rng.normal(size=(i, R)) for i in self.dims]
             if allow_rhs_mttkrp:
                 self.ten = LowRankTensor(R, J, 10000, self.U)
             else:
@@ -42,7 +43,9 @@ class PyLowRank:
 
     def compute_diff_resid_sparse(self, rhs_ten):
         sigma_lhs= np.zeros(self.R, dtype=np.double) 
-        residual = rhs_ten.compute_residual_normsq_py(sigma_lhs, self.U) 
+        self.ten.get_sigma(sigma_lhs, -1)
+        residual = rhs_ten.ten.compute_residual_normsq_py(sigma_lhs, self.U)
+        residual += inner_prod(self.U, self.U, sigma_lhs, sigma_lhs) 
         return np.sqrt(residual)
 
     def compute_norm(self):
@@ -58,6 +61,7 @@ class PySparseTensor:
         self.max_idxs = f['MAX_MODE_SET'][:]
         self.min_idxs = f['MIN_MODE_SET'][:]
         self.N = len(self.max_idxs)
+        self.dims = self.max_idxs[:]
 
         # The tensor must have at least one mode
         self.nnz = len(f['MODE_0']) 
@@ -85,8 +89,6 @@ def als(lhs, rhs, J, method, iter):
 
     als = ALS(lhs.ten, rhs.ten)
     als.initialize_ds_als(J, method)
-
-    rhs_norm = rhs.compute_norm()
 
     residual = lhs.compute_diff_resid(rhs)
     print(f"Residual: {residual / rhs_norm}")
@@ -142,20 +144,24 @@ def sparse_als(lhs, rhs, J, method, iter):
 
     residual_approx = lhs.compute_diff_resid_sparse(rhs)
     print(f"Residual: {residual_approx}")
-    exit(1)
-    try:
-        for i in range(iter):
-            for j in range(lhs.N):
-                als.execute_ds_als_update(j, True, True) 
-                residual_approx = lhs.compute_diff_resid_sparse(rhs)
 
-                print(f"Residual: {residual_approx}")
+    for i in range(iter):
+        for j in range(lhs.N):
+            als.execute_ds_als_update(j, True, True) 
+            residual_approx = lhs.compute_diff_resid_sparse(rhs)
+
+            exit(1)
+
+            print(f"Residual: {residual_approx}")
+    return data 
+
+
 
 if __name__=='__main__':
     i = 13
-    R = 32
-    N = 5
-    J = 40000
+    R = 16
+    N = 4
+    J = 100000
 
     trial_count = 5
     iterations = 25
@@ -165,10 +171,11 @@ if __name__=='__main__':
 
     for sampler in samplers:
         result[sampler] = []
-        for trial in range(trial_count): 
-            lhs = PyLowRank([2 ** i] * N, 2 * R, seed=923845)
-            lhs.ten.renormalize_columns(-1)
+        for trial in range(trial_count):
             rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
+            print(rhs.dims)
+            lhs = PyLowRank(rhs.dims, 2 * R, seed=923845)
+            lhs.ten.renormalize_columns(-1)
             result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
             exit(1)
 
