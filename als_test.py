@@ -52,15 +52,15 @@ class PySparseTensor:
 
         self.max_idxs = f['MAX_MODE_SET'][:]
         self.min_idxs = f['MIN_MODE_SET'][:]
-        self.dim = len(self.max_idxs)
+        self.N = len(self.max_idxs)
 
         # The tensor must have at least one mode
         self.nnz = len(f['MODE_0']) 
 
-        self.tensor_idxs = []
+        self.tensor_idxs = np.zeros((self.nnz, self.N), dtype=np.uint32) 
 
-        for i in range(self.dim): 
-            self.tensor_idxs.append(f[f'MODE_{i}'][:] - self.min_idxs[i])
+        for i in range(self.N): 
+            self.tensor_idxs[:, i] = f[f'MODE_{i}'][:] - self.min_idxs[i]
 
         self.values = f['VALUES'][:]
 
@@ -70,6 +70,8 @@ class PySparseTensor:
             else:
                 print(f"Unknown preprocessing option '{preprocessing}' specified!")
                 exit(1)
+
+        self.ten = SparseTensor(self.tensor_idxs, self.values) 
 
         print("Finished loading sparse tensor...")
 
@@ -138,7 +140,7 @@ if __name__=='__main__':
     N = 5
     J = 20000
 
-    sparse_tensor = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5")
+    sparse_tensor = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
     exit(1)
 
     trial_count = 5

@@ -121,31 +121,52 @@ public:
   }
 
   /*
-  void lookup_and_append(IDX_T r_idx, double weight, IDX_T* buf, COOSparse<IDX_T, VAL_T> &res) {
-    auto pair_loc = lookup_table->find(buf);
-    if(pair_loc != lookup_table->end()) {
-      vector<pair<IDX_T, VAL_T>> &pairs = storage[pair_loc->second];
-      for(auto it = pairs.begin(); it != pairs.end(); it++) {
-        res.rows.push_back(r_idx);
-        res.cols.push_back(it->first);
-        res.values.push_back(weight * it->second);
-      }  
+  * Executes an SpMM with the tensor matricization tracked by this
+  * lookup table.
+  *
+  * This function assumes that the output buffer has already been
+  * initialized to zero. 
+  */
+  void execute_spmm(
+      Buffer<IDX_T> indices, 
+      Buffer<double> &input,
+      Buffer<double> &output
+      ) {
+
+    uint64_t J = indices.shape[0];
+    uint64_t N = indices.shape[1];
+    uint64_t R = output.shape[1];
+
+    for(uint64_t j = 0; j < J; j++) {
+      uint64_t input_offset = j * R;
+      IDX_T* buf = indices(j * N); 
+      auto pair_loc = lookup_table->find(buf);
+      if(pair_loc != lookup_table->end()) {
+        vector<pair<IDX_T, VAL_T>> &pairs = storage[pair_loc->second];
+        for(auto it = pairs.begin(); it != pairs.end(); it++) {
+          uint64_t output_offset = it->first * R;
+          double value = it->second;
+          for(uint64_t k = 0; k < R; k++) {
+            output[output_offset + k] += input[input_offset + k] * value; 
+          }
+        }  
+      }
     }
   }
-  */
 };
 
 /*
 * By default, we assume this is a tensor with uint32_t index variables
 * and double-precision values. 
 */
-class __attribute__((visibility("hidden"))) SparseTensor {
+class __attribute__((visibility("hidden"))) SparseTensor : public Tensor {
 public:
     Buffer<uint32_t> indices;
     Buffer<double> values;
     vector<HashIdxLookup<uint32_t, double>> lookups;
 
     uint64_t N, nnz;
+    double normsq;
 
     SparseTensor(py::array_t<uint32_t> indices_py, py::array_t<double> values_py)
     :
@@ -171,7 +192,51 @@ public:
             uint64_t j,
             Buffer<double> &result
             ) {
+      uint64_t J = samples.shape[1];
+      uint64_t N = samples.shape[0];
+      uint64_t R = result.shape[1];
+      Buffer<uint32_t> samples_transpose({J, N});
 
-      // Empty - TODO: need to write this function!
+      for(uint64_t i = 0; i < J; i++) {
+        for(uint64_t k = 0; k < N; k++) {
+          samples[i * N + k] = 0; // TODO: Need to fill this in! samples_transpose[]
+        }
+      }
+
+      std::fill(result(), result(J * R), 0.0);
+      lookups[j].execute_spmm(samples_transpose, lhs, result);
+    }
+
+    double compute_residual_normsq(Buffer<double> &sigma, vector<Buffer<double>> &U) {
+      // There is likely a faster way to do this computation... but okay, let's get it working first.
+
+      uint64_t R = U[0].shape[1];
+
+      double residual_normsq = 0.0;
+
+      #pragma omp parallel
+{
+        vector<double*> base_ptrs;
+        for(int j = 0; j < N; j++) {
+            base_ptrs.push_back(nullptr);
+        }
+        
+        #pragma omp for reduction (+:normsq_residual)
+        for(uint64_t i = 0; i < nnz; i++) {
+            for(int j = 0; j < N; j++) {
+                base_ptrs[j] = U[j](indices(i * N + j) * R); 
+            } 
+            double value = 0.0;
+            for(uint64_t k = 0; k < R; k++) {
+                double coord_buffer = sigma[k];
+                for(int j = 0; j < factors.length; j++) {
+                    coord_buffer *= base_ptrs[j][k]; 
+                }
+                value += coord_buffer;
+            }
+            residual_normsq += value * value + values[i] * values[i] - 2 * value * values[i];
+        }
+}
+        return residual_normsq;
     }
 };
