@@ -190,8 +190,7 @@ public:
             Buffer<uint64_t> &samples, 
             Buffer<double> &lhs,
             uint64_t j,
-            Buffer<double> &result
-            ) {
+            Buffer<double> &result) {
       uint64_t J = samples.shape[1];
       uint64_t N = samples.shape[0];
       uint64_t R = result.shape[1];
@@ -199,9 +198,11 @@ public:
 
       for(uint64_t i = 0; i < J; i++) {
         for(uint64_t k = 0; k < N; k++) {
-          samples[i * N + k] = 0; // TODO: Need to fill this in! samples_transpose[]
+          samples_transpose[i * N + k] = (uint32_t) samples[k * J + i]; 
         }
       }
+
+      // It is probably a good idea to sort and reweight samples here... 
 
       std::fill(result(), result(J * R), 0.0);
       lookups[j].execute_spmm(samples_transpose, lhs, result);
@@ -238,5 +239,12 @@ public:
         }
 }
         return residual_normsq;
+    }
+
+
+    double compute_residual_normsq_py(py::array_t<double> sigma_py, py::list U_py) {
+        Buffer<double> sigma(sigma_py);
+        NPBufferList<double> U(U_py);
+        return compute_residual_normsq(sigma, U.buffers);
     }
 };

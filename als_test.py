@@ -40,6 +40,11 @@ class PyLowRank:
 
         return residual
 
+    def compute_diff_resid_sparse(self, rhs_ten):
+        sigma_lhs= np.zeros(self.R, dtype=np.double) 
+        residual = rhs_ten.compute_residual_normsq_py(sigma_lhs, self.U) 
+        return np.sqrt(residual)
+
     def compute_norm(self):
         sigma_lhs = np.zeros(self.R, dtype=np.double)
         self.ten.get_sigma(sigma_lhs, -1)
@@ -129,19 +134,28 @@ def als(lhs, rhs, J, method, iter):
         print("Caught SVD unconverged exception, terminating and returning trace...")
         return data
 
-    #with open('data/lstsq_problems.pickle', 'wb') as handle:
-    #    pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    
-    #print("Dumped data pickle")
+def sparse_als(lhs, rhs, J, method, iter):
+    data = []
+
+    als = ALS(lhs.ten, rhs.ten)
+    als.initialize_ds_als(J, method)
+
+    residual_approx = lhs.compute_diff_resid_sparse(rhs)
+    print(f"Residual: {residual_approx}")
+    exit(1)
+    try:
+        for i in range(iter):
+            for j in range(lhs.N):
+                als.execute_ds_als_update(j, True, True) 
+                residual_approx = lhs.compute_diff_resid_sparse(rhs)
+
+                print(f"Residual: {residual_approx}")
 
 if __name__=='__main__':
     i = 13
     R = 32
     N = 5
-    J = 20000
-
-    sparse_tensor = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
-    exit(1)
+    J = 40000
 
     trial_count = 5
     iterations = 25
@@ -154,9 +168,9 @@ if __name__=='__main__':
         for trial in range(trial_count): 
             lhs = PyLowRank([2 ** i] * N, 2 * R, seed=923845)
             lhs.ten.renormalize_columns(-1)
-            rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J, seed=29348)
-            rhs.ten.renormalize_columns(-1)
-            result[sampler].append(als(lhs, rhs, J, sampler, iterations))
+            rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
+            result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
+            exit(1)
 
     #with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:
     #    json.dump(result, outfile, indent=4)
