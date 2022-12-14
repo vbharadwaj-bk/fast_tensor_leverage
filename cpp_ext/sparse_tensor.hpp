@@ -139,23 +139,24 @@ public:
 
     uint64_t found_count = 0;
 
+    #pragma omp parallel for reduction(+:found_count)
     for(uint64_t j = 0; j < J; j++) {
       uint64_t input_offset = j * R;
       IDX_T* buf = indices(j * N); 
       auto pair_loc = lookup_table->find(buf);
       if(pair_loc != lookup_table->end()) {
-        found_count++;
         vector<pair<IDX_T, VAL_T>> &pairs = storage[pair_loc->second];
+        found_count += pairs.size();
         for(auto it = pairs.begin(); it != pairs.end(); it++) {
           uint64_t output_offset = it->first * R;
           double value = it->second;
           for(uint64_t k = 0; k < R; k++) {
+            #pragma omp atomic
             output[output_offset + k] += input[input_offset + k] * value; 
           }
         }  
       }
     }
-    cout << "Found nonzeros: " << found_count << endl;
   }
 };
 
@@ -208,7 +209,7 @@ public:
       uint64_t R = result.shape[1];
       Buffer<uint32_t> samples_transpose({J, N});
 
-
+      #pragma omp parallel for collapse(2)
       for(uint64_t i = 0; i < J; i++) {
         for(uint64_t k = 0; k < N; k++) {
           samples_transpose[i * N + k] = (uint32_t) samples[k * J + i]; 
@@ -225,8 +226,16 @@ public:
       // There is likely a faster way to do this computation... but okay, let's get it working first.
 
       uint64_t R = U[0].shape[1];
+      Buffer<double> chain_had_prod({R, R});
 
-      double residual_normsq = 0.0;
+      ATB_chain_prod(
+              U,
+              U,
+              sigma, 
+              sigma,
+              chain_had_prod);
+
+      double residual_normsq = std::accumulate(chain_had_prod(), chain_had_prod(R * R), 0.0);
 
       #pragma omp parallel
 {

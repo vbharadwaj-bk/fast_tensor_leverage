@@ -138,7 +138,6 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<py::array_t<uint32_t>, py::array_t<double>>())
         .def("compute_residual_normsq_py", &SparseTensor::compute_residual_normsq_py) 
         .def("get_norm_py", &SparseTensor::get_norm_py);
-        ;
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
@@ -150,6 +149,6 @@ PYBIND11_MODULE(als_module, m) {
 setup_pybind11(cfg)
 cfg['extra_compile_args'] = ['--std=c++2a', '-I/home/vbharadw/OpenBLAS_install/include', '-fopenmp', '-g']
 cfg['extra_link_args'] = ['-L/home/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-g']
-cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp'] 
+cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp', 'tensor.hpp'] 
 %>
 */
