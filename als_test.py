@@ -48,6 +48,11 @@ class PyLowRank:
         residual += inner_prod(self.U, self.U, sigma_lhs, sigma_lhs) 
         return np.sqrt(residual)
 
+    def compute_estimated_fit(self, rhs_ten):
+        diff_norm = self.compute_diff_resid_sparse(rhs_ten)
+        rhs_norm = rhs_ten.ten.get_norm_py()
+        return 1.0 - diff_norm / rhs_norm
+
     def compute_norm(self):
         sigma_lhs = np.zeros(self.R, dtype=np.double)
         self.ten.get_sigma(sigma_lhs, -1)
@@ -142,20 +147,16 @@ def sparse_als(lhs, rhs, J, method, iter):
     als = ALS(lhs.ten, rhs.ten)
     als.initialize_ds_als(J, method)
 
-    residual_approx = lhs.compute_diff_resid_sparse(rhs)
-    print(f"Residual: {residual_approx}")
+    estimated_fit = lhs.compute_estimated_fit(rhs)
+    print(f"Estimated Fit: {estimated_fit}")
 
     for i in range(iter):
         for j in range(lhs.N):
             als.execute_ds_als_update(j, True, True) 
-            residual_approx = lhs.compute_diff_resid_sparse(rhs)
+            estimated_fit = lhs.compute_estimated_fit(rhs)
+            print(f"Estimated Fit: {estimated_fit}")
 
-            exit(1)
-
-            print(f"Residual: {residual_approx}")
     return data 
-
-
 
 if __name__=='__main__':
     i = 13

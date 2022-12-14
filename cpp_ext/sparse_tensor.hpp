@@ -170,7 +170,7 @@ public:
     vector<HashIdxLookup<uint32_t, double>> lookups;
 
     uint64_t N, nnz;
-    double normsq;
+    double norm;
 
     SparseTensor(py::array_t<uint32_t> indices_py, py::array_t<double> values_py)
     :
@@ -186,6 +186,13 @@ public:
             values(), 
             nnz);
       }
+
+      norm = 0.0;
+      #pragma omp parallel for reduction(+:norm)
+      for(uint64_t i = 0; i < nnz; i++) {
+        norm += values[i] * values[i];
+      }
+      norm = sqrt(norm);
 
       // Sorting nonzeros would be good here...
     }
@@ -248,8 +255,12 @@ public:
     }
 
     double compute_residual_normsq_py(py::array_t<double> sigma_py, py::list U_py) {
-        Buffer<double> sigma(sigma_py);
-        NPBufferList<double> U(U_py);
-        return compute_residual_normsq(sigma, U.buffers);
+      Buffer<double> sigma(sigma_py);
+      NPBufferList<double> U(U_py);
+      return compute_residual_normsq(sigma, U.buffers);
+    }
+    
+    double get_norm_py() {
+      return norm; 
     }
 };
