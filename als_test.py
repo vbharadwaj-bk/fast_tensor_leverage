@@ -45,7 +45,6 @@ class PyLowRank:
         sigma_lhs= np.zeros(self.R, dtype=np.double) 
         self.ten.get_sigma(sigma_lhs, -1)
         residual = rhs_ten.ten.compute_residual_normsq_py(sigma_lhs, self.U)
-        residual += inner_prod(self.U, self.U, sigma_lhs, sigma_lhs) 
         return np.sqrt(residual)
 
     def compute_estimated_fit(self, rhs_ten):
