@@ -25,6 +25,9 @@ public:
     Buffer<double> sigma;
     Buffer<double> col_norms;
 
+    bool is_static;
+    double normsq;
+
     LowRankTensor(uint64_t R, uint64_t J,
         uint64_t max_rhs_rows, 
         py::list U_py
@@ -46,10 +49,15 @@ public:
         for(uint32_t i = 0; i < N; i++) {
             dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
+
+        // This is a static tensor. We will compute and store the norm^2
+        is_static = true;
+
+        get_sigma(sigma, -1);
+        normsq = ATB_chain_prod_sum(U, U, sigma, sigma);
     }
 
-    LowRankTensor(uint64_t R, 
-            py::list U_py)
+    LowRankTensor(uint64_t R, py::list U_py)
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
     U(U_py_bufs->buffers),
@@ -64,6 +72,25 @@ public:
         for(uint32_t i = 0; i < N; i++) {
             dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
+
+        is_static = false;
+    }
+
+    double get_normsq() {
+        if (! is_static) { 
+            get_sigma(sigma, -1); 
+            normsq = ATB_chain_prod_sum(U, U, sigma, sigma);
+        }
+        return normsq; 
+    };
+
+    double compute_residual_normsq(Buffer<double> &sigma_other, vector<Buffer<double>> &U_other) {
+        get_sigma(sigma, -1); 
+        double self_normsq = get_normsq();
+        double other_normsq = ATB_chain_prod_sum(U_other, U_other, sigma_other, sigma_other);
+        double inner_prod = ATB_chain_prod_sum(U, U_other, sigma, sigma_other);
+
+        return self_normsq + other_normsq - 2 * inner_prod;
     }
 
     // Convenience method for RHS sampling 
