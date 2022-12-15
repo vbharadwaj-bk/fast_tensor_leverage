@@ -223,7 +223,7 @@ double ATB_chain_prod_sum(
     uint64_t R_A = A[0].shape[0];
     uint64_t R_B = B[0].shape[0];
     Buffer<double> result({R_A, R_B});
-    ATB_chain_prod_sum(A, B, sigma_A, sigma_B, result, -1);
+    ATB_chain_prod(A, B, sigma_A, sigma_B, result, -1);
     return std::accumulate(result(), result(R_A * R_B), 0.0); 
 }
 

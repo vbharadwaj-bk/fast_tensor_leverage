@@ -189,12 +189,12 @@ public:
       }
 
       normsq = 0.0;
-      #pragma omp parallel for reduction(+:norm)
+      #pragma omp parallel for reduction(+:normsq)
       for(uint64_t i = 0; i < nnz; i++) {
         normsq += values[i] * values[i];
       }
 
-      // Sorting nonzeros would be good here...
+      // Sorting nonzeros would be good here... 
     }
 
     void execute_downsampled_mttkrp(
