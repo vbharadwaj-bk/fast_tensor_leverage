@@ -28,18 +28,14 @@ class PyLowRank:
         else:
             assert(False)
 
-    def compute_diff_resid(self, rhs_ten):
+    def compute_diff_resid(self, rhs):
         '''
         Computes the residual of the difference between two low-rank tensors.
         '''
-        sigma_lhs, sigma_rhs = np.zeros(self.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
-        U_lhs = self.U
+        sigma_lhs = np.zeros(self.R, dtype=np.double) 
         self.ten.get_sigma(sigma_lhs, -1)
-        U_rhs = rhs_ten.U
-        rhs_ten.ten.get_sigma(sigma_rhs, -1)
-        residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
-
-        return residual
+        normsq = rhs.ten.compute_residual_normsq_py(sigma_lhs, self.U)
+        return np.sqrt(normsq)
 
     def compute_diff_resid_sparse(self, rhs_ten):
         sigma_lhs= np.zeros(self.R, dtype=np.double) 
@@ -97,7 +93,7 @@ def als(lhs, rhs, J, method, iter):
     als.initialize_ds_als(J, method)
 
     residual = lhs.compute_diff_resid(rhs)
-    rhs_norm = rhs.compute_norm()
+    rhs_norm = np.sqrt(rhs.ten.get_normsq())
     print(f"Residual: {residual / rhs_norm}")
     try:
         for i in range(iter):
@@ -108,11 +104,10 @@ def als(lhs, rhs, J, method, iter):
 
                 als.execute_exact_als_update(j, True, True) 
                 #lhs.ten.renormalize_columns(j)
-
                 residual = lhs.compute_diff_resid(rhs)
-
-                als.execute_ds_als_update(j, True, True) 
+                als.execute_ds_als_update(j, True, True)
                 residual_approx = lhs.compute_diff_resid(rhs)
+
 
                 if residual > 0:
                     ratio = residual_approx / residual
