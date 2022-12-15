@@ -150,6 +150,88 @@ public:
     }
 };
 
+/*
+* exclude is the index of a matrix to exclude from the chain Hadamard product. Pass -1
+* to include all components in the chain Hadamard product.
+*/
+void ATB_chain_prod(
+        vector<Buffer<double>> &A,
+        vector<Buffer<double>> &B,
+        Buffer<double> &sigma_A, 
+        Buffer<double> &sigma_B,
+        Buffer<double> &result,
+        int exclude) {
+
+        uint64_t N = A.size();
+        uint64_t R_A = A[0].shape[1];
+        uint64_t R_B = B[0].shape[1];
+
+        vector<unique_ptr<Buffer<double>>> ATB;
+        for(uint64_t i = 0; i < A.size(); i++) {
+                ATB.emplace_back();
+                ATB[i].reset(new Buffer<double>({R_A, R_B}));
+        }
+
+        for(uint64_t i = 0; i < R_A; i++) {
+                for(uint64_t j = 0; j < R_B; j++) {
+                        result[i * R_B + j] = sigma_A[i] * sigma_B[j];
+                }
+        }
+
+        // Can replace with a batch DGEMM call
+        for(uint64_t i = 0; i < N; i++) {
+            if((int) i != exclude) {
+                uint64_t K = A[i].shape[0];
+                cblas_dgemm(
+                        CblasRowMajor,
+                        CblasTrans,
+                        CblasNoTrans,
+                        R_A,
+                        R_B,
+                        K,
+                        1.0,
+                        A[i](),
+                        R_A,
+                        B[i](),
+                        R_B,
+                        0.0,
+                        (*(ATB[i]))(),
+                        R_B
+                );
+            }
+        }
+
+        for(uint64_t k = 0; k < N; k++) {
+                if((int) k != exclude) {
+                    for(uint64_t i = 0; i < R_A; i++) {
+                            for(uint64_t j = 0; j < R_B; j++) {
+                                    result[i * R_B + j] *= (*(ATB[k]))[i * R_B + j];
+                            }
+                    }
+                }
+        }
+}
+
+void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
+    uint64_t R = in.shape[1];
+    Buffer<double> M({R, R});
+
+    // Compute pseudo-inverse of the input matrix through dsyrk and eigendecomposition  
+    cblas_dsyrk(CblasRowMajor, 
+                CblasUpper, 
+                CblasTrans,
+                R,
+                in.shape[0], 
+                1.0, 
+                in(), 
+                R, 
+                0.0, 
+                M(), 
+                R);
+
+    compute_pinv_square(M, out);
+}
+
 
 /*typedef chrono::time_point<std::chrono::steady_clock> my_timer_t; 
 

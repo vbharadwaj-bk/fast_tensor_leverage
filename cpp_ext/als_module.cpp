@@ -124,6 +124,68 @@ public:
             sampler->update_sampler(j);
         }
     }
+
+    void execute_exact_als_update(uint32_t j, 
+            bool renormalize,
+            bool update_sampler
+            ) {
+
+        uint64_t Ij = cp_decomp.U[j].shape[0];
+        Buffer<double> mttkrp_res({Ij, R});
+        Buffer<double> gram({R, R});
+        Buffer<double> gram_pinv({R, R});
+
+        Buffer<double> ones({R});
+        std::fill(ones(), ones(R), 1.0);
+
+        ATB_chain_prod(
+                cp_decomp.U,
+                cp_decomp.U,
+                ones, 
+                ones,
+                gram,
+                j);        
+
+        cp_decomp.get_sigma(cp_decomp.sigma, j);
+        ground_truth.execute_exact_mttkrp(cp_decomp.U, j, mttkrp_res);
+
+        // Multiply gram matrix result by the pseudo-inverse
+        cblas_dsymm(
+            CblasRowMajor,
+            CblasRight,
+            CblasUpper,
+            (uint32_t) Ij,
+            (uint32_t) R,
+            1.0,
+            gram_pinv(),
+            R,
+            mttkrp_res(),
+            R,
+            0.0,
+            cp_decomp.U[j](),
+            R
+        );
+
+        // Multiply result by sigma^(-1) of the CP
+        // decomposition. Assumes that sigma is correct
+        // upon entry to this function. 
+        #pragma omp parallel for collapse(2)
+        for(uint32_t u = 0; u < Ij; u++) {
+            for(uint32_t v = 0; v < R; v++) {
+                cp_decomp.U[j][u * R + v] /= cp_decomp.sigma[v]; 
+            }
+        }
+
+        if(renormalize) {
+            cp_decomp.renormalize_columns(j);
+        }
+
+        // We could update the sampler here... maybe should take that argument
+        // off the signature for this function.
+
+    }
+
+
 };
 
 PYBIND11_MODULE(als_module, m) {
@@ -141,6 +203,7 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
+        .def("execute_exact_als_update", &ALS::execute_exact_als_update)
         .def("execute_ds_als_update", &ALS::execute_ds_als_update);
 }
 
