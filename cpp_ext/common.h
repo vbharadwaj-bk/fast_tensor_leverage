@@ -8,6 +8,8 @@
 #include <initializer_list>
 #include <chrono>
 #include "omp.h"
+#include "cblas.h"
+#include "lapacke.h"
 
 using namespace std;
 namespace py = pybind11;
@@ -212,6 +214,46 @@ void ATB_chain_prod(
         }
 }
 
+void compute_pinv_square(Buffer<double> &M, Buffer<double> &out) {
+    uint64_t R = M.shape[0];
+    double eigenvalue_tolerance = 0.0;
+    Buffer<double> lambda({R});
+
+    LAPACKE_dsyev( CblasRowMajor, 
+                    'V', 
+                    'U', 
+                    R,
+                    M(), 
+                    R, 
+                    lambda() );
+
+    for(uint32_t v = 0; v < R; v++) {
+        if(lambda[v] > eigenvalue_tolerance) {
+            for(uint32_t u = 0; u < R; u++) {
+                M[u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
+            }
+        }
+        else {
+            for(uint32_t u = 0; u < R; u++) {
+                M[u * R + v] = 0.0; 
+            }
+        }
+    }
+
+    cblas_dsyrk(CblasRowMajor, 
+                CblasUpper, 
+                CblasNoTrans,
+                R,
+                R, 
+                1.0, 
+                (const double*) M(), 
+                R, 
+                0.0, 
+                out(), 
+                R);
+
+}
+
 void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
     uint64_t R = in.shape[1];
     Buffer<double> M({R, R});
@@ -231,6 +273,8 @@ void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
 
     compute_pinv_square(M, out);
 }
+
+
 
 
 /*typedef chrono::time_point<std::chrono::steady_clock> my_timer_t; 

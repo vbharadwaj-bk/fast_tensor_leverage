@@ -95,6 +95,7 @@ def als(lhs, rhs, J, method, iter):
     als.initialize_ds_als(J, method)
 
     residual = lhs.compute_diff_resid(rhs)
+    rhs_norm = rhs.compute_norm()
     print(f"Residual: {residual / rhs_norm}")
     try:
         for i in range(iter):
@@ -104,15 +105,19 @@ def als(lhs, rhs, J, method, iter):
                 rhs.ten.get_sigma(sigma_rhs, -1)
 
                 g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
-                print(la.cond(g))
                 g_pinv = la.pinv(g) 
 
                 elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
-                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs)
+                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs) 
+ 
                 true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
+                #print(true_soln)
 
-                lhs.U[j][:] = true_soln
-                lhs.ten.renormalize_columns(j)
+                als.execute_exact_als_update(j, True, True) 
+
+
+                #lhs.U[j][:] = true_soln
+                #lhs.ten.renormalize_columns(j)
                 residual = lhs.compute_diff_resid(rhs)
 
                 als.execute_ds_als_update(j, True, True) 
@@ -159,9 +164,9 @@ def sparse_als(lhs, rhs, J, method, iter):
 
 if __name__=='__main__':
     i = 13
-    R = 16
+    R = 4
     N = 4
-    J = 100000
+    J = 10000
 
     trial_count = 5
     iterations = 25
@@ -172,11 +177,13 @@ if __name__=='__main__':
     for sampler in samplers:
         result[sampler] = []
         for trial in range(trial_count):
-            rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
-            print(rhs.dims)
-            lhs = PyLowRank(rhs.dims, 2 * R, seed=923845)
+            rhs = PyLowRank([2 ** 5] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+            rhs.ten.renormalize_columns(-1)
+            #rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
+            lhs = PyLowRank(rhs.dims, R, seed=923845)
             lhs.ten.renormalize_columns(-1)
-            result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
+            result[sampler].append(als(lhs, rhs, J, sampler, iterations))
+            #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
             exit(1)
 
     #with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:

@@ -233,7 +233,8 @@ public:
               U,
               sigma, 
               sigma,
-              chain_had_prod);
+              chain_had_prod,
+              -1);
 
       double residual_normsq = std::accumulate(chain_had_prod(), chain_had_prod(R * R), 0.0);
 
