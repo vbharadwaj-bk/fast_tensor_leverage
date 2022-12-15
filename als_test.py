@@ -88,6 +88,8 @@ class PySparseTensor:
 
         print("Finished loading sparse tensor...")
 
+
+
 def als(lhs, rhs, J, method, iter):
     data = []
 
@@ -100,24 +102,13 @@ def als(lhs, rhs, J, method, iter):
     try:
         for i in range(iter):
             for j in range(lhs.N):
-                sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
-                lhs.ten.get_sigma(sigma_lhs, j)
-                rhs.ten.get_sigma(sigma_rhs, -1)
 
+                # This is used just to check for NaN values.
                 g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
-                g_pinv = la.pinv(g) 
-
-                elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
-                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs) 
- 
-                true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
-                #print(true_soln)
 
                 als.execute_exact_als_update(j, True, True) 
-
-
-                #lhs.U[j][:] = true_soln
                 #lhs.ten.renormalize_columns(j)
+
                 residual = lhs.compute_diff_resid(rhs)
 
                 als.execute_ds_als_update(j, True, True) 
@@ -180,7 +171,7 @@ if __name__=='__main__':
             rhs = PyLowRank([2 ** 5] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
             rhs.ten.renormalize_columns(-1)
             #rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
-            lhs = PyLowRank(rhs.dims, R, seed=923845)
+            lhs = PyLowRank(rhs.dims, 2 * R, seed=923845)
             lhs.ten.renormalize_columns(-1)
             result[sampler].append(als(lhs, rhs, J, sampler, iterations))
             #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
