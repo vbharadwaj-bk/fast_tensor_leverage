@@ -171,7 +171,7 @@ public:
     vector<HashIdxLookup<uint32_t, double>> lookups;
 
     uint64_t N, nnz;
-    double norm;
+    double normsq;
 
     SparseTensor(py::array_t<uint32_t> indices_py, py::array_t<double> values_py)
     :
@@ -188,12 +188,11 @@ public:
             nnz);
       }
 
-      norm = 0.0;
+      normsq = 0.0;
       #pragma omp parallel for reduction(+:norm)
       for(uint64_t i = 0; i < nnz; i++) {
-        norm += values[i] * values[i];
+        normsq += values[i] * values[i];
       }
-      norm = sqrt(norm);
 
       // Sorting nonzeros would be good here...
     }
@@ -228,15 +227,7 @@ public:
       uint64_t R = U[0].shape[1];
       Buffer<double> chain_had_prod({R, R});
 
-      ATB_chain_prod(
-              U,
-              U,
-              sigma, 
-              sigma,
-              chain_had_prod,
-              -1);
-
-      double residual_normsq = std::accumulate(chain_had_prod(), chain_had_prod(R * R), 0.0);
+      double residual_normsq = ATB_chain_prod_sum(U, U, sigma, sigma);
 
       #pragma omp parallel
 {
@@ -263,14 +254,8 @@ public:
 }
         return residual_normsq;
     }
-
-    double compute_residual_normsq_py(py::array_t<double> sigma_py, py::list U_py) {
-      Buffer<double> sigma(sigma_py);
-      NPBufferList<double> U(U_py);
-      return compute_residual_normsq(sigma, U.buffers);
-    }
-    
-    double get_norm_py() {
-      return norm; 
+ 
+    double get_normsq() {
+      return normsq; 
     }
 };

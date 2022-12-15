@@ -211,8 +211,8 @@ PYBIND11_MODULE(als_module, m) {
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
         .def(py::init<py::array_t<uint32_t>, py::array_t<double>>())
-        .def("compute_residual_normsq_py", &SparseTensor::compute_residual_normsq_py) 
-        .def("get_norm_py", &SparseTensor::get_norm_py);
+        .def("compute_residual_normsq", &SparseTensor::compute_residual_normsq_py) 
+        .def("get_normsq", &SparseTensor::get_normsq);
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
         .def("initialize_ds_als", &ALS::initialize_ds_als) 

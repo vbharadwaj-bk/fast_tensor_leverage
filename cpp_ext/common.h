@@ -214,6 +214,19 @@ void ATB_chain_prod(
         }
 }
 
+double ATB_chain_prod_sum(
+        vector<Buffer<double>> &A,
+        vector<Buffer<double>> &B,
+        Buffer<double> &sigma_A, 
+        Buffer<double> &sigma_B) {
+
+    uint64_t R_A = A[0].shape[0];
+    uint64_t R_B = B[0].shape[0];
+    Buffer<double> result({R_A, R_B});
+    ATB_chain_prod_sum(A, B, sigma_A, sigma_B, result, -1);
+    return std::accumulate(result(), result(R_A * R_B), 0.0); 
+}
+
 void compute_pinv_square(Buffer<double> &M, Buffer<double> &out) {
     uint64_t R = M.shape[0];
     double eigenvalue_tolerance = 0.0;
