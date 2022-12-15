@@ -157,6 +157,41 @@ public:
         delete rhs_buf; 
     }
 
+    void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
+        uint64_t R_L = sigma_L.shape[0];
+        Buffer<double> sigma({R});
+        Buffer<double> chain_had_prod({R, R_L});
+        get_sigma(sigma, -1);
+
+        Buffer<double> ones({R});
+        std::fill(ones(), ones(R), 1.0);
+
+        ATB_chain_prod(
+                U,
+                U_L,
+                sigma,
+                ones(),
+                chain_had_prod,
+                j);
+
+        cblas_dgemm(
+            CblasRowMajor,
+            CblasNoTrans,
+            CblasNoTrans,
+            (uint32_t) U_L[j].shape[0],
+            (uint32_t) U_L[j].shape[1],
+            (uint32_t) R,
+            1.0,
+            U[j](),
+            (uint32_t) R,
+            temp1(),
+            R_L,
+            1.0,
+            mttkrp_res(),
+            R_L
+        );
+    }
+
     /*
     * Returns the product of all column norms, except for the
     * one specified by the parameter. If the parameter is -1,

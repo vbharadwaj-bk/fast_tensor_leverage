@@ -92,23 +92,10 @@ void compute_DAGAT(double* A, double* G,
     }
 }
 
-void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
+void compute_pinv_square(Buffer<double> &M, Buffer<double> &out) {
     uint64_t R = in.shape[1];
     double eigenvalue_tolerance = 0.0;
-    Buffer<double> M({R, R});
     Buffer<double> lambda({R});
-    // Compute pseudo-inverse of the input matrix through dsyrk and eigendecomposition  
-    cblas_dsyrk(CblasRowMajor, 
-                CblasUpper, 
-                CblasTrans,
-                R,
-                in.shape[0], 
-                1.0, 
-                in(), 
-                R, 
-                0.0, 
-                M(), 
-                R);
 
     LAPACKE_dsyev( CblasRowMajor, 
                     'V', 
@@ -142,4 +129,6 @@ void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
                 0.0, 
                 out(), 
                 R);
+
 }
+

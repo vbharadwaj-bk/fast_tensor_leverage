@@ -239,26 +239,26 @@ public:
 
       #pragma omp parallel
 {
-        vector<double*> base_ptrs;
-        for(uint64_t j = 0; j < N; j++) {
-            base_ptrs.push_back(nullptr);
-        }
-        
-        #pragma omp for reduction (+:residual_normsq)
-        for(uint64_t i = 0; i < nnz; i++) {
-            for(uint64_t j = 0; j < N; j++) {
-                base_ptrs[j] = U[j](indices[i * N + j] * R); 
-            } 
-            double value = 0.0;
-            for(uint64_t k = 0; k < R; k++) {
-                double coord_buffer = sigma[k];
-                for(uint64_t j = 0; j < N; j++) {
-                    coord_buffer *= base_ptrs[j][k]; 
-                }
-                value += coord_buffer;
-            }
-            residual_normsq += values[i] * values[i] - 2 * value * values[i];
-        }
+      vector<double*> base_ptrs;
+      for(uint64_t j = 0; j < N; j++) {
+          base_ptrs.push_back(nullptr);
+      }
+      
+      #pragma omp for reduction (+:residual_normsq)
+      for(uint64_t i = 0; i < nnz; i++) {
+          for(uint64_t j = 0; j < N; j++) {
+              base_ptrs[j] = U[j](indices[i * N + j] * R); 
+          } 
+          double value = 0.0;
+          for(uint64_t k = 0; k < R; k++) {
+              double coord_buffer = sigma[k];
+              for(uint64_t j = 0; j < N; j++) {
+                  coord_buffer *= base_ptrs[j][k]; 
+              }
+              value += coord_buffer;
+          }
+          residual_normsq += values[i] * values[i] - 2 * value * values[i];
+      }
 }
         return residual_normsq;
     }
