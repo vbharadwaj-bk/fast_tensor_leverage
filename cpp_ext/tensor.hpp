@@ -10,7 +10,7 @@ using namespace std;
 
 class __attribute__((visibility("hidden"))) Tensor {
 public:
-    void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
+    virtual void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
 
     }
 

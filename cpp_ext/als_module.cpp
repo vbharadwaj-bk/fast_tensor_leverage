@@ -131,6 +131,8 @@ public:
             ) {
 
         uint64_t Ij = cp_decomp.U[j].shape[0];
+        uint64_t R = cp_decomp.R; 
+
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> gram({R, R});
         Buffer<double> gram_pinv({R, R});
@@ -146,7 +148,7 @@ public:
                 gram,
                 j);        
 
-        cp_decomp.get_sigma(cp_decomp.sigma, j);
+        compute_pinv_square(gram, gram_pinv);
         ground_truth.execute_exact_mttkrp(cp_decomp.U, j, mttkrp_res);
 
         // Multiply gram matrix result by the pseudo-inverse
@@ -166,6 +168,8 @@ public:
             R
         );
 
+        cp_decomp.get_sigma(cp_decomp.sigma, j);
+
         // Multiply result by sigma^(-1) of the CP
         // decomposition. Assumes that sigma is correct
         // upon entry to this function. 
@@ -175,6 +179,15 @@ public:
                 cp_decomp.U[j][u * R + v] /= cp_decomp.sigma[v]; 
             }
         }
+
+        /*cout << "-----------------------------------" << endl;
+        for(uint64_t i = 0; i < Ij; i++) {
+            for(uint64_t k = 0; k < R; k++) {
+                cout << cp_decomp.U[j][i * R + k] << " ";
+            }
+            cout << endl;
+        }
+        cout << "-----------------------------------" << endl;*/
 
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
