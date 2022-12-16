@@ -82,22 +82,23 @@ def als(lhs, rhs, J, method, iter):
     residual = lhs.compute_diff_resid(rhs)
     rhs_norm = np.sqrt(rhs.ten.get_normsq())
 
-    try:
+    #try:
+    if True:
         for i in range(iter):
             for j in range(lhs.N):
                 # This is used just to check for NaN values.
-                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
+                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(lhs.N) if i != j])
                 detected_nan = np.any(np.isnan(g))
 
                 if detected_nan:
                     print("Found a NaN value!")
 
-                als.execute_exact_als_update(j, True, True)
-                residual = lhs.compute_diff_resid(rhs)
+                #als.execute_exact_als_update(j, True, True)
+                #residual = lhs.compute_diff_resid(rhs)
+                residual = 0.0
 
                 als.execute_ds_als_update(j, True, True)
                 residual_approx = lhs.compute_diff_resid(rhs)
-
 
                 if residual > 0:
                     ratio = residual_approx / residual
@@ -105,8 +106,11 @@ def als(lhs, rhs, J, method, iter):
                     ratio = 1.0
 
                 #print(f"Condition #: {la.cond(g)}")
-                print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}")
+                fit = lhs.compute_estimated_fit(rhs)
+                print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, Fit: {fit}")
+
                 data_entry = {}
+                data_entry["fit"] = fit 
                 data_entry["exact_solve_residual"] = residual
                 data_entry["approx_solve_residual"] = residual_approx
                 data_entry["exact_solve_residual_normalized"] = residual / rhs_norm
@@ -117,9 +121,9 @@ def als(lhs, rhs, J, method, iter):
                 
                 data.append(data_entry)
         return data 
-    except:
-        print("Caught SVD unconverged exception, terminating and returning trace...")
-        return data
+    #except:
+    #    print("Caught SVD unconverged exception, terminating and returning trace...")
+    #    return data
 
 def sparse_als(lhs, rhs, J, method, iter):
     data = []
@@ -139,24 +143,22 @@ def sparse_als(lhs, rhs, J, method, iter):
     return data 
 
 if __name__=='__main__':
-    i = 5
-    R = 4
-    N = 4
+    R = 32
     J = 10000
 
     trial_count = 5
     iterations = 25
-    result = {"I": 2 ** i, "R" : R, "N": N, "J": J}
+    result = {"R" : R, "J": J}
 
     samplers = ["efficient"]
 
     for sampler in samplers:
         result[sampler] = []
         for trial in range(trial_count):
-            rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
-            rhs.ten.renormalize_columns(-1)
-            #rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
-            lhs = PyLowRank(rhs.dims, 2 * R, seed=923845)
+            #rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+            #rhs.ten.renormalize_columns(-1)
+            rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
+            lhs = PyLowRank(rhs.dims, R, seed=923845)
             lhs.ten.renormalize_columns(-1)
             result[sampler].append(als(lhs, rhs, J, sampler, iterations))
             #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
