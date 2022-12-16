@@ -216,16 +216,6 @@ public:
             0.0,
             mttkrp_res(),
             R_L);
-
-        /*cout << "---------------------------------" << endl; 
-        for(uint64_t i = 0; i < U[j].shape[0]; i++) {
-            for(uint64_t k = 0; k < R_L; k++) {
-                cout << mttkrp_res[i * R_L + k] << " ";
-            }
-            cout << endl;
-        }
-        cout << "---------------------------------" << endl;*/
-
     }
 
     /*
