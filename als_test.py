@@ -34,8 +34,19 @@ class PyLowRank:
         '''
         sigma_lhs = np.zeros(self.R, dtype=np.double) 
         self.ten.get_sigma(sigma_lhs, -1)
-        normsq = rhs.ten.compute_residual_normsq_py(sigma_lhs, self.U)
-        return np.sqrt(normsq)
+
+        sigma_rhs = np.zeros(rhs.R, dtype=np.double) 
+        rhs.ten.get_sigma(sigma_rhs, -1)
+
+        normsq = rhs.ten.compute_residual_normsq(sigma_lhs, self.U)
+
+        lhs_normsq = self.compute_norm() ** 2
+        rhs_normsq = rhs.compute_norm() ** 2
+        inprod = inner_prod(self.U, rhs.U, sigma_lhs, sigma_rhs)
+
+        return np.sqrt(lhs_normsq + rhs_normsq - 2 * inprod)
+
+        #return np.sqrt(normsq)
 
     def compute_diff_resid_sparse(self, rhs_ten):
         sigma_lhs= np.zeros(self.R, dtype=np.double) 
@@ -93,8 +104,9 @@ def als(lhs, rhs, J, method, iter):
     als.initialize_ds_als(J, method)
 
     residual = lhs.compute_diff_resid(rhs)
-    rhs_norm = np.sqrt(rhs.ten.get_normsq())
-    print(f"Residual: {residual / rhs_norm}")
+    #rhs_norm = np.sqrt(rhs.ten.get_normsq())
+    rhs_norm = rhs.compute_norm()
+
     try:
         for i in range(iter):
             for j in range(lhs.N):
@@ -102,12 +114,18 @@ def als(lhs, rhs, J, method, iter):
                 # This is used just to check for NaN values.
                 g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
 
+                detected_nan = np.any(np.isnan(g))
+
+                if detected_nan:
+                    print("Found a NaN value!")
+
                 als.execute_exact_als_update(j, True, True) 
                 #lhs.ten.renormalize_columns(j)
                 residual = lhs.compute_diff_resid(rhs)
+                print(residual)
                 als.execute_ds_als_update(j, True, True)
                 residual_approx = lhs.compute_diff_resid(rhs)
-
+                print(residual_approx)
 
                 if residual > 0:
                     ratio = residual_approx / residual

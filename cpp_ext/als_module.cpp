@@ -203,16 +203,16 @@ public:
 
 PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
-        .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py);
+        .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py)
+        .def("compute_residual_normsq", &Tensor::compute_residual_normsq_py) 
+        .def("get_normsq", &Tensor::get_normsq);
     py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::list>()) 
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
-        .def(py::init<py::array_t<uint32_t>, py::array_t<double>>())
-        .def("compute_residual_normsq", &SparseTensor::compute_residual_normsq_py) 
-        .def("get_normsq", &SparseTensor::get_normsq);
+        .def(py::init<py::array_t<uint32_t>, py::array_t<double>>());
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
