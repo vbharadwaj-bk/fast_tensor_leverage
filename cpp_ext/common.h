@@ -168,21 +168,27 @@ void ATB_chain_prod(
         uint64_t R_A = A[0].shape[1];
         uint64_t R_B = B[0].shape[1];
 
+        std::fill(result(), result(R_A * R_B), 0.0);
+
         vector<unique_ptr<Buffer<double>>> ATB;
         for(uint64_t i = 0; i < A.size(); i++) {
                 ATB.emplace_back();
                 ATB[i].reset(new Buffer<double>({R_A, R_B}));
         }
 
+        //cout << "---------------------" << endl;
         for(uint64_t i = 0; i < R_A; i++) {
                 for(uint64_t j = 0; j < R_B; j++) {
                         result[i * R_B + j] = sigma_A[i] * sigma_B[j];
+                        //cout << sigma_A[i] * sigma_B[j] << " ";
                 }
+                //cout << endl;
         }
+        //cout << "---------------------" << endl;
 
         // Can replace with a batch DGEMM call
         for(uint64_t i = 0; i < N; i++) {
-            if((int) i != exclude) {
+            if(((int) i) != exclude) {
                 uint64_t K = A[i].shape[0];
                 cblas_dgemm(
                         CblasRowMajor,
@@ -204,7 +210,7 @@ void ATB_chain_prod(
         }
 
         for(uint64_t k = 0; k < N; k++) {
-                if((int) k != exclude) {
+                if(((int) k) != exclude) {
                     for(uint64_t i = 0; i < R_A; i++) {
                             for(uint64_t j = 0; j < R_B; j++) {
                                     result[i * R_B + j] *= (*(ATB[k]))[i * R_B + j];
@@ -220,8 +226,8 @@ double ATB_chain_prod_sum(
         Buffer<double> &sigma_A, 
         Buffer<double> &sigma_B) {
 
-    uint64_t R_A = A[0].shape[0];
-    uint64_t R_B = B[0].shape[0];
+    uint64_t R_A = A[0].shape[1];
+    uint64_t R_B = B[0].shape[1];
     Buffer<double> result({R_A, R_B});
     ATB_chain_prod(A, B, sigma_A, sigma_B, result, -1);
     return std::accumulate(result(), result(R_A * R_B), 0.0); 

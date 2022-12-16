@@ -44,9 +44,13 @@ class PyLowRank:
         rhs_normsq = rhs.compute_norm() ** 2
         inprod = inner_prod(self.U, rhs.U, sigma_lhs, sigma_rhs)
 
-        return np.sqrt(lhs_normsq + rhs_normsq - 2 * inprod)
+        #print(f"LHS Normsq Python: {lhs_normsq}") 
+        #print(f"RHS Normsq Python: {rhs_normsq}") 
+        #print(f"Inner product Python: {inprod}") 
 
-        #return np.sqrt(normsq)
+        #return np.sqrt(lhs_normsq + rhs_normsq - 2 * inprod)
+
+        return np.sqrt(normsq)
 
     def compute_diff_resid_sparse(self, rhs_ten):
         sigma_lhs= np.zeros(self.R, dtype=np.double) 
@@ -104,12 +108,31 @@ def als(lhs, rhs, J, method, iter):
     als.initialize_ds_als(J, method)
 
     residual = lhs.compute_diff_resid(rhs)
-    #rhs_norm = np.sqrt(rhs.ten.get_normsq())
-    rhs_norm = rhs.compute_norm()
+    rhs_norm = np.sqrt(rhs.ten.get_normsq())
+    #rhs_norm = rhs.compute_norm()
 
     try:
         for i in range(iter):
             for j in range(lhs.N):
+                #### DEBUGGING!!
+
+                sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
+                lhs.ten.get_sigma(sigma_lhs, j)
+                rhs.ten.get_sigma(sigma_rhs, -1)
+
+                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
+                g_pinv = la.pinv(g) 
+
+                elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
+                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs) 
+
+                #print(elwise_prod.T)
+                #print(np.outer(np.ones(lhs.R), sigma_rhs).T)
+
+                true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
+                #print(rhs.U[j] @ elwise_prod.T)
+
+                #### END DEBUGGING!
 
                 # This is used just to check for NaN values.
                 g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
@@ -119,13 +142,12 @@ def als(lhs, rhs, J, method, iter):
                 if detected_nan:
                     print("Found a NaN value!")
 
-                als.execute_exact_als_update(j, True, True) 
-                #lhs.ten.renormalize_columns(j)
+                als.execute_exact_als_update(j, True, True)
                 residual = lhs.compute_diff_resid(rhs)
-                print(residual)
+
                 als.execute_ds_als_update(j, True, True)
                 residual_approx = lhs.compute_diff_resid(rhs)
-                print(residual_approx)
+
 
                 if residual > 0:
                     ratio = residual_approx / residual
@@ -167,7 +189,7 @@ def sparse_als(lhs, rhs, J, method, iter):
     return data 
 
 if __name__=='__main__':
-    i = 13
+    i = 5
     R = 4
     N = 4
     J = 10000
@@ -181,7 +203,7 @@ if __name__=='__main__':
     for sampler in samplers:
         result[sampler] = []
         for trial in range(trial_count):
-            rhs = PyLowRank([2 ** 5] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+            rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
             rhs.ten.renormalize_columns(-1)
             #rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
             lhs = PyLowRank(rhs.dims, 2 * R, seed=923845)
