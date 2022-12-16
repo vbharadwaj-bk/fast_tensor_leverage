@@ -140,29 +140,30 @@ def sparse_als(lhs, rhs, J, method, iter):
             estimated_fit = lhs.compute_estimated_fit(rhs)
             print(f"Estimated Fit: {estimated_fit}")
 
-    return data 
+    return data
 
 if __name__=='__main__':
-    R = 32
-    J = 10000
+    J = 50000
 
-    trial_count = 5
-    iterations = 25
-    result = {"R" : R, "J": J}
+    trial_count = 3
+    iterations = 10
+    result = {}
 
     samplers = ["efficient"]
+    R_values = [4, 8, 16, 32, 64, 128]
 
-    for sampler in samplers:
-        result[sampler] = []
-        for trial in range(trial_count):
-            #rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
-            #rhs.ten.renormalize_columns(-1)
-            rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
-            lhs = PyLowRank(rhs.dims, R, seed=923845)
-            lhs.ten.renormalize_columns(-1)
-            result[sampler].append(als(lhs, rhs, J, sampler, iterations))
-            #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
-            exit(1)
+    for R in R_values: 
+        result[R] = {}
+        for sampler in samplers:
+            result[R][sampler] = []
+            for trial in range(trial_count):
+                #rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+                #rhs.ten.renormalize_columns(-1)
+                rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
+                lhs = PyLowRank(rhs.dims, R, seed=923845)
+                lhs.ten.renormalize_columns(-1)
+                result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
+                #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
 
-    #with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:
-    #    json.dump(result, outfile, indent=4)
+    with open('outputs/synthetic_sparse_comparison.json', 'w') as outfile:
+        json.dump(result, outfile, indent=4)
