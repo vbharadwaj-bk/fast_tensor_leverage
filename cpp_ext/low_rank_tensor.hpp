@@ -88,9 +88,13 @@ public:
         get_sigma(sigma, -1); 
         double self_normsq = get_normsq();
         double other_normsq = ATB_chain_prod_sum(U_other, U_other, sigma_other, sigma_other);
-        double inner_prod = ATB_chain_prod_sum(U, U_other, sigma, sigma_other);
+        double inner_prod = ATB_chain_prod_sum(U_other, U, sigma_other, sigma);
 
-        return self_normsq + other_normsq - 2 * inner_prod;
+        //cout << "LHS Normsq: " << other_normsq << endl;
+        //cout << "RHS Normsq: " << self_normsq << endl;
+        //cout << "Inner Product: " << inner_prod << endl;
+
+        return max(self_normsq + other_normsq - 2 * inner_prod, 0.0);
     }
 
     // Convenience method for RHS sampling 
@@ -190,8 +194,8 @@ public:
         Buffer<double> chain_had_prod({R, R_L});
         get_sigma(sigma, -1);
 
-        Buffer<double> ones({R});
-        std::fill(ones(), ones(R), 1.0);
+        Buffer<double> ones({R_L});
+        std::fill(ones(), ones(R_L), 1.0);
 
         ATB_chain_prod(
                 U,
@@ -216,6 +220,16 @@ public:
             0.0,
             mttkrp_res(),
             R_L);
+
+        /*cout << "---------------------------------" << endl; 
+        for(uint64_t i = 0; i < U[j].shape[0]; i++) {
+            for(uint64_t k = 0; k < R_L; k++) {
+                cout << mttkrp_res[i * R_L + k] << " ";
+            }
+            cout << endl;
+        }
+        cout << "---------------------------------" << endl;*/
+
     }
 
     /*
