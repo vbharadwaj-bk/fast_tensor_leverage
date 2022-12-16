@@ -197,6 +197,12 @@ public:
       // Sorting nonzeros would be good here... 
     }
 
+    void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
+      /*for(uint64_t i = 0; i < nnz; i++) {
+        normsq += values[i] * values[i];
+      }*/
+    }
+
     void execute_downsampled_mttkrp(
             Buffer<uint64_t> &samples, 
             Buffer<double> &lhs,

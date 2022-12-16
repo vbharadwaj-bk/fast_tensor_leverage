@@ -168,23 +168,18 @@ void ATB_chain_prod(
         uint64_t R_A = A[0].shape[1];
         uint64_t R_B = B[0].shape[1];
 
-        std::fill(result(), result(R_A * R_B), 0.0);
-
         vector<unique_ptr<Buffer<double>>> ATB;
         for(uint64_t i = 0; i < A.size(); i++) {
                 ATB.emplace_back();
                 ATB[i].reset(new Buffer<double>({R_A, R_B}));
         }
 
-        //cout << "---------------------" << endl;
         for(uint64_t i = 0; i < R_A; i++) {
                 for(uint64_t j = 0; j < R_B; j++) {
                         result[i * R_B + j] = sigma_A[i] * sigma_B[j];
-                        //cout << sigma_A[i] * sigma_B[j] << " ";
                 }
-                //cout << endl;
+
         }
-        //cout << "---------------------" << endl;
 
         // Can replace with a batch DGEMM call
         for(uint64_t i = 0; i < N; i++) {
@@ -209,8 +204,11 @@ void ATB_chain_prod(
             }
         }
 
+        #pragma omp parallel 
+{
         for(uint64_t k = 0; k < N; k++) {
                 if(((int) k) != exclude) {
+                    #pragma omp for collapse(2)
                     for(uint64_t i = 0; i < R_A; i++) {
                             for(uint64_t j = 0; j < R_B; j++) {
                                     result[i * R_B + j] *= (*(ATB[k]))[i * R_B + j];
@@ -218,6 +216,7 @@ void ATB_chain_prod(
                     }
                 }
         }
+}
 }
 
 double ATB_chain_prod_sum(
