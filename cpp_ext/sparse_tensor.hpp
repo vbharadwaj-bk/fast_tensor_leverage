@@ -207,8 +207,8 @@ public:
       
       #pragma omp for
       for(uint64_t i = 0; i < nnz; i++) {
-        std::fill(had_product(), had_product(R), 1.0);
-        uint32_t* index = indices(i * R);
+        std::fill(had_product(), had_product(R), values[i]);
+        uint32_t* index = indices(i * N);
 
         for(uint64_t k = 0; k < N; k++) {
           if(k != j) {
