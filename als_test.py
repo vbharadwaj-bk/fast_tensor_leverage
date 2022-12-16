@@ -93,9 +93,9 @@ def als(lhs, rhs, J, method, iter):
                 if detected_nan:
                     print("Found a NaN value!")
 
-                #als.execute_exact_als_update(j, True, True)
-                #residual = lhs.compute_diff_resid(rhs)
-                residual = 0.0
+                als.execute_exact_als_update(j, True, True)
+                residual = lhs.compute_diff_resid(rhs)
+                #residual = 0.0
 
                 als.execute_ds_als_update(j, True, True)
                 residual_approx = lhs.compute_diff_resid(rhs)
