@@ -222,7 +222,6 @@ public:
           #pragma omp atomic
           mttkrp_res[index[j] * R + u] += had_product[u];
         }
-
       }
 } 
     }
