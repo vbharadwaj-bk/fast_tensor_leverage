@@ -34,39 +34,13 @@ class PyLowRank:
         '''
         sigma_lhs = np.zeros(self.R, dtype=np.double) 
         self.ten.get_sigma(sigma_lhs, -1)
-
-        sigma_rhs = np.zeros(rhs.R, dtype=np.double) 
-        rhs.ten.get_sigma(sigma_rhs, -1)
-
         normsq = rhs.ten.compute_residual_normsq(sigma_lhs, self.U)
-
-        lhs_normsq = self.compute_norm() ** 2
-        rhs_normsq = rhs.compute_norm() ** 2
-        inprod = inner_prod(self.U, rhs.U, sigma_lhs, sigma_rhs)
-
-        #print(f"LHS Normsq Python: {lhs_normsq}") 
-        #print(f"RHS Normsq Python: {rhs_normsq}") 
-        #print(f"Inner product Python: {inprod}") 
-
-        #return np.sqrt(lhs_normsq + rhs_normsq - 2 * inprod)
-
         return np.sqrt(normsq)
 
-    def compute_diff_resid_sparse(self, rhs_ten):
-        sigma_lhs= np.zeros(self.R, dtype=np.double) 
-        self.ten.get_sigma(sigma_lhs, -1)
-        residual = rhs_ten.ten.compute_residual_normsq_py(sigma_lhs, self.U)
-        return np.sqrt(residual)
-
     def compute_estimated_fit(self, rhs_ten):
-        diff_norm = self.compute_diff_resid_sparse(rhs_ten)
-        rhs_norm = rhs_ten.ten.get_norm_py()
+        diff_norm = self.compute_diff_resid(rhs_ten)
+        rhs_norm = np.sqrt(rhs_ten.ten.get_normsq())
         return 1.0 - diff_norm / rhs_norm
-
-    def compute_norm(self):
-        sigma_lhs = np.zeros(self.R, dtype=np.double)
-        self.ten.get_sigma(sigma_lhs, -1)
-        return np.sqrt(inner_prod(self.U, self.U, sigma_lhs, sigma_lhs))
 
 class PySparseTensor:
     def __init__(self, filename, preprocessing=None):
@@ -96,9 +70,7 @@ class PySparseTensor:
                 exit(1)
 
         self.ten = SparseTensor(self.tensor_idxs, self.values) 
-
         print("Finished loading sparse tensor...")
-
 
 
 def als(lhs, rhs, J, method, iter):
@@ -109,34 +81,12 @@ def als(lhs, rhs, J, method, iter):
 
     residual = lhs.compute_diff_resid(rhs)
     rhs_norm = np.sqrt(rhs.ten.get_normsq())
-    #rhs_norm = rhs.compute_norm()
 
     try:
         for i in range(iter):
             for j in range(lhs.N):
-                #### DEBUGGING!!
-
-                sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
-                lhs.ten.get_sigma(sigma_lhs, j)
-                rhs.ten.get_sigma(sigma_rhs, -1)
-
-                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
-                g_pinv = la.pinv(g) 
-
-                elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
-                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs) 
-
-                #print(elwise_prod.T)
-                #print(np.outer(np.ones(lhs.R), sigma_rhs).T)
-
-                true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
-                #print(rhs.U[j] @ elwise_prod.T)
-
-                #### END DEBUGGING!
-
                 # This is used just to check for NaN values.
                 g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
-
                 detected_nan = np.any(np.isnan(g))
 
                 if detected_nan:
