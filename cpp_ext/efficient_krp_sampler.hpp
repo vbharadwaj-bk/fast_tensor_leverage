@@ -47,7 +47,7 @@ public:
             uint32_t n = U[i].shape[0];
             assert(U[i].shape.size() == 2);
             assert(U[i].shape[1] == R);
-            assert(n % R == 0);  // Should check these assertions!
+            //assert(n % R == 0);  // Should check these assertions outside this class!
 
             uint64_t F = R < n ? R : n;
             gram_trees.push_back(new PartitionTree(n, F, J, R, scratch));

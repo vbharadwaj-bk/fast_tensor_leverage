@@ -17,7 +17,13 @@ class PyLowRank:
     def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=42):
         if init_method=="gaussian":
             rng = np.random.default_rng(seed)
-            self.dims = [divide_and_roundup(i, R) * R for i in dims]
+            self.dims = []
+            for i in dims:
+                if i < R:
+                    self.dims.append(i)
+                else:
+                    self.dims.append(divide_and_roundup(i, R) * R)
+            #self.dims = [divide_and_roundup(i, R) * R for i in dims]
             self.N = len(dims)
             self.R = R
             self.U = [rng.normal(size=(i, R)) for i in self.dims]
@@ -111,6 +117,12 @@ def als(lhs, rhs, J, method, iter):
                 #print(f"Condition #: {la.cond(g)}")
                 fit = lhs.compute_estimated_fit(rhs)
                 print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, Fit: {fit}")
+
+                if j == 1:
+                    mat = lhs.U[j]
+                    print(mat)
+
+                    exit(1)
 
                 data_entry = {}
                 data_entry["fit"] = fit 
