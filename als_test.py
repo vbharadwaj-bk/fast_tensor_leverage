@@ -93,6 +93,9 @@ def als(lhs, rhs, J, method, iter):
                 if detected_nan:
                     print("Found a NaN value!")
 
+                sigma_lhs = np.zeros(lhs.R, dtype=np.double) 
+                lhs.ten.get_sigma(sigma_lhs, -1)
+
                 als.execute_exact_als_update(j, True, True)
                 residual = lhs.compute_diff_resid(rhs)
                 #residual = 0.0
@@ -143,14 +146,15 @@ def sparse_als(lhs, rhs, J, method, iter):
     return data
 
 if __name__=='__main__':
-    J = 50000
+    J = 65536
 
     trial_count = 3
-    iterations = 10
+    iterations = 20
     result = {}
 
-    samplers = ["efficient"]
-    R_values = [4, 8, 16, 32, 64, 128]
+    samplers = ["larsen_kolda"]
+    #R_values = [4, 8, 16, 32, 64, 128]
+    R_values = [32]
 
     for R in R_values: 
         result[R] = {}
@@ -163,7 +167,8 @@ if __name__=='__main__':
                 lhs = PyLowRank(rhs.dims, R, seed=923845)
                 lhs.ten.renormalize_columns(-1)
                 result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
+                exit(1)
                 #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
 
-    with open('outputs/synthetic_sparse_comparison.json', 'w') as outfile:
-        json.dump(result, outfile, indent=4)
+    #with open('outputs/synthetic_sparse_comparison.json', 'w') as outfile:
+    #    json.dump(result, outfile, indent=4)
