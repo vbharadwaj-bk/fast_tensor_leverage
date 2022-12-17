@@ -52,11 +52,24 @@ public:
 
         double total = 0.0;
 
-        #pragma omp parallel for reduction(+: total)
+        //#pragma omp parallel for reduction(+: total)
         for(uint64_t i = 0; i < U[j].shape[0]; i++) {
             total += leverage[i];
         }
         leverage_sums[j] = total;
+
+        cout << "j: " << j << " new total: " << total << endl;
+
+        cout << "Ij: " << Ij << endl;
+
+        /*cout << "--------------------------" << endl;
+        for(uint64_t u = 0; u < R; u++) {
+            for(uint64_t v = 0; v < R; v++) {
+                cout << pinv[u * R + v] << " ";
+            }
+            cout << endl;
+        }
+        cout << "--------------------------" << endl;*/
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
@@ -77,9 +90,9 @@ public:
             }
         }
 
-        double leverage_sum = std::accumulate(leverage_sums(), leverage_sums(N), 0.0);
-        cout << "Sample Sum: " << sum << endl; 
-        cout << "Leverage Sum: " << leverage_sum << endl; 
+        //double leverage_sum = std::accumulate(leverage_sums(), leverage_sums(N), 0.0);
+        //cout << "Sample Sum: " << sum << endl; 
+        //cout << "Leverage Sum: " << leverage_sum << endl; 
 
         #pragma omp parallel for
         for(uint64_t i = 0; i < J; i++) {
