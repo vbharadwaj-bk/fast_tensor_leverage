@@ -232,7 +232,7 @@ double ATB_chain_prod_sum(
     return std::accumulate(result(), result(R_A * R_B), 0.0); 
 }
 
-void compute_pinv_square(Buffer<double> &M, Buffer<double> &out) {
+void compute_pinv_square(Buffer<double> &M, Buffer<double> &out, uint64_t target_rank) {
     uint64_t R = M.shape[0];
     double eigenvalue_tolerance = 0.0;
     Buffer<double> lambda({R});
@@ -245,8 +245,10 @@ void compute_pinv_square(Buffer<double> &M, Buffer<double> &out) {
                     R, 
                     lambda() );
 
+    //cout << "Lambda: ";
     for(uint32_t v = 0; v < R; v++) {
-        if(lambda[v] > eigenvalue_tolerance) {
+        //cout << lambda[v] << " ";
+        if(v >= R - target_rank && lambda[v] > eigenvalue_tolerance) {
             for(uint32_t u = 0; u < R; u++) {
                 M[u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
             }
@@ -257,6 +259,7 @@ void compute_pinv_square(Buffer<double> &M, Buffer<double> &out) {
             }
         }
     }
+    //cout << "]" << endl;
 
     cblas_dsyrk(CblasRowMajor, 
                 CblasUpper, 
@@ -289,7 +292,8 @@ void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
                 M(), 
                 R);
 
-    compute_pinv_square(M, out);
+    uint64_t target_rank = min(in.shape[0], R);
+    compute_pinv_square(M, out, target_rank);
 }
 
 

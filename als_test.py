@@ -104,7 +104,6 @@ def als(lhs, rhs, J, method, iter):
 
                 als.execute_exact_als_update(j, True, True)
                 residual = lhs.compute_diff_resid(rhs)
-                #residual = 0.0
 
                 als.execute_ds_als_update(j, True, True)
                 residual_approx = lhs.compute_diff_resid(rhs)
@@ -114,15 +113,8 @@ def als(lhs, rhs, J, method, iter):
                 else:
                     ratio = 1.0
 
-                #print(f"Condition #: {la.cond(g)}")
                 fit = lhs.compute_estimated_fit(rhs)
                 print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, Fit: {fit}")
-
-                if j == 1:
-                    mat = lhs.U[j]
-                    print(mat)
-
-                    exit(1)
 
                 data_entry = {}
                 data_entry["fit"] = fit 
@@ -164,7 +156,7 @@ if __name__=='__main__':
     iterations = 20
     result = {}
 
-    samplers = ["larsen_kolda"]
+    samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [32]
 
