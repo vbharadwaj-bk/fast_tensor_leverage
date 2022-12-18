@@ -148,7 +148,7 @@ public:
                 gram,
                 j);        
 
-        compute_pinv_square(gram, gram_pinv);
+        compute_pinv_square(gram, gram_pinv, R);
         ground_truth.execute_exact_mttkrp(cp_decomp.U, j, mttkrp_res);
 
         // Multiply gram matrix result by the pseudo-inverse
