@@ -83,7 +83,9 @@ def als(lhs, rhs, J, method, iter):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, method)
+
+    if method != "exact":
+        als.initialize_ds_als(J, method)
 
     residual = lhs.compute_diff_resid(rhs)
     rhs_norm = np.sqrt(rhs.ten.get_normsq())
@@ -105,8 +107,11 @@ def als(lhs, rhs, J, method, iter):
                 als.execute_exact_als_update(j, True, True)
                 residual = lhs.compute_diff_resid(rhs)
 
-                als.execute_ds_als_update(j, True, True)
-                residual_approx = lhs.compute_diff_resid(rhs)
+                if method != "exact":
+                    als.execute_ds_als_update(j, True, True)
+                    residual_approx = lhs.compute_diff_resid(rhs)
+                else: 
+                    residual_approx = residual
 
                 if residual > 0:
                     ratio = residual_approx / residual
@@ -152,13 +157,13 @@ def sparse_als(lhs, rhs, J, method, iter):
 if __name__=='__main__':
     J = 65536
 
-    trial_count = 3
-    iterations = 20
+    trial_count = 5
+    iterations = 40
     result = {}
 
     samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [32]
+    R_values = [25]
 
     for R in R_values: 
         result[R] = {}
@@ -171,8 +176,7 @@ if __name__=='__main__':
                 lhs = PyLowRank(rhs.dims, R, seed=923845)
                 lhs.ten.renormalize_columns(-1)
                 result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
-                exit(1)
                 #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
 
-    #with open('outputs/synthetic_sparse_comparison.json', 'w') as outfile:
-    #    json.dump(result, outfile, indent=4)
+    with open('outputs/lk_uber_comparison.json', 'w') as outfile:
+        json.dump(result, outfile, indent=4)

@@ -29,7 +29,7 @@ public:
         h({J, R}),
         weights({J}),
         rd(),
-        gen(42)
+        gen(rd())
         {
         this->N = U.size();
         this->J = J;
