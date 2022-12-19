@@ -5,22 +5,17 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
-#include "tensor.hpp"
+#include "black_box_tensor.hpp"
 
 using namespace std;
 
-class __attribute__((visibility("hidden"))) LowRankTensor : public Tensor {
+class __attribute__((visibility("hidden"))) LowRankTensor : public BlackBoxTensor {
 public:
-    vector<uint64_t> dims;
     unique_ptr<NPBufferList<double>> U_py_bufs;
     vector<Buffer<double>> &U;
     uint32_t N;
-    uint64_t R, J;
-    uint64_t max_rhs_rows;
+    uint64_t R;
 
-    // This is a pointer, since it will be dynamically allocated
-    // based on the tensor mode 
-    Buffer<double>* rhs_buf; 
     Buffer<double> partial_evaluation;
     Buffer<double> sigma;
     Buffer<double> col_norms;
@@ -141,47 +136,6 @@ public:
 
     void preprocess(Buffer<uint64_t> &samples, uint64_t j) {
         materialize_partial_evaluation(samples, j);
-    }
-
-    void execute_downsampled_mttkrp(
-            Buffer<uint64_t> &samples, 
-            Buffer<double> &lhs,
-            uint64_t j,
-            Buffer<double> &result
-            ) {
-        
-        rhs_buf = new Buffer<double>({max_rhs_rows, dims[j]});
-        Buffer<double> &temp_buf = (*rhs_buf);
-        preprocess(samples, j);
-
-        // Result is a dims[j] x R matrix
-        std::fill(result(), result(dims[j], 0), 0.0);
-
-        for(uint64_t i = 0; i < J; i += max_rhs_rows) {
-            uint64_t max_range = min(i + max_rhs_rows, J);
-            uint32_t rows = (uint32_t) (max_range - i);
-
-            materialize_rhs(samples, j, i);
-
-            // Need to fix this when the ranks are different! 
-            cblas_dgemm(
-                CblasRowMajor,
-                CblasTrans,
-                CblasNoTrans,
-                (uint32_t) dims[j],
-                (uint32_t) lhs.shape[1],
-                (uint32_t) rows,
-                1.0,
-                temp_buf(),
-                (uint32_t) dims[j],
-                lhs(i, 0),
-                (uint32_t) lhs.shape[1],
-                1.0,
-                result(),
-                (uint32_t) lhs.shape[1]
-            );
-        }
-        delete rhs_buf; 
     }
 
     void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
