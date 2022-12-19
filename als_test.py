@@ -14,16 +14,19 @@ from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
-    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=42):
-        if init_method=="gaussian":
+    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=None):
+        if seed is None:
+            rng = np.random.default_rng()
+        else:
             rng = np.random.default_rng(seed)
+        if init_method=="gaussian":
             self.dims = []
             for i in dims:
                 if i < R:
                     self.dims.append(i)
                 else:
                     self.dims.append(divide_and_roundup(i, R) * R)
-            #self.dims = [divide_and_roundup(i, R) * R for i in dims]
+
             self.N = len(dims)
             self.R = R
             self.U = [rng.normal(size=(i, R)) for i in self.dims]
@@ -154,7 +157,7 @@ def sparse_als(lhs, rhs, J, method, iter):
 
     return data
 
-if __name__=='__main__':
+def sparse_tensor_test():
     J = 65536
 
     trial_count = 5
@@ -176,7 +179,38 @@ if __name__=='__main__':
                 lhs = PyLowRank(rhs.dims, R, seed=923845)
                 lhs.ten.renormalize_columns(-1)
                 result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
-                #result[sampler].append(sparse_als(lhs, rhs, J, sampler, iterations))
 
     with open('outputs/lk_uber_comparison.json', 'w') as outfile:
         json.dump(result, outfile, indent=4)
+
+def low_rank_test():
+    J = 10000 
+
+    trial_count = 1
+    iterations = 40
+    result = {}
+
+    samplers = ["efficient"]
+    #R_values = [4, 8, 16, 32, 64, 128]
+    R_values = [32]
+
+    I = 2 ** 5
+    N = 4
+
+    for R in R_values: 
+        result[R] = {}
+        for sampler in samplers:
+            result[R][sampler] = []
+            for trial in range(trial_count):
+                rhs = PyLowRank([I] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+                rhs.ten.renormalize_columns(-1)
+                lhs = PyLowRank(rhs.dims, R, seed=923845)
+                lhs.ten.renormalize_columns(-1)
+                result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
+
+    with open('outputs/lk_uber_comparison.json', 'w') as outfile:
+        json.dump(result, outfile, indent=4)
+
+if __name__=='__main__':
+    low_rank_test()
+

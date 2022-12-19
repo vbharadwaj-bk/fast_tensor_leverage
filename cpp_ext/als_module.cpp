@@ -206,7 +206,8 @@ PYBIND11_MODULE(als_module, m) {
         .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py)
         .def("compute_residual_normsq", &Tensor::compute_residual_normsq_py) 
         .def("get_normsq", &Tensor::get_normsq);
-    py::class_<LowRankTensor, Tensor>(m, "LowRankTensor")
+    py::class_<BlackBoxTensor, Tensor>(m, "BlackBoxTensor");
+    py::class_<LowRankTensor, BlackBoxTensor>(m, "LowRankTensor")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::list>()) 
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
