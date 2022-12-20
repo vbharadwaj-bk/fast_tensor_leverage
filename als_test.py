@@ -145,28 +145,12 @@ def low_rank_test():
     #with open('outputs/low_rank_comparison.json', 'w') as outfile:
     #    json.dump(result, outfile, indent=4)
 
-from numba import cfunc, types, carray, jit
-
-@jit
-def test_function(out_buffer):
-    for j in range(5000):
-        for i in range(10000):
-            out_buffer[i] = 3.18999
-
-def test_wrapper(ptr):
-    c_ptr = ctypes.c_void_p(ptr)
-    out_buffer = carray(c_ptr, (10000,), dtype=np.double)
-    test_function(out_buffer)
-
 def numerical_integration_test():
     I = 100
     J = 10000
     N = 2
     dims = np.array([I] * N, dtype=np.uint64)
-    rhs = PyFunctionTensor(test_wrapper, dims, J, 10000)
-
-    print("Starting evaluation...")
-    rhs.test_fiber_evaluator()
+    rhs = FunctionTensor()
     print("Initialized Function Tensor!")
 
 if __name__=='__main__':

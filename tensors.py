@@ -81,23 +81,31 @@ class PySparseTensor:
         self.ten = SparseTensor(self.tensor_idxs, self.values) 
         print("Finished loading sparse tensor...")
 
-from numba import cfunc, types, carray
+from numba import cfunc, types, carray, void, uint32, float64, uint64 
 
-#@jit(void(uint64,uint64,uint32,uint32,uint32,uint32,uint32), nopython=True)
-#def test_function(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
-#    delta_X = 0.01
+@jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)
+def test_function(out_buffer, samples, j, row_pos, M, Ij):
+    delta_X = 0.01
 
-#    out_buffer = carray(out_buffer_, (M, Ij), dtype=np.double)
-#    samples = carray(samples_, (M, tensor_dim), dtype=np.uint64)
+    for i in range(row_pos, row_pos + M):
+        samples[i, j] = 0
+        temp_sum = np.cumsum(samples[i, :])
+        for k in range(Ij):
+            out_buffer[i, k] = np.sin((temp_sum + k) * delta_X)
 
-#    for i in range(row_pos, row_pos + M):
-#        samples[i, j] = 0
-#        temp_sum = np.cumsum(samples[i, :])
-#        for k in range(Ij):
-#            out_buffer[i, k] = np.sin((temp_sum + k) * delta_X)
+def test_wrapper(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
+    out_ptr = ctypes.c_void_p(out_buffer_)
+    samples_ptr = ctypes.c_void_p(samples_)
+    out_buffer = carray(out_ptr, (M, Ij), dtype=np.double)
+    samples = carray(samples_ptr, (M, tensor_dim), dtype=np.uint64)
+    test_function(out_buffer, samples, j, row_pos, M, Ij)
+
 
 class FunctionTensor:
-    def __init__(self, bounds, subdivisions, func=None, func_batch=None):
+    def __init__(self, func=None, func_batch=None):
+        self.N = 2
         self.bounds = bounds
         self.subdivisions = subdivisions
-        self.ten = None 
+        dims = np.array([100] * self.N)
+        J = 10000
+        self.ten = PyFunctionTensor(test_wrapper, dims, J, 10000)
