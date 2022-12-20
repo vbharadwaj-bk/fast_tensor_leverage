@@ -83,17 +83,21 @@ class PySparseTensor:
 
 from numba import cfunc, types, carray
 
-def test_function(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
-    out_buffer = carray(out_buffer_, (M, Ij), dtype=np.double)
-    samples = carray(samples_, (M, tensor_dim), dtype=np.uint64)
+#@jit(void(uint64,uint64,uint32,uint32,uint32,uint32,uint32), nopython=True)
+#def test_function(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
+#    delta_X = 0.01
 
-    for i in range(M):
-        for k in range(Ij):
-            samples[i, j] = k
-            out_buffer[i, k] = 
+#    out_buffer = carray(out_buffer_, (M, Ij), dtype=np.double)
+#    samples = carray(samples_, (M, tensor_dim), dtype=np.uint64)
 
-class PyFunctionTensor:
-    def __init__(self, bounds, subdivisions):
+#    for i in range(row_pos, row_pos + M):
+#        samples[i, j] = 0
+#        temp_sum = np.cumsum(samples[i, :])
+#        for k in range(Ij):
+#            out_buffer[i, k] = np.sin((temp_sum + k) * delta_X)
+
+class FunctionTensor:
+    def __init__(self, bounds, subdivisions, func=None, func_batch=None):
         self.bounds = bounds
         self.subdivisions = subdivisions
-
+        self.ten = None 
