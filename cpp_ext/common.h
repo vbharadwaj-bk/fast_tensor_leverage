@@ -234,7 +234,7 @@ double ATB_chain_prod_sum(
 
 void compute_pinv_square(Buffer<double> &M, Buffer<double> &out, uint64_t target_rank) {
     uint64_t R = M.shape[0];
-    double eigenvalue_tolerance = 1e-6;
+    double eigenvalue_tolerance = 1e-8;
     Buffer<double> lambda({R});
 
     LAPACKE_dsyev( CblasRowMajor, 
@@ -245,9 +245,9 @@ void compute_pinv_square(Buffer<double> &M, Buffer<double> &out, uint64_t target
                     R, 
                     lambda() );
 
-    cout << "Lambda: ";
+    //cout << "Lambda: ";
     for(uint32_t v = 0; v < R; v++) {
-        cout << lambda[v] << " ";
+        //cout << lambda[v] << " ";
         if(v >= R - target_rank && lambda[v] > eigenvalue_tolerance) {
             for(uint32_t u = 0; u < R; u++) {
                 M[u * R + v] = M[u * R + v] / sqrt(lambda[v]); 
@@ -259,7 +259,7 @@ void compute_pinv_square(Buffer<double> &M, Buffer<double> &out, uint64_t target
             }
         }
     }
-    cout << "]" << endl;
+    //cout << "]" << endl;
 
     cblas_dsyrk(CblasRowMajor, 
                 CblasUpper, 
