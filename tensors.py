@@ -32,6 +32,8 @@ class PyLowRank:
             self.R = R
             self.U = [rng.normal(size=(i, R)) for i in self.dims]
             if allow_rhs_mttkrp:
+                for i in range(self.N):
+                    self.U[i][:] = 1.0
                 self.ten = LowRankTensor(R, J, 10000, self.U)
             else:
                 self.ten = LowRankTensor(R, self.U)
