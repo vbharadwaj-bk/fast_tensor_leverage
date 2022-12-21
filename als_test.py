@@ -73,23 +73,6 @@ def als(lhs, rhs, J, method, iter):
     #    print("Caught SVD unconverged exception, terminating and returning trace...")
     #    return data
 
-def sparse_als(lhs, rhs, J, method, iter):
-    data = []
-
-    als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, method)
-
-    estimated_fit = lhs.compute_estimated_fit(rhs)
-    print(f"Estimated Fit: {estimated_fit}")
-
-    for i in range(iter):
-        for j in range(lhs.N):
-            als.execute_ds_als_update(j, True, True) 
-            estimated_fit = lhs.compute_estimated_fit(rhs)
-            print(f"Estimated Fit: {estimated_fit}")
-
-    return data
-
 def sparse_tensor_test():
     J = 65536
 
@@ -149,10 +132,38 @@ def numerical_integration_test():
     I = 100
     J = 10000
     N = 2
-    dims = np.array([I] * N, dtype=np.uint64)
+    R = 25
+    dims = [I] * N
+    iterations = 10
+
     rhs = FunctionTensor()
     print("Initialized Function Tensor!")
 
+    lhs = PyLowRank(dims, R, seed=923845)
+    lhs.ten.renormalize_columns(-1)
+
+    dx = [0.01] * N
+
+    method = "efficient"
+    als = ALS(lhs.ten, rhs.ten)
+    als.initialize_ds_als(J, method)
+
+    integral = lhs.compute_integral(dx)
+    print(f"Integral: {integral}")
+
+    for i in range(iterations):
+        for j in range(lhs.N):
+            als.execute_ds_als_update(j, True, True) 
+
+            g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(lhs.N) if i != j])
+            detected_nan = np.any(np.isnan(g))
+
+            if detected_nan:
+                print("Found a NaN value!")
+
+            integral = lhs.compute_integral(dx)
+            print(f"Integral: {integral}")
+
 if __name__=='__main__':
     numerical_integration_test()
-
+    #low_rank_test()

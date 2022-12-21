@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as la
+import scipy
 import matplotlib.pyplot as plt
 import time
 import json
@@ -10,7 +11,7 @@ from common import *
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
-from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
+from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
@@ -51,6 +52,19 @@ class PyLowRank:
         rhs_norm = np.sqrt(rhs_ten.ten.get_normsq())
         return 1.0 - diff_norm / rhs_norm
 
+    def compute_integral(self, dx):
+        '''
+        Computes the integral of the CP decomposition. 
+        '''  
+        sigma = np.zeros(self.R, dtype=np.double) 
+        self.ten.get_sigma(sigma, -1)
+
+        buffers = [sigma]
+        for i in range(self.N):
+            buffers.append(scipy.integrate.simpson(self.U[i], axis=0, dx=dx[i]))
+
+        return np.sum(chain_had_prod(buffers))
+
 class PySparseTensor:
     def __init__(self, filename, preprocessing=None):
         print("Loading sparse tensor...")
@@ -81,7 +95,8 @@ class PySparseTensor:
         self.ten = SparseTensor(self.tensor_idxs, self.values) 
         print("Finished loading sparse tensor...")
 
-from numba import cfunc, types, carray, void, uint32, float64, uint64 
+from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
+import ctypes
 
 @jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)
 def test_function(out_buffer, samples, j, row_pos, M, Ij):
@@ -89,9 +104,10 @@ def test_function(out_buffer, samples, j, row_pos, M, Ij):
 
     for i in range(row_pos, row_pos + M):
         samples[i, j] = 0
-        temp_sum = np.cumsum(samples[i, :])
+        temp_sum = np.sum(samples[i, :])
+
         for k in range(Ij):
-            out_buffer[i, k] = np.sin((temp_sum + k) * delta_X)
+            out_buffer[i-row_pos, k] = 0.1 #np.sin((temp_sum + k) * delta_X)
 
 def test_wrapper(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
     out_ptr = ctypes.c_void_p(out_buffer_)
@@ -100,12 +116,11 @@ def test_wrapper(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
     samples = carray(samples_ptr, (M, tensor_dim), dtype=np.uint64)
     test_function(out_buffer, samples, j, row_pos, M, Ij)
 
-
 class FunctionTensor:
     def __init__(self, func=None, func_batch=None):
         self.N = 2
-        self.bounds = bounds
-        self.subdivisions = subdivisions
-        dims = np.array([100] * self.N)
+        #self.bounds = bounds
+        #self.subdivisions = subdivisions
+        dims = np.array([100] * self.N, dtype=np.uint64)
         J = 10000
         self.ten = PyFunctionTensor(test_wrapper, dims, J, 10000)

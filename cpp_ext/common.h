@@ -234,7 +234,7 @@ double ATB_chain_prod_sum(
 
 void compute_pinv_square(Buffer<double> &M, Buffer<double> &out, uint64_t target_rank) {
     uint64_t R = M.shape[0];
-    double eigenvalue_tolerance = 0.0;
+    double eigenvalue_tolerance = 1e-7;
     Buffer<double> lambda({R});
 
     LAPACKE_dsyev( CblasRowMajor, 
