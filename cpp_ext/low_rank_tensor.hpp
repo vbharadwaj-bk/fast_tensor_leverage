@@ -233,11 +233,19 @@ public:
                     col_norms[i * R + v] = sqrt(col_norms[i * R + v]);
                 }
 
-                #pragma omp for collapse(2)
-                for(uint32_t u = 0; u < dims[i]; u++) {
-                    for(uint32_t v = 0; v < R; v++) {
-                        U[i][u * R + v] /= col_norms[i * R + v];
+                for(uint32_t v = 0; v < R; v++) {
+                    // Renormalization only occurs when the column norm
+                    // is large enough. Should change this to a cutoff parameter... 
+                    double divisor = col_norms[i * R + v];
+                    if(divisor > 1e-7) {
+                        #pragma omp for
+                        for(uint32_t u = 0; u < dims[i]; u++) {
+                            U[i][u * R + v] /= divisor; 
+                        }
                     }
+                    else {
+                        col_norms[i * R + v] = 1.0;
+                    } 
                 }
             }
         }

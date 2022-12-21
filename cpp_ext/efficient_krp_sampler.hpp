@@ -41,7 +41,7 @@ public:
             scaled_h({J, R}),
             dis(0.0, 1.0) 
     {    
-        eigenvalue_tolerance = 0.0; // Tolerance of eigenvalues for symmetric PINV 
+        eigenvalue_tolerance = 1e-7; // Tolerance of eigenvalues for symmetric PINV 
     
         for(uint32_t i = 0; i < N; i++) {
             uint32_t n = U[i].shape[0];
