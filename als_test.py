@@ -165,5 +165,5 @@ def numerical_integration_test():
             print(f"Integral: {integral}")
 
 if __name__=='__main__':
-    #numerical_integration_test()
-    low_rank_test()
+    numerical_integration_test()
+    #low_rank_test()
