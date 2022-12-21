@@ -12,7 +12,6 @@ using namespace std;
 class __attribute__((visibility("hidden"))) PyFunctionTensor : public BlackBoxTensor {
 public:
     py::function fiber_evaluator;
-    py::object c_void_p;
 
     PyFunctionTensor(py::function fiber_evaluator,
             py::array_t<uint64_t> dims_py,
@@ -27,8 +26,6 @@ public:
         for(uint32_t i = 0; i < dims_in.shape[0]; i++) {
             dims.push_back(dims_in[i]);
         }
-
-        c_void_p = py::module_::import("ctypes").attr("c_void_p");
     }
 
     void preprocess(Buffer<uint64_t> &samples, uint64_t j) {
@@ -52,6 +49,8 @@ public:
         uint32_t M = (uint32_t) (max_range - row_pos);
         uint32_t Ij = (uint32_t) dims[j]; 
         uint32_t tensor_dim = dims.size();
+
+        std::fill(temp_buf(), temp_buf(Ij * M), 1.0);
 
         //fiber_evaluator((uint64_t) (temp_buf()), (uint64_t) (samples()), (uint32_t) j, (uint32_t) row_pos, M, Ij, tensor_dim);
     };
