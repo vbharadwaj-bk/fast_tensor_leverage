@@ -130,5 +130,5 @@ class FunctionTensor:
         self.J = J
         #self.bounds = bounds
         #self.subdivisions = subdivisions
-        dims = np.array([4] * self.N, dtype=np.uint64)
+        dims = np.array([100] * self.N, dtype=np.uint64)
         self.ten = PyFunctionTensor(dims, J, 10000)
