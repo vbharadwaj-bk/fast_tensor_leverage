@@ -24,7 +24,6 @@ public:
 
         for(uint32_t i = 0; i < dims_in.shape[0]; i++) {
             dims.push_back(dims_in[i]);
-            cout << dims_in[i] << endl;
         }
     }
 
@@ -43,7 +42,7 @@ public:
         cout << temp[100] << endl;
     }
 
-    void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, uint64_t row_pos) {
+    void materialize_rhs(Buffer<uint64_t> &samples_transpose, uint64_t j, uint64_t row_pos) {
         Buffer<double> &temp_buf = (*rhs_buf);
         uint64_t max_range = min(row_pos + max_rhs_rows, J);
         uint32_t M = (uint32_t) (max_range - row_pos);
@@ -63,16 +62,16 @@ public:
             //cout << samples[offset] << " " << samples[ offset + 1] << endl;
 
             for(uint64_t k = 0; k < Ij; k++) {
-                samples[(row_pos + i) * tensor_dim + j] = k;
+                samples_transpose[(row_pos + i) * tensor_dim + j] = k;
                 //temp_buf[i * Ij + k] = (partial + k) * 0.01; 
                 //temp_buf[i * Ij + k] = samples[i * tensor_dim] * 0.01; 
-                temp_buf[i * Ij + k] = (samples[offset] + samples[offset + 1]) * 0.01;
+                temp_buf[i * Ij + k] = sin((samples_transpose[offset] + samples_transpose[offset + 1]) * 0.01);
                 //temp_buf[i * Ij + k] = 1.0; 
 
-                if(i < 5) {
+                /*if(i < 5) {
                     cout << samples[offset] << " " << samples[offset + 1] << " ";
                     cout << temp_buf[i * Ij + k] << endl;
-                }
+                }*/
             }
         }
         //cout << "---------------------------" << endl;
