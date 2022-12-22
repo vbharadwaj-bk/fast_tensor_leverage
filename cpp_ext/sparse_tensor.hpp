@@ -227,27 +227,25 @@ public:
     }
 
     void execute_downsampled_mttkrp(
-            Buffer<uint64_t> &samples, 
+            Buffer<uint64_t> &samples_transpose, 
             Buffer<double> &lhs,
             uint64_t j,
             Buffer<double> &result) {
-      uint64_t J = samples.shape[1];
-      uint64_t N = samples.shape[0];
+      uint64_t J = samples_transpose.shape[0];
+      uint64_t N = samples_transpose.shape[1];
       uint64_t Ij = result.shape[0];
       uint64_t R = result.shape[1];
-      Buffer<uint32_t> samples_transpose({J, N});
+      Buffer<uint32_t> samples_dcast({J, N});
 
-      #pragma omp parallel for collapse(2)
-      for(uint64_t i = 0; i < J; i++) {
-        for(uint64_t k = 0; k < N; k++) {
-          samples_transpose[i * N + k] = (uint32_t) samples[k * J + i]; 
-        }
-      }
+      #pragma omp parallel for 
+      for(uint64_t i = 0; i < J * N; i++) {
+          samples_dcast[i] = (uint32_t) samples_transpose[i]; 
+      } 
 
       // It is probably a good idea to sort and reweight samples here... 
 
       std::fill(result(), result(Ij * R), 0.0);
-      lookups[j].execute_spmm(samples_transpose, lhs, result);
+      lookups[j].execute_spmm(samples_dcast, lhs, result);
     }
 
     double compute_residual_normsq(Buffer<double> &sigma, vector<Buffer<double>> &U) {

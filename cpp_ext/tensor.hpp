@@ -24,7 +24,7 @@ public:
 
     virtual void 
     execute_downsampled_mttkrp(
-            Buffer<uint64_t> &samples, 
+            Buffer<uint64_t> &samples_transpose, 
             Buffer<double> &lhs,
             uint64_t j,
             Buffer<double> &result

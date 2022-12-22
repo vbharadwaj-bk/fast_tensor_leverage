@@ -185,5 +185,5 @@ def numerical_integration_test():
 
 
 if __name__=='__main__':
-    numerical_integration_test()
-    #low_rank_test()
+    #numerical_integration_test()
+    low_rank_test()

@@ -89,7 +89,7 @@ public:
     }
 
     // Convenience method for RHS sampling 
-    void materialize_partial_evaluation(Buffer<uint64_t> &samples, 
+    void materialize_partial_evaluation(Buffer<uint64_t> &samples_transpose, 
         uint64_t j) {
         get_sigma(sigma, -1);
 
@@ -99,7 +99,7 @@ public:
             for(uint32_t k = 0; k < N; k++) {
                 if(k != j) {
                     for(uint32_t u = 0; u < R; u++) {
-                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples[k * J + i] * R + u];
+                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples_transpose[i * N + k] * R + u];
                     }
                 } 
             }
@@ -110,7 +110,7 @@ public:
     * Fills rhs_buf with an evaluation of the tensor starting from the
     * specified index in the array of samples. 
     */
-    void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, uint64_t row_pos) {
+    void materialize_rhs(Buffer<uint64_t> &samples_transpose, uint64_t j, uint64_t row_pos) {
         Buffer<double> &temp_buf = (*rhs_buf);
         uint64_t max_range = min(row_pos + max_rhs_rows, J);
         uint32_t M = (uint32_t) (max_range - row_pos);
@@ -134,8 +134,8 @@ public:
         );
     }
 
-    void preprocess(Buffer<uint64_t> &samples, uint64_t j) {
-        materialize_partial_evaluation(samples, j);
+    void preprocess(Buffer<uint64_t> &samples_transpose, uint64_t j) {
+        materialize_partial_evaluation(samples_transpose, j);
     }
 
     void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {

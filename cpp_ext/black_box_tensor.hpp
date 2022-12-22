@@ -19,7 +19,7 @@ public:
     virtual void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, uint64_t row_pos) = 0; 
 
     void execute_downsampled_mttkrp(
-            Buffer<uint64_t> &samples, 
+            Buffer<uint64_t> &samples_transpose, 
             Buffer<double> &lhs,
             uint64_t j,
             Buffer<double> &result
@@ -27,7 +27,7 @@ public:
         
         rhs_buf = new Buffer<double>({max_rhs_rows, dims[j]});
         Buffer<double> &temp_buf = (*rhs_buf);
-        preprocess(samples, j);
+        preprocess(samples_transpose, j);
 
         // Result is a dims[j] x R matrix
         std::fill(result(), result(dims[j], 0), 0.0);
@@ -36,7 +36,7 @@ public:
             uint64_t max_range = min(i + max_rhs_rows, J);
             uint32_t rows = (uint32_t) (max_range - i);
 
-            materialize_rhs(samples, j, i);
+            materialize_rhs(samples_transpose, j, i);
 
             cblas_dgemm(
                 CblasRowMajor,

@@ -29,6 +29,7 @@ public:
     uint64_t J;
     unique_ptr<Sampler> sampler;
     unique_ptr<Buffer<uint64_t>> samples;
+    unique_ptr<Buffer<uint64_t>> samples_transpose;
 
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
         cp_decomp(cp_dec),
@@ -49,6 +50,7 @@ public:
         }
 
         samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
+        samples_transpose.reset(new Buffer<uint64_t>({J, cp_decomp.N}));
     }
 
     void execute_ds_als_update(uint32_t j, 
@@ -59,11 +61,20 @@ public:
         uint64_t Ij = cp_decomp.U[j].shape[0];
         uint64_t R = cp_decomp.R; 
         uint64_t J = sampler->J;
+        uint64_t N = cp_decomp.N;
 
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> pinv({R, R});
 
         sampler->KRPDrawSamples(j, *samples, nullptr);
+
+        // This step is unecessary, but we keep it in anyway
+        #pragma omp parallel for collapse(2)
+        for(uint64_t i = 0; i < J; i++) {
+            for(uint64_t k = 0; k < N; k++) {
+                (*samples_transpose)[i * N + k] = (uint32_t) (*samples)[k * J + i]; 
+            }
+        }
 
         #pragma omp parallel for collapse(2) 
         for(uint32_t i = 0; i < J; i++) {
@@ -83,7 +94,7 @@ public:
         }
 
         ground_truth.execute_downsampled_mttkrp(
-                *samples, 
+                *samples_transpose,
                 sampler->h,
                 j,
                 mttkrp_res 
