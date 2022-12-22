@@ -31,9 +31,12 @@ class PyLowRank:
             self.N = len(dims)
             self.R = R
             self.U = [rng.normal(size=(i, R)) for i in self.dims]
+
+            # If padding is applied, zero out values 
+            for i in range(self.N):
+                self.U[i][dims[i]:self.dims[i]] = 0.0
+
             if allow_rhs_mttkrp:
-                #for i in range(self.N):
-                #    self.U[i][:] = 1.0
                 self.ten = LowRankTensor(R, J, 10000, self.U)
             else:
                 self.ten = LowRankTensor(R, self.U)
@@ -100,29 +103,32 @@ class PySparseTensor:
 from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
 import ctypes
 
-@jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)
-def test_function(out_buffer, samples, j, row_pos, M, Ij):
-    delta_X = 0.01
+#@jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)
+#def test_function(out_buffer, samples, j, row_pos, M, Ij):
+#    delta_X = 0.01
+#
+#    for i in range(row_pos, row_pos + M):
+#        samples[i, j] = 0
+#        temp_sum = np.sum(samples[i, :])
+#
+#        for k in range(Ij):
+            #out_buffer[i-row_pos, k] = np.sin((temp_sum + k) * delta_X)
+            #out_buffer[i-row_pos, k] = (temp_sum + k) * delta_X
+#            out_buffer[i-row_pos, k] = samples[i, 0] 
 
-    for i in range(row_pos, row_pos + M):
-        samples[i, j] = 0
-        temp_sum = np.sum(samples[i, :])
 
-        for k in range(Ij):
-            out_buffer[i-row_pos, k] = 0.1 #np.sin((temp_sum + k) * delta_X)
-
-def test_wrapper(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
-    out_ptr = ctypes.c_void_p(out_buffer_)
-    samples_ptr = ctypes.c_void_p(samples_)
-    out_buffer = carray(out_ptr, (M, Ij), dtype=np.double)
-    samples = carray(samples_ptr, (M, tensor_dim), dtype=np.uint64)
-    test_function(out_buffer, samples, j, row_pos, M, Ij)
+#def test_wrapper(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
+#    out_ptr = ctypes.c_void_p(out_buffer_)
+#    samples_ptr = ctypes.c_void_p(samples_)
+#    out_buffer = carray(out_ptr, (M, Ij), dtype=np.double)
+#    samples = carray(samples_ptr, (M, tensor_dim), dtype=np.uint64)
+#    test_function(out_buffer, samples, j, row_pos, M, Ij)
 
 class FunctionTensor:
-    def __init__(self, func=None, func_batch=None):
-        self.N = 2
+    def __init__(self, N, J, func=None, func_batch=None):
+        self.N = N 
+        self.J = J
         #self.bounds = bounds
         #self.subdivisions = subdivisions
         dims = np.array([100] * self.N, dtype=np.uint64)
-        J = 10000
-        self.ten = PyFunctionTensor(test_wrapper, dims, J, 10000)
+        self.ten = PyFunctionTensor(dims, J, 10000)

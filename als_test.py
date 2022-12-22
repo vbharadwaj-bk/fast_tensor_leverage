@@ -130,13 +130,13 @@ def low_rank_test():
 
 def numerical_integration_test():
     I = 100
-    J = 10000
+    J = 5000
     N = 2
     R = 25
     dims = [I] * N
     iterations = 10
 
-    rhs = FunctionTensor()
+    rhs = FunctionTensor(N, J)
     print("Initialized Function Tensor!")
 
     lhs = PyLowRank(dims, R, seed=923845)
