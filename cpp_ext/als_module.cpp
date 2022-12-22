@@ -214,7 +214,7 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
         .def(py::init<py::array_t<uint32_t>, py::array_t<double>>());
     py::class_<PyFunctionTensor, BlackBoxTensor>(m, "PyFunctionTensor")
-        .def(py::init<py::function, py::array_t<uint64_t>, uint64_t, uint64_t>()) 
+        .def(py::init<py::array_t<uint64_t>, uint64_t, uint64_t>()) 
         .def("test_fiber_evaluator", &PyFunctionTensor::test_fiber_evaluator);
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
@@ -226,8 +226,8 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2a', '-I/home/vbharadw/OpenBLAS_install/include', '-fopenmp', '-O3']
-cfg['extra_link_args'] = ['-L/home/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-O3']
+cfg['extra_compile_args'] = ['--std=c++2a', '-I/home/vbharadw/OpenBLAS_install/include', '-fopenmp', '-g']
+cfg['extra_link_args'] = ['-L/home/vbharadw/OpenBLAS_install/lib', '-lopenblas', '-fopenmp', '-g']
 cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp', 'black_box_tensor.hpp', 'py_function_tensor.hpp','tensor.hpp'] 
 %>
 */
