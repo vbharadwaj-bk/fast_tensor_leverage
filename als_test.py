@@ -129,12 +129,12 @@ def low_rank_test():
     #    json.dump(result, outfile, indent=4)
 
 def numerical_integration_test():
-    I = 100
-    J = 5000
+    I = 4
+    J = 500
     N = 2
-    R = 25
+    R = 8
     dims = [I] * N
-    iterations = 10
+    iterations = 20
 
     rhs = FunctionTensor(N, J)
     print("Initialized Function Tensor!")
@@ -148,8 +148,16 @@ def numerical_integration_test():
     als = ALS(lhs.ten, rhs.ten)
     als.initialize_ds_als(J, method)
 
-    integral = lhs.compute_integral(dx)
-    print(f"Integral: {integral}")
+    # For some very small test functions, we will manually compute the
+    # ground truth
+
+    ground_truth = np.zeros((I, I), dtype=np.double)
+    for i in range(I):
+        for j in range(I):
+            ground_truth[i, j] = (i + j) * 0.01 
+
+    #integral = lhs.compute_integral(dx)
+    #print(f"Integral: {integral}")
 
     for i in range(iterations):
         for j in range(lhs.N):
@@ -163,6 +171,18 @@ def numerical_integration_test():
 
             integral = lhs.compute_integral(dx)
             print(f"Integral: {integral}")
+
+
+            sigma_lhs = np.zeros(R, dtype=np.double) 
+            lhs.ten.get_sigma(sigma_lhs, -1)
+
+            test = np.einsum('i,ji,ki->jk', sigma_lhs, lhs.U[0], lhs.U[1])
+
+            print(la.norm(test - ground_truth))
+            print(test - ground_truth)
+            print(test)
+            print(ground_truth)
+
 
 if __name__=='__main__':
     numerical_integration_test()
