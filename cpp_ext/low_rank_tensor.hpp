@@ -5,25 +5,23 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
-#include "tensor.hpp"
+#include "black_box_tensor.hpp"
 
 using namespace std;
 
-class __attribute__((visibility("hidden"))) LowRankTensor : public Tensor {
+class __attribute__((visibility("hidden"))) LowRankTensor : public BlackBoxTensor {
 public:
-    vector<uint64_t> dims;
     unique_ptr<NPBufferList<double>> U_py_bufs;
     vector<Buffer<double>> &U;
     uint32_t N;
-    uint64_t R, J;
-    uint64_t max_rhs_rows;
+    uint64_t R;
 
-    // This is a pointer, since it will be dynamically allocated
-    // based on the tensor mode 
-    Buffer<double>* rhs_buf; 
     Buffer<double> partial_evaluation;
     Buffer<double> sigma;
     Buffer<double> col_norms;
+
+    bool is_static;
+    double normsq;
 
     LowRankTensor(uint64_t R, uint64_t J,
         uint64_t max_rhs_rows, 
@@ -46,10 +44,15 @@ public:
         for(uint32_t i = 0; i < N; i++) {
             dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
+
+        // This is a static tensor. We will compute and store the norm^2
+        is_static = true;
+
+        get_sigma(sigma, -1);
+        normsq = ATB_chain_prod_sum(U, U, sigma, sigma);
     }
 
-    LowRankTensor(uint64_t R, 
-            py::list U_py)
+    LowRankTensor(uint64_t R, py::list U_py)
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
     U(U_py_bufs->buffers),
@@ -64,10 +67,29 @@ public:
         for(uint32_t i = 0; i < N; i++) {
             dims.push_back(U_py_bufs->buffers[i].shape[0]);
         }
+
+        is_static = false;
+    }
+
+    double get_normsq() {
+        if (! is_static) { 
+            get_sigma(sigma, -1); 
+            normsq = ATB_chain_prod_sum(U, U, sigma, sigma);
+        }
+        return normsq; 
+    };
+
+    double compute_residual_normsq(Buffer<double> &sigma_other, vector<Buffer<double>> &U_other) {
+        get_sigma(sigma, -1); 
+        double self_normsq = get_normsq();
+        double other_normsq = ATB_chain_prod_sum(U_other, U_other, sigma_other, sigma_other);
+        double inner_prod = ATB_chain_prod_sum(U_other, U, sigma_other, sigma);
+
+        return max(self_normsq + other_normsq - 2 * inner_prod, 0.0);
     }
 
     // Convenience method for RHS sampling 
-    void materialize_partial_evaluation(Buffer<uint64_t> &samples, 
+    void materialize_partial_evaluation(Buffer<uint64_t> &samples_transpose, 
         uint64_t j) {
         get_sigma(sigma, -1);
 
@@ -77,7 +99,7 @@ public:
             for(uint32_t k = 0; k < N; k++) {
                 if(k != j) {
                     for(uint32_t u = 0; u < R; u++) {
-                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples[k * J + i] * R + u];
+                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples_transpose[i * N + k] * R + u];
                     }
                 } 
             }
@@ -88,7 +110,7 @@ public:
     * Fills rhs_buf with an evaluation of the tensor starting from the
     * specified index in the array of samples. 
     */
-    void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, uint64_t row_pos) {
+    void materialize_rhs(Buffer<uint64_t> &samples_transpose, uint64_t j, uint64_t row_pos) {
         Buffer<double> &temp_buf = (*rhs_buf);
         uint64_t max_range = min(row_pos + max_rhs_rows, J);
         uint32_t M = (uint32_t) (max_range - row_pos);
@@ -112,49 +134,42 @@ public:
         );
     }
 
-    void preprocess(Buffer<uint64_t> &samples, uint64_t j) {
-        materialize_partial_evaluation(samples, j);
+    void preprocess(Buffer<uint64_t> &samples_transpose, uint64_t j) {
+        materialize_partial_evaluation(samples_transpose, j);
     }
 
-    void execute_downsampled_mttkrp(
-            Buffer<uint64_t> &samples, 
-            Buffer<double> &lhs,
-            uint64_t j,
-            Buffer<double> &result
-            ) {
-        
-        rhs_buf = new Buffer<double>({max_rhs_rows, dims[j]});
-        Buffer<double> &temp_buf = (*rhs_buf);
-        preprocess(samples, j);
+    void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
+        uint64_t R_L = U_L[0].shape[1];
+        Buffer<double> sigma({R});
+        Buffer<double> chain_had_prod({R, R_L});
+        get_sigma(sigma, -1);
 
-        // Result is a dims[j] x R matrix
-        std::fill(result(), result(dims[j], 0), 0.0);
+        Buffer<double> ones({R_L});
+        std::fill(ones(), ones(R_L), 1.0);
 
-        for(uint64_t i = 0; i < J; i += max_rhs_rows) {
-            uint64_t max_range = min(i + max_rhs_rows, J);
-            uint32_t rows = (uint32_t) (max_range - i);
+        ATB_chain_prod(
+                U,
+                U_L,
+                sigma,
+                ones,
+                chain_had_prod,
+                j);
 
-            materialize_rhs(samples, j, i);
-
-            // Need to fix this when the ranks are different! 
-            cblas_dgemm(
-                CblasRowMajor,
-                CblasTrans,
-                CblasNoTrans,
-                (uint32_t) dims[j],
-                (uint32_t) lhs.shape[1],
-                (uint32_t) rows,
-                1.0,
-                temp_buf(),
-                (uint32_t) dims[j],
-                lhs(i, 0),
-                (uint32_t) lhs.shape[1],
-                1.0,
-                result(),
-                (uint32_t) lhs.shape[1]
-            );
-        }
-        delete rhs_buf; 
+        cblas_dgemm(
+            CblasRowMajor,
+            CblasNoTrans,
+            CblasNoTrans,
+            (uint32_t) U[j].shape[0],
+            (uint32_t) U_L[j].shape[1],
+            (uint32_t) R,
+            1.0,
+            U[j](),
+            (uint32_t) R,
+            chain_had_prod(),
+            R_L,
+            0.0,
+            mttkrp_res(),
+            R_L);
     }
 
     /*
@@ -218,11 +233,19 @@ public:
                     col_norms[i * R + v] = sqrt(col_norms[i * R + v]);
                 }
 
-                #pragma omp for collapse(2)
-                for(uint32_t u = 0; u < dims[i]; u++) {
-                    for(uint32_t v = 0; v < R; v++) {
-                        U[i][u * R + v] /= col_norms[i * R + v];
+                for(uint32_t v = 0; v < R; v++) {
+                    // Renormalization only occurs when the column norm
+                    // is large enough. Should change this to a cutoff parameter... 
+                    double divisor = col_norms[i * R + v];
+                    if(divisor > 1e-7) {
+                        #pragma omp for
+                        for(uint32_t u = 0; u < dims[i]; u++) {
+                            U[i][u * R + v] /= divisor; 
+                        }
                     }
+                    else {
+                        col_norms[i * R + v] = 1.0;
+                    } 
                 }
             }
         }
