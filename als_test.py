@@ -74,7 +74,7 @@ def als(lhs, rhs, J, method, iter):
     #    return data
 
 def sparse_tensor_test():
-    J = 65536
+    J = 10000
 
     trial_count = 5
     iterations = 40
@@ -129,20 +129,22 @@ def low_rank_test():
     #    json.dump(result, outfile, indent=4)
 
 def numerical_integration_test():
-    I = 100
+    I = 10000
     J = 10000
     N = 10
-    R = 50
+    R = 25 
     dims = [I] * N
     iterations = 20
 
-    rhs = FunctionTensor(dims, J)
+    dx = 9.0 / (I - 1)
+    dx_array = [dx] * N
+    #dx = np.array([1.0 / (I - 1) for _ in range(N)], dtype=np.double)
+
+    rhs = FunctionTensor(dims, J, dx)
     print("Initialized Function Tensor!")
 
     lhs = PyLowRank(dims, R, seed=923845)
     lhs.ten.renormalize_columns(-1)
-
-    dx = [0.01] * N
 
     method = "larsen_kolda"
     als = ALS(lhs.ten, rhs.ten)
@@ -169,7 +171,7 @@ def numerical_integration_test():
             if detected_nan:
                 print("Found a NaN value!")
 
-            integral = lhs.compute_integral(dx)
+            integral = lhs.compute_integral(dx_array)
             print(f"Integral: {integral}")
 
             #sigma_lhs = np.zeros(R, dtype=np.double) 
@@ -178,5 +180,6 @@ def numerical_integration_test():
 
 
 if __name__=='__main__':
-    numerical_integration_test()
+    #numerical_integration_test()
     #low_rank_test()
+    sparse_tensor_test()

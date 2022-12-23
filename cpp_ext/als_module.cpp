@@ -225,7 +225,7 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
         .def(py::init<py::array_t<uint32_t>, py::array_t<double>>());
     py::class_<PyFunctionTensor, BlackBoxTensor>(m, "PyFunctionTensor")
-        .def(py::init<py::array_t<uint64_t>, uint64_t, uint64_t>()) 
+        .def(py::init<py::array_t<uint64_t>, uint64_t, uint64_t, double>()) 
         .def("test_fiber_evaluator", &PyFunctionTensor::test_fiber_evaluator);
     py::class_<ALS>(m, "ALS")
         .def(py::init<LowRankTensor&, Tensor&>()) 
