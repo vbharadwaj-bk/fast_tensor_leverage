@@ -54,13 +54,15 @@ public:
 
         #pragma omp parallel for reduction(+: total)
         for(uint64_t i = 0; i < U[j].shape[0]; i++) {
-            total += leverage[i];
+            total += leverage[i]; 
         }
+    
         leverage_sums[j] = total;
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
         std::fill(weights(), weights(J), 0.0-log((double) J));
+        double sum = 0.0;
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
                 Buffer<double> &leverage = *(factor_leverage[k]);
@@ -69,6 +71,7 @@ public:
 
                 for(uint64_t i = 0; i < J; i++) {
                     uint64_t sample = dist(gen);
+                    sum += sample;
                     row_buffer[i] = sample;
                     weights[i] += log(leverage_sums[k]) - log(leverage[sample]); 
                 }

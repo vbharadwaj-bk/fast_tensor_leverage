@@ -5,114 +5,60 @@ import time
 import json
 import pickle
 import h5py
+import ctypes
 
 from common import *
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
-from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
+from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
-
-class PyLowRank:
-    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=42):
-        if init_method=="gaussian":
-            rng = np.random.default_rng(seed)
-            self.N = len(dims)
-            self.R = R
-            self.U = [rng.normal(size=(divide_and_roundup(i, R) * R, R)) for i in dims]
-            if allow_rhs_mttkrp:
-                self.ten = LowRankTensor(R, J, 10000, self.U)
-            else:
-                self.ten = LowRankTensor(R, self.U)
-        else:
-            assert(False)
-
-    def compute_diff_resid(self, rhs_ten):
-        '''
-        Computes the residual of the difference between two low-rank tensors.
-        '''
-        sigma_lhs, sigma_rhs = np.zeros(self.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
-        U_lhs = self.U
-        self.ten.get_sigma(sigma_lhs, -1)
-        U_rhs = rhs_ten.U
-        rhs_ten.ten.get_sigma(sigma_rhs, -1)
-        residual = compute_diff_norm(U_lhs, U_rhs, sigma_lhs, sigma_rhs)
-
-        return residual
-
-    def compute_norm(self):
-        sigma_lhs = np.zeros(self.R, dtype=np.double)
-        self.ten.get_sigma(sigma_lhs, -1)
-        return np.sqrt(inner_prod(self.U, self.U, sigma_lhs, sigma_lhs))
-
-class PySparseTensor:
-    def __init__(self, filename, preprocessing=None):
-        print("Loading sparse tensor...")
-        f = h5py.File(filename, 'r')
-
-        self.max_idxs = f['MAX_MODE_SET'][:]
-        self.min_idxs = f['MIN_MODE_SET'][:]
-        self.dim = len(self.max_idxs)
-
-        # The tensor must have at least one mode
-        self.nnz = len(f['MODE_0']) 
-
-        self.tensor_idxs = []
-
-        for i in range(self.dim): 
-            self.tensor_idxs.append(f[f'MODE_{i}'][:] - self.min_idxs[i])
-
-        self.values = f['VALUES'][:]
-
-        if preprocessing is not None:
-            if preprocessing == "log_count":
-                self.values = np.log(self.values + 1.0)
-            else:
-                print(f"Unknown preprocessing option '{preprocessing}' specified!")
-                exit(1)
-
-        print("Finished loading sparse tensor...")
+from tensors import *
 
 def als(lhs, rhs, J, method, iter):
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
-    als.initialize_ds_als(J, method)
 
-    rhs_norm = rhs.compute_norm()
+    if method != "exact":
+        als.initialize_ds_als(J, method)
 
     residual = lhs.compute_diff_resid(rhs)
-    print(f"Residual: {residual / rhs_norm}")
-    try:
+    rhs_norm = np.sqrt(rhs.ten.get_normsq())
+
+    #try:
+    if True:
         for i in range(iter):
             for j in range(lhs.N):
-                sigma_lhs, sigma_rhs = np.zeros(lhs.R, dtype=np.double), np.zeros(rhs.R, dtype=np.double)
-                lhs.ten.get_sigma(sigma_lhs, j)
-                rhs.ten.get_sigma(sigma_rhs, -1)
+                # This is used just to check for NaN values.
+                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(lhs.N) if i != j])
+                detected_nan = np.any(np.isnan(g))
 
-                g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(N) if i != j])
-                print(la.cond(g))
-                g_pinv = la.pinv(g) 
+                if detected_nan:
+                    print("Found a NaN value!")
 
-                elwise_prod = chain_had_prod([lhs.U[i].T @ rhs.U[i] for i in range(N) if i != j])
-                elwise_prod *= np.outer(np.ones(lhs.R), sigma_rhs)
-                true_soln = rhs.U[j] @ elwise_prod.T @ g_pinv @ np.diag(sigma_lhs ** -1)
+                sigma_lhs = np.zeros(lhs.R, dtype=np.double) 
+                lhs.ten.get_sigma(sigma_lhs, -1)
 
-                lhs.U[j][:] = true_soln
-                lhs.ten.renormalize_columns(j)
+                als.execute_exact_als_update(j, True, True)
                 residual = lhs.compute_diff_resid(rhs)
 
-                als.execute_ds_als_update(j, True, True) 
-                residual_approx = lhs.compute_diff_resid(rhs)
+                if method != "exact":
+                    als.execute_ds_als_update(j, True, True)
+                    residual_approx = lhs.compute_diff_resid(rhs)
+                else: 
+                    residual_approx = residual
 
                 if residual > 0:
                     ratio = residual_approx / residual
                 else:
                     ratio = 1.0
 
-                #print(f"Condition #: {la.cond(g)}")
-                print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}")
+                fit = lhs.compute_estimated_fit(rhs)
+                print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, Fit: {fit}")
+
                 data_entry = {}
+                data_entry["fit"] = fit 
                 data_entry["exact_solve_residual"] = residual
                 data_entry["approx_solve_residual"] = residual_approx
                 data_entry["exact_solve_residual_normalized"] = residual / rhs_norm
@@ -123,38 +69,117 @@ def als(lhs, rhs, J, method, iter):
                 
                 data.append(data_entry)
         return data 
-    except:
-        print("Caught SVD unconverged exception, terminating and returning trace...")
-        return data
+    #except:
+    #    print("Caught SVD unconverged exception, terminating and returning trace...")
+    #    return data
 
-    #with open('data/lstsq_problems.pickle', 'wb') as handle:
-    #    pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    
-    #print("Dumped data pickle")
-
-if __name__=='__main__':
-    i = 13
-    R = 32
-    N = 5
-    J = 20000
-
-    sparse_tensor = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5")
-    exit(1)
+def sparse_tensor_test():
+    J = 10000
 
     trial_count = 5
-    iterations = 25
-    result = {"I": 2 ** i, "R" : R, "N": N, "J": J}
+    iterations = 40
+    result = {}
 
     samplers = ["efficient"]
+    #R_values = [4, 8, 16, 32, 64, 128]
+    R_values = [25]
 
-    for sampler in samplers:
-        result[sampler] = []
-        for trial in range(trial_count): 
-            lhs = PyLowRank([2 ** i] * N, 2 * R, seed=923845)
-            lhs.ten.renormalize_columns(-1)
-            rhs = PyLowRank([2 ** i] * N, R, allow_rhs_mttkrp=True, J=J, seed=29348)
-            rhs.ten.renormalize_columns(-1)
-            result[sampler].append(als(lhs, rhs, J, sampler, iterations))
+    for R in R_values: 
+        result[R] = {}
+        for sampler in samplers:
+            result[R][sampler] = []
+            for trial in range(trial_count):
+                #rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+                #rhs.ten.renormalize_columns(-1)
+                rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
+                lhs = PyLowRank(rhs.dims, R, seed=923845)
+                lhs.ten.renormalize_columns(-1)
+                result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
 
-    #with open('outputs/synthetic_lowrank_comparison.json', 'w') as outfile:
+    with open('outputs/lk_uber_comparison.json', 'w') as outfile:
+        json.dump(result, outfile, indent=4)
+
+def low_rank_test():
+    J = 30000 
+
+    trial_count = 1
+    iterations = 20
+    result = {}
+
+    samplers = ["efficient"]
+    R_values = [32]
+
+    I = 2 ** 9
+    N = 4
+
+    for R in R_values: 
+        result[R] = {}
+        for sampler in samplers:
+            result[R][sampler] = []
+            for trial in range(trial_count):
+                rhs = PyLowRank([I] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+                rhs.ten.renormalize_columns(-1)
+
+                # Specify a seed here to make everything deterministic
+                lhs = PyLowRank(rhs.dims, R)
+                lhs.ten.renormalize_columns(-1)
+                result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
+
+    #with open('outputs/low_rank_comparison.json', 'w') as outfile:
     #    json.dump(result, outfile, indent=4)
+
+def numerical_integration_test():
+    I = 10000
+    J = 10000
+    N = 10
+    R = 25 
+    dims = [I] * N
+    iterations = 20
+
+    dx = 9.0 / (I - 1)
+    dx_array = [dx] * N
+    #dx = np.array([1.0 / (I - 1) for _ in range(N)], dtype=np.double)
+
+    rhs = FunctionTensor(dims, J, dx)
+    print("Initialized Function Tensor!")
+
+    lhs = PyLowRank(dims, R, seed=923845)
+    lhs.ten.renormalize_columns(-1)
+
+    method = "larsen_kolda"
+    als = ALS(lhs.ten, rhs.ten)
+    als.initialize_ds_als(J, method)
+
+    # For some very small test functions, we will manually compute the
+    # ground truth
+
+    #ground_truth = np.zeros((I, I), dtype=np.double)
+    #for i in range(I):
+    #    for j in range(I):
+    #        ground_truth[i, j] = (i + j) * 0.01 
+
+    #integral = lhs.compute_integral(dx)
+    #print(f"Integral: {integral}")
+
+    for i in range(iterations):
+        for j in range(lhs.N):
+            als.execute_ds_als_update(j, True, True) 
+
+            g = chain_had_prod([lhs.U[i].T @ lhs.U[i] for i in range(lhs.N) if i != j])
+            detected_nan = np.any(np.isnan(g))
+
+            if detected_nan:
+                print("Found a NaN value!")
+
+            integral = lhs.compute_integral(dx_array)
+            print(f"Integral: {integral}")
+
+            #sigma_lhs = np.zeros(R, dtype=np.double) 
+            #lhs.ten.get_sigma(sigma_lhs, -1)
+            #test = np.einsum('i,ji,ki->jk', sigma_lhs, lhs.U[0], lhs.U[1])
+
+
+if __name__=='__main__':
+    #numerical_integration_test()
+    #low_rank_test()
+    sparse_tensor_test()
