@@ -129,14 +129,14 @@ def low_rank_test():
     #    json.dump(result, outfile, indent=4)
 
 def numerical_integration_test():
-    I = 100
-    J = 500
-    N = 2
+    I = 101
+    J = 10000
+    N = 3
     R = 25
     dims = [I] * N
     iterations = 20
 
-    rhs = FunctionTensor(N, J)
+    rhs = FunctionTensor(dims, J)
     print("Initialized Function Tensor!")
 
     lhs = PyLowRank(dims, R, seed=923845)
