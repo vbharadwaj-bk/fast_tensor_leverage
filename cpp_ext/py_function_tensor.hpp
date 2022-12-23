@@ -53,13 +53,14 @@ public:
 
         // As a test, we will directly compute the integral of the sine function here.
 
+        #pragma omp parallel for
         for(uint64_t i = 0; i < M; i++) {
             uint64_t offset = (row_pos + i) * tensor_dim;
             samples_transpose[offset + j] = 0;
             double partial = std::accumulate(samples_transpose(offset), samples_transpose(offset + tensor_dim), 0);
 
             for(uint64_t k = 0; k < Ij; k++) {
-                //temp_buf[i * Ij + k] = ((partial + k) * 0.01);
+                //temp_buf[i * Ij + k] = sin((partial + k) * 0.01);
                 temp_buf[i * Ij + k] = 1.0; 
             }
         }
