@@ -74,7 +74,7 @@ def als(lhs, rhs, J, method, iter):
     #    return data
 
 def sparse_tensor_test():
-    J = 10000
+    J = 2 ** 16 
 
     trial_count = 5
     iterations = 40
@@ -82,17 +82,17 @@ def sparse_tensor_test():
 
     samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [25]
+    R_values = [125]
+
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5")
 
     for R in R_values: 
         result[R] = {}
         for sampler in samplers:
             result[R][sampler] = []
             for trial in range(trial_count):
-                #rhs = PyLowRank([2 ** 4] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
-                #rhs.ten.renormalize_columns(-1)
-                rhs = PySparseTensor("/home/vbharadw/tensors/uber.tns_converted.hdf5")
-                lhs = PyLowRank(rhs.dims, R, seed=923845)
+                lhs = PyLowRank(rhs.dims, R)
                 lhs.ten.renormalize_columns(-1)
                 result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
 

@@ -95,7 +95,6 @@ class PySparseTensor:
                 self.values = np.log(self.values + 1.0)
             else:
                 print(f"Unknown preprocessing option '{preprocessing}' specified!")
-                exit(1)
 
         self.ten = SparseTensor(self.tensor_idxs, self.values) 
         print("Finished loading sparse tensor...")

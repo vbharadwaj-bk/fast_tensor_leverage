@@ -198,17 +198,14 @@ public:
     void renormalize_columns(int j) {
         std::fill(sigma(), sigma(R), 1.0);
 
-        #pragma omp parallel
-{
         for(int i = 0; i < (int) N; i++) {
             if(j == -1 || j == i) {
 
-                #pragma omp critical
-                {
                 std::fill(col_norms(i * R), 
                     col_norms((i + 1) * R), 0.0);
-                }
 
+                #pragma omp parallel
+{
                 Buffer<double> thread_loc_norms({R});
                 std::fill(thread_loc_norms(), 
                     thread_loc_norms(R), 0.0);
@@ -225,10 +222,8 @@ public:
                     #pragma omp atomic 
                     col_norms[i * R + v] += thread_loc_norms[v]; 
                 }
+}
 
-                #pragma omp barrier
-
-                #pragma omp for
                 for(uint32_t v = 0; v < R; v++) { 
                     col_norms[i * R + v] = sqrt(col_norms[i * R + v]);
                 }
@@ -238,7 +233,7 @@ public:
                     // is large enough. Should change this to a cutoff parameter... 
                     double divisor = col_norms[i * R + v];
                     if(divisor > 1e-7) {
-                        #pragma omp for
+                        #pragma omp parallel for
                         for(uint32_t u = 0; u < dims[i]; u++) {
                             U[i][u * R + v] /= divisor; 
                         }
@@ -249,6 +244,5 @@ public:
                 }
             }
         }
-}
     }
 };
