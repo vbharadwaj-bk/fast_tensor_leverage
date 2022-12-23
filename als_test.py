@@ -129,10 +129,10 @@ def low_rank_test():
     #    json.dump(result, outfile, indent=4)
 
 def numerical_integration_test():
-    I = 101
+    I = 100
     J = 10000
-    N = 3
-    R = 25
+    N = 10
+    R = 50
     dims = [I] * N
     iterations = 20
 
@@ -144,7 +144,7 @@ def numerical_integration_test():
 
     dx = [0.01] * N
 
-    method = "efficient"
+    method = "larsen_kolda"
     als = ALS(lhs.ten, rhs.ten)
     als.initialize_ds_als(J, method)
 
