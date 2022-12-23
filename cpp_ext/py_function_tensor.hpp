@@ -13,11 +13,14 @@ class __attribute__((visibility("hidden"))) PyFunctionTensor : public BlackBoxTe
 public:
     //py::function fiber_evaluator;
 
+    double dx;
     PyFunctionTensor(py::array_t<uint64_t> dims_py,
             uint64_t J,
-            uint64_t max_rhs_rows) {
+            uint64_t max_rhs_rows,
+            double dx) {
         this->max_rhs_rows = max_rhs_rows;
         this->J = J;
+        this->dx = dx;
         //this->fiber_evaluator = fiber_evaluator;
 
         Buffer<uint64_t> dims_in(dims_py);
@@ -60,8 +63,8 @@ public:
             double partial = std::accumulate(samples_transpose(offset), samples_transpose(offset + tensor_dim), 0);
 
             for(uint64_t k = 0; k < Ij; k++) {
-                //temp_buf[i * Ij + k] = sin((partial + k) * 0.01);
-                temp_buf[i * Ij + k] = 1.0; 
+                temp_buf[i * Ij + k] = sin((partial + k) * dx);
+                //temp_buf[i * Ij + k] = 1.0; 
             }
         }
     };

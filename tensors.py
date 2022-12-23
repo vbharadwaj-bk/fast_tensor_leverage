@@ -125,10 +125,10 @@ import ctypes
 #    test_function(out_buffer, samples, j, row_pos, M, Ij)
 
 class FunctionTensor:
-    def __init__(self, dims, J, func=None, func_batch=None):
+    def __init__(self, dims, J, dx, func=None, func_batch=None):
         self.N = len(dims)
         self.J = J
         #self.bounds = bounds
         #self.subdivisions = subdivisions
         self.dims = np.array(dims, dtype=np.uint64)
-        self.ten = PyFunctionTensor(self.dims, J, 10000)
+        self.ten = PyFunctionTensor(self.dims, J, 10000, dx)
