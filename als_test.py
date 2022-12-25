@@ -11,7 +11,7 @@ from common import *
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
-from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTensor, ALS
+from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTensor, ALS, test 
 from cpp_ext.efficient_krp_sampler import CP_ALS
 from tensors import *
 
@@ -182,4 +182,5 @@ def numerical_integration_test():
 if __name__=='__main__':
     #numerical_integration_test()
     #low_rank_test()
-    sparse_tensor_test()
+    #sparse_tensor_test()
+    test()

@@ -1,40 +1,50 @@
-#include <iostream>
+#include <stddef.h>
+#include <stdio.h>
+#include <execution>
+#include <algorithm>
 #include <chrono>
-#include "cblas.h"
+#include <random>
+#include <ratio>
+#include <vector>
 #include "omp.h"
 
-using namespace std;
+using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::milli;
+using std::random_device;
+using std::sort;
+using std::vector;
 
-int main(int argc, char** argv) {
-    int N = 4000;
-    double* A = new double[N * N];
-    double* B = new double[N * N];
+const size_t testSize = 100'000'000;
+const int iterationCount = 5;
 
-    auto start = std::chrono::system_clock::now();
+void print_results(const char *const tag, const vector<double>& sorted,
+                   high_resolution_clock::time_point startTime,
+                   high_resolution_clock::time_point endTime) {
+  printf("%s: Lowest: %g Highest: %g Time: %fms\n", tag, sorted.front(),
+         sorted.back(),
+         duration_cast<duration<double, milli>>(endTime - startTime).count());
+}
 
-    double* C = new double[N * N];
-    #pragma omp parallel for
-    for(int i = 0; i < 20; i++) {
-        double* C = new double[N * N];
-    }
+int main() {
+  random_device rd;
 
-    cblas_dgemm(
-        CblasRowMajor,
-        CblasNoTrans,
-        CblasNoTrans,
-        N, N, N,
-        1.0,
-        (const double*) A,
-        N,
-        (const double*) B,
-        N,
-        0.0,
-        C,
-        N);
+  // generate some random doubles:
+  printf("Testing with %zu doubles...\n", testSize);
+  vector<double> doubles(testSize);
+  for (auto& d : doubles) {
+    d = static_cast<double>(rd());
+  }
 
-
-    auto end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-
-    cout << "Elapsed: " << elapsed_seconds.count() << endl;
+  // time how long it takes to sort them:
+  for (int i = 0; i < iterationCount; ++i)
+  {
+    vector<double> sorted(doubles);
+    const auto startTime = high_resolution_clock::now();
+    sort(std::execution::par_unseq, sorted.begin(), sorted.end()); 
+    //sort(sorted.begin(), sorted.end());
+    const auto endTime = high_resolution_clock::now();
+    print_results("Serial", sorted, startTime, endTime);
+  }
 }
