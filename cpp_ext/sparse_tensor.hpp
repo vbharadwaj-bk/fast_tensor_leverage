@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
+#include <string>
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
@@ -19,24 +21,32 @@ class __attribute__((visibility("hidden"))) SparseTensor : public Tensor {
 public:
     Buffer<uint32_t> indices;
     Buffer<double> values;
-    vector<HashIdxLookup<uint32_t, double>> lookups;
+    vector<unique_ptr<IdxLookup<uint32_t, double>>> lookups;
 
     uint64_t N, nnz;
     double normsq;
 
-    SparseTensor(py::array_t<uint32_t> indices_py, py::array_t<double> values_py)
+    SparseTensor(py::array_t<uint32_t> indices_py, 
+        py::array_t<double> values_py,
+        std::string method)
     :
     indices(indices_py),
     values(values_py)
     {
       nnz = indices.shape[0]; 
-      N = indices.shape[1]; 
+      N = indices.shape[1];
 
       for(uint64_t j = 0; j < N; j++) {
-        lookups.emplace_back(N, j, 
-            indices(), 
-            values(), 
-            nnz);
+        if(method == "hash") {
+          lookups.emplace_back(new HashIdxLookup(N, j, 
+              indices(), 
+              values(), 
+              nnz));
+        }
+        else {
+          cout << "Unknown lookup method passed, terminating..." << endl;
+          exit(1);
+        }
       }
 
       normsq = 0.0;
@@ -96,7 +106,7 @@ public:
       // It is probably a good idea to sort and reweight samples here... 
 
       std::fill(result(), result(Ij * R), 0.0);
-      lookups[j].execute_spmm(samples_dcast, lhs, result);
+      lookups[j]->execute_spmm(samples_dcast, lhs, result);
     }
 
     double compute_residual_normsq(Buffer<double> &sigma, vector<Buffer<double>> &U) {
