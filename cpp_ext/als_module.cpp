@@ -1,10 +1,6 @@
 //cppimport
 #include <iostream>
 #include <string>
-#include <random>
-#include <execution>
-#include <algorithm>
-#include <chrono>
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
@@ -23,14 +19,6 @@
 
 using namespace std;
 namespace py = pybind11;
-
-using std::chrono::duration;
-using std::chrono::duration_cast;
-using std::chrono::high_resolution_clock;
-using std::milli;
-using std::random_device;
-using std::sort;
-using std::vector;
 
 class __attribute__((visibility("hidden"))) ALS {
 public:
@@ -223,37 +211,6 @@ public:
     }
 };
 
-void print_results(const char *const tag, const vector<double>& sorted,
-                   high_resolution_clock::time_point startTime,
-                   high_resolution_clock::time_point endTime) {
-  printf("%s: Lowest: %g Highest: %g Time: %fms\n", tag, sorted.front(),
-         sorted.back(),
-         duration_cast<duration<double, milli>>(endTime - startTime).count());
-}
-
-void test() {
-  size_t testSize = 100'000'000;
-  int iterationCount = 5;
-  random_device rd;
-
-  // generate some random doubles:
-  printf("Testing with %zu doubles...\n", testSize);
-  vector<double> doubles(testSize);
-  for (auto& d : doubles) {
-    d = static_cast<double>(rd());
-  }
-
-  // time how long it takes to sort them:
-  for (int i = 0; i < iterationCount; ++i)
-  {
-    vector<double> sorted(doubles);
-    const auto startTime = high_resolution_clock::now();
-    sort(std::execution::par_unseq, sorted.begin(), sorted.end()); 
-    const auto endTime = high_resolution_clock::now();
-    print_results("Serial", sorted, startTime, endTime);
-  }
-}
-
 PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
         .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py)
@@ -275,7 +232,6 @@ PYBIND11_MODULE(als_module, m) {
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
         .def("execute_exact_als_update", &ALS::execute_exact_als_update)
         .def("execute_ds_als_update", &ALS::execute_ds_als_update);
-    m.def("test", &test); 
 }
 
 /*
@@ -283,7 +239,7 @@ PYBIND11_MODULE(als_module, m) {
 setup_pybind11(cfg)
 cfg['extra_compile_args'] = ['--std=c++2a', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-O3', '-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include']
 cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8', '-lopenblas', '-fopenmp', '-O3', '-ltbb']
-cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp', 'black_box_tensor.hpp', 'py_function_tensor.hpp','tensor.hpp'] 
+cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp', 'black_box_tensor.hpp', 'py_function_tensor.hpp','tensor.hpp', 'hash_lookup.hpp'] 
 %>
 */
 
