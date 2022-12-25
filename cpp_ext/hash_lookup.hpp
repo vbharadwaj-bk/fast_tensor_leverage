@@ -5,6 +5,7 @@
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
+#include "idx_lookup.hpp"
 #include "tensor.hpp"
 #include "hashing.hpp"
 #include "sparsehash/dense_hash_map"
@@ -68,7 +69,7 @@ public:
 };
 
 template<typename IDX_T, typename VAL_T>
-class HashIdxLookup {
+class HashIdxLookup : public IdxLookup<IDX_T, VAL_T> {
 public:
   int dim;
   int mode_to_leave;

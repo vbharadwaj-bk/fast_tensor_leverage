@@ -71,7 +71,7 @@ class PyLowRank:
         return np.sum(chain_had_prod(buffers))
 
 class PySparseTensor:
-    def __init__(self, filename, preprocessing=None):
+    def __init__(self, filename, preprocessing=None, lookup="hash"):
         print("Loading sparse tensor...")
         f = h5py.File(filename, 'r')
 
@@ -96,7 +96,7 @@ class PySparseTensor:
             else:
                 print(f"Unknown preprocessing option '{preprocessing}' specified!")
 
-        self.ten = SparseTensor(self.tensor_idxs, self.values) 
+        self.ten = SparseTensor(self.tensor_idxs, self.values, lookup) 
         print("Finished loading sparse tensor...")
 
 from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
