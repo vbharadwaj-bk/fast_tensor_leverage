@@ -14,6 +14,9 @@
 #include "larsen_kolda_sampler.hpp"
 #include "efficient_krp_sampler.hpp"
 
+#include <execution>
+#include <algorithm>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
@@ -30,6 +33,7 @@ public:
     unique_ptr<Sampler> sampler;
     unique_ptr<Buffer<uint64_t>> samples;
     unique_ptr<Buffer<uint64_t>> samples_transpose;
+    unique_ptr<Buffer<uint64_t*>> sample_sort; 
 
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
         cp_decomp(cp_dec),
@@ -51,6 +55,12 @@ public:
 
         samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
         samples_transpose.reset(new Buffer<uint64_t>({J, cp_decomp.N}));
+        /*samples_sort.reset(new Buffer<uint64_t*>({J}));
+
+        #pragma omp parallel for
+        for(uint64_t i = 0; i < J; i++) {
+            sort_idxs[i] = idx_ptr + (i * N);
+        }*/
     }
 
     void execute_ds_als_update(uint32_t j, 
@@ -75,6 +85,12 @@ public:
                 (*samples_transpose)[i * N + k] = (uint32_t) (*samples)[k * J + i]; 
             }
         }
+
+        // Use a sort to deduplicate the list of samples 
+        /*std::sort(std::execution::par_unseq, 
+            sort_idxs(), 
+            sort_idxs(nnz),
+        );*/
 
         #pragma omp parallel for collapse(2) 
         for(uint32_t i = 0; i < J; i++) {
@@ -192,22 +208,9 @@ public:
             }
         }
 
-        /*cout << "-----------------------------------" << endl;
-        for(uint64_t i = 0; i < Ij; i++) {
-            for(uint64_t k = 0; k < R; k++) {
-                cout << cp_decomp.U[j][i * R + k] << " ";
-            }
-            cout << endl;
-        }
-        cout << "-----------------------------------" << endl;*/
-
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
         }
-
-        // We could update the sampler here... maybe should take that argument
-        // off the signature for this function 
-
     }
 };
 

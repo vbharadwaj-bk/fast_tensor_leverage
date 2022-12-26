@@ -12,7 +12,6 @@
 #include <execution>
 #include <algorithm>
 #include <numeric>
-#include <bitset>
 
 using namespace std;
 
