@@ -44,7 +44,7 @@ public:
               values(), 
               nnz));
         }
-        if(method == "sort") {
+        else if(method == "sort") {
           lookups.emplace_back(new SortIdxLookup(N, j, 
               indices(), 
               values(), 

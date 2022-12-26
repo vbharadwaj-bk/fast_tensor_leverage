@@ -71,7 +71,7 @@ class PyLowRank:
         return np.sum(chain_had_prod(buffers))
 
 class PySparseTensor:
-    def __init__(self, filename, preprocessing=None, lookup="hash"):
+    def __init__(self, filename, preprocessing=None, lookup="sort"):
         print("Loading sparse tensor...")
         f = h5py.File(filename, 'r')
 
