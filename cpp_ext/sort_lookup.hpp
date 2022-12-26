@@ -69,9 +69,14 @@ public:
       Buffer<double> &output
       ) {
 
-    auto lambda_fcn = [mode_to_leave, N](IDX_T* a, IDX_T* b) {
-                for(int i = 0; i < N; i++) {
-                    if(i != mode_to_leave && a[i] != b[i]) {
+    uint64_t J = indices.shape[0];
+    uint64_t R = output.shape[1];
+
+    int mode = this->mode_to_leave;
+    int Nval = this->N;
+    auto lambda_fcn = [mode, Nval](IDX_T* a, IDX_T* b) {
+                for(int i = 0; i < Nval; i++) {
+                    if(i != mode && a[i] != b[i]) {
                         return a[i] < b[i];
                     }
                 }
@@ -92,13 +97,16 @@ public:
             buf,
             lambda_fcn);
 
-      IDX_T* start = *(bound.first);
-      IDX_T* end = *(bound.second);
+      bool found = false;
+      if(bounds.first != sort_idxs(nnz)) {
+        found = true;
+        IDX_T* start = *(bounds.first);
+        IDX_T* end = *(bounds.second);
 
-      bool found = true;
-      for(int i = 0; i < N; i++) {
-        if(i != mode_to_leave) {
-          found = found && (buf[i] != start[i]);
+        for(int i = 0; i < N; i++) {
+            if(i != mode_to_leave) {
+                found = found && (buf[i] != start[i]);
+            }
         }
       }
 
@@ -106,7 +114,7 @@ public:
         for(IDX_T** i = bounds.first; i < bounds.second; i++) {
           found_count++;
           IDX_T* nonzero = *i;
-          uint64_t diff = (nonzero - idx_ptr) / sizeof(IDX_T);
+          uint64_t diff = (nonzero - idx_ptr) / (N * sizeof(IDX_T));
           double value = val_ptr[diff];
           uint64_t output_offset = ((*i)[mode_to_leave]) * R;
 
@@ -117,5 +125,7 @@ public:
         }
       }
     }
+
+    cout << "Found nonzeros: " << found_count << endl;
   }
 };
