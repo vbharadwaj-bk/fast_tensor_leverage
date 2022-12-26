@@ -8,6 +8,10 @@
 #include "tensor.hpp"
 #include "hashing.hpp"
 
+#include <execution>
+#include <algorithm>
+#include <numeric>
+
 using namespace std;
 
 template<typename IDX_T, typename VAL_T>
@@ -16,17 +20,26 @@ public:
   int dim;
   int mode_to_leave;
 
-  Buffer<IDX_T> sort_idxs;
+  uint64_t nnz;
+  IDX_T* idx_ptr;
+  VAL_T* val_ptr;
+
+  Buffer<uint64_t> sort_idxs;
 
   SortIdxLookup(int dim, int mode_to_leave, IDX_T* idx_ptr, VAL_T* val_ptr, uint64_t nnz) 
   :
   sort_idxs(nnz)
   {
-
     this->dim = dim;
     this->mode_to_leave = mode_to_leave;
+    this->nnz = nnz;
+    this->idx_ptr = idx_ptr;
+    this->val_ptr = val_ptr;
 
-
+    #pragma omp parallel for
+    for(uint64_t i = 0; i < nnz; i++) {
+        sort_idxs[i] = i;
+    }
   }
 
   /*
