@@ -156,5 +156,7 @@ public:
         }  
       }
     }
+
+    cout << "Found nonzeros: " << found_count << endl;
   }
 };
