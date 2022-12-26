@@ -101,11 +101,10 @@ public:
       if(bounds.first != sort_idxs(nnz)) {
         found = true;
         IDX_T* start = *(bounds.first);
-        IDX_T* end = *(bounds.second);
 
         for(int i = 0; i < N; i++) {
-            if(i != mode_to_leave) {
-                found = found && (buf[i] != start[i]);
+            if(i != mode_to_leave && buf[i] != start[i]) {
+                found = false;
             }
         }
       }
@@ -114,9 +113,9 @@ public:
         for(IDX_T** i = bounds.first; i < bounds.second; i++) {
           found_count++;
           IDX_T* nonzero = *i;
-          uint64_t diff = (nonzero - idx_ptr) / (N * sizeof(IDX_T));
+          uint64_t diff = (uint64_t) (nonzero - idx_ptr) / N;
           double value = val_ptr[diff];
-          uint64_t output_offset = ((*i)[mode_to_leave]) * R;
+          uint64_t output_offset = (nonzero[mode_to_leave]) * R;
 
           for(uint64_t k = 0; k < R; k++) {
             #pragma omp atomic 
@@ -125,7 +124,5 @@ public:
         }
       }
     }
-
-    cout << "Found nonzeros: " << found_count << endl;
   }
 };
