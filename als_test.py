@@ -84,10 +84,8 @@ def sparse_tensor_test():
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5")
-    print("Created sparse tensor!")
-    exit()
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="hash")
 
     for R in R_values: 
         result[R] = {}
