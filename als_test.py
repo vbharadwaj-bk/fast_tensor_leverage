@@ -37,7 +37,7 @@ def sparse_tensor_test():
             for trial in range(trial_count):
                 lhs = PyLowRank(rhs.dims, R)
                 lhs.ten.renormalize_columns(-1)
-                result[R][sampler].append(als_exact_comparison(lhs, rhs, J, sampler, iterations))
+                result[R][sampler].append(als_prod(lhs, rhs, J, sampler, iterations))
 
     with open('outputs/lk_uber_comparison.json', 'w') as outfile:
         json.dump(result, outfile, indent=4)
