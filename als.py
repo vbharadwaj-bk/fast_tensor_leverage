@@ -28,9 +28,6 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
 
     for i in range(iter):
         for j in range(lhs.N):
-            sigma_lhs = np.zeros(lhs.R, dtype=np.double) 
-            lhs.ten.get_sigma(sigma_lhs, -1)
-
             als.execute_exact_als_update(j, True, True)
             residual = lhs.compute_diff_resid(rhs)
 
@@ -59,3 +56,31 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
             data_entry["j"] = j 
             data.append(data_entry)
     return data 
+
+def als_prod(lhs, rhs, J, method, iter, epoch_length=5):
+    data = []
+
+    als = ALS(lhs.ten, rhs.ten)
+
+    iterations = []
+    fits = []
+
+    if method != "exact":
+        als.initialize_ds_als(J, method)
+
+    iterations.append(0)
+    fits.append(lhs.compute_estimated_fit(rhs))
+
+    for i in range(iter):
+        for j in range(lhs.N):
+            if method == "exact":
+                als.execute_exact_als_update(j, True, True)
+            else:
+                als.execute_ds_als_update(j, True, True)
+
+        if (i + 1) % epoch_length == 0:
+            iterations.append(i + 1)
+            fits.append(lhs.compute_estimated_fit(rhs))
+            print(f"Iteration: {i+1}\tFit: {fits[-1]}")
+
+    data = {"iterations": iterations, "fits": fits}
