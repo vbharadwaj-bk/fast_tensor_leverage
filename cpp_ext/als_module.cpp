@@ -152,25 +152,25 @@ public:
         }
 
         #pragma omp parallel for collapse(2) 
-        for(uint32_t i = 0; i < J; i++) {
+        for(uint32_t i = 0; i < num_unique; i++) {
             for(uint32_t t = 0; t < R; t++) {
-                sampler->h[i * R + t] *= sqrt(sampler->weights[i]); 
+                h_dedup[i * R + t] *= sqrt(weights_dedup[i]); 
             }
         }
 
         std::fill(pinv(), pinv(R * R), 0.0);
-        compute_pinv(sampler->h, pinv);  
+        compute_pinv(h_dedup, pinv);  
 
         #pragma omp parallel for collapse(2)
-        for(uint32_t i = 0; i < J; i++) {
+        for(uint32_t i = 0; i < num_unique; i++) {
             for(uint32_t t = 0; t < R; t++) {
-                sampler->h[i * R + t] *= sqrt(sampler->weights[i]); 
+                h_dedup[i * R + t] *= sqrt(weights_dedup[i]); 
             }
         }
 
         ground_truth.execute_downsampled_mttkrp(
-                *samples_transpose,
-                sampler->h,
+                samples_dedup,
+                h_dedup,
                 j,
                 mttkrp_res 
                 );
