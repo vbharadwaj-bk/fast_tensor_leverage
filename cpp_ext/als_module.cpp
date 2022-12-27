@@ -33,7 +33,6 @@ public:
     unique_ptr<Sampler> sampler;
     unique_ptr<Buffer<uint64_t>> samples;
     unique_ptr<Buffer<uint64_t>> samples_transpose;
-    unique_ptr<Buffer<uint64_t*>> sample_sort; 
 
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
         cp_decomp(cp_dec),
@@ -55,12 +54,6 @@ public:
 
         samples.reset(new Buffer<uint64_t>({cp_decomp.N, J}));
         samples_transpose.reset(new Buffer<uint64_t>({J, cp_decomp.N}));
-        /*samples_sort.reset(new Buffer<uint64_t*>({J}));
-
-        #pragma omp parallel for
-        for(uint64_t i = 0; i < J; i++) {
-            sort_idxs[i] = idx_ptr + (i * N);
-        }*/
     }
 
     void execute_ds_als_update(uint32_t j, 
@@ -87,10 +80,76 @@ public:
         }
 
         // Use a sort to deduplicate the list of samples 
-        /*std::sort(std::execution::par_unseq, 
+        Buffer<uint64_t*> sort_idxs({J});
+        Buffer<uint64_t*> dedup_idxs({J});
+
+        #pragma omp parallel for
+        for(uint64_t i = 0; i < J; i++) {
+            sort_idxs[i] = (*samples_transpose)(i * N);
+        }
+
+        std::sort(std::execution::par_unseq, 
             sort_idxs(), 
-            sort_idxs(nnz),
-        );*/
+            sort_idxs(J),
+            [j, N](uint64_t* a, uint64_t* b) {
+                for(uint32_t i = 0; i < N; i++) {
+                    if(i != j && a[i] != b[i]) {
+                        return a[i] < b[i];
+                    }
+                }
+                return false;  
+            });
+
+
+        uint64_t** end_range = 
+            std::unique_copy(std::execution::par_unseq,
+                sort_idxs(),
+                sort_idxs(J),
+                dedup_idxs(),
+                [j, N](uint64_t* a, uint64_t* b) {
+                    for(uint32_t i = 0; i < N; i++) {
+                        if(i != j && a[i] != b[i]) {
+                            return false;
+                        }
+                    }
+                    return true; 
+                });
+
+        uint64_t num_unique = end_range - dedup_idxs();
+
+        Buffer<uint64_t> samples_dedup({num_unique, N});
+        Buffer<double> weights_dedup({num_unique});
+        Buffer<double> h_dedup({num_unique, R});
+
+        #pragma omp parallel for
+        for(uint64_t i = 0; i < num_unique; i++) {
+            uint64_t* buf = dedup_idxs[i];
+            uint64_t offset = (buf - (*samples_transpose)()) / N;
+
+            std::pair<uint64_t**, uint64_t**> bounds = std::equal_range(
+                sort_idxs(),
+                sort_idxs(J),
+                buf, 
+                [j, N](uint64_t* a, uint64_t* b) {
+                    for(uint32_t i = 0; i < N; i++) {
+                        if(i != j && a[i] != b[i]) {
+                            return a[i] < b[i];
+                        }
+                    }
+                    return false; 
+                });
+
+            uint64_t num_copies = bounds.second - bounds.first; 
+
+            weights_dedup[i] = sampler->weights[offset] * num_copies; 
+
+            for(uint64_t k = 0; k < N; k++) {
+                samples_dedup[i * N + k] = buf[k];
+            }
+            for(uint64_t k = 0; k < R; k++) {
+                h_dedup[i * R + k] = sampler->h[offset * R + k]; 
+            }
+        }
 
         #pragma omp parallel for collapse(2) 
         for(uint32_t i = 0; i < J; i++) {

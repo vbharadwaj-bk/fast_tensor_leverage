@@ -23,6 +23,8 @@ public:
     bool is_static;
     double normsq;
 
+    // THERE IS A PROBLEM HERE! WE CANNOT HARDCODE
+    // the value J here... 
     LowRankTensor(uint64_t R, uint64_t J,
         uint64_t max_rhs_rows, 
         py::list U_py
