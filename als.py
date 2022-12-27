@@ -72,6 +72,7 @@ def als_prod(lhs, rhs, J, method, iter, epoch_length=5):
     fits.append(lhs.compute_estimated_fit(rhs))
 
     for i in range(iter):
+        print(f"Starting Iteration {i+1}.")
         for j in range(lhs.N):
             if method == "exact":
                 als.execute_exact_als_update(j, True, True)
