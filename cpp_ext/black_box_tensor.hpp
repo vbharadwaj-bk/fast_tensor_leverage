@@ -12,11 +12,11 @@ using namespace std;
 class __attribute__((visibility("hidden"))) BlackBoxTensor : public Tensor {
 public:
     vector<uint64_t> dims;
-    uint64_t J, max_rhs_rows;
+    uint64_t max_rhs_rows;
     Buffer<double>* rhs_buf; 
 
     virtual void preprocess(Buffer<uint64_t> &samples, uint64_t j) = 0;
-    virtual void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, uint64_t row_pos) = 0; 
+    virtual void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, Buffer<double> &rhs_buf) = 0; 
 
     void execute_downsampled_mttkrp(
             Buffer<uint64_t> &samples_transpose, 
@@ -24,7 +24,10 @@ public:
             uint64_t j,
             Buffer<double> &result
             ) {
-        
+
+        uint64_t N = dims.size();
+        uint64_t num_samples = samples_transpose.shape[0];
+
         rhs_buf = new Buffer<double>({max_rhs_rows, dims[j]});
         Buffer<double> &temp_buf = (*rhs_buf);
         preprocess(samples_transpose, j);
@@ -32,11 +35,16 @@ public:
         // Result is a dims[j] x R matrix
         std::fill(result(), result(dims[j], 0), 0.0);
 
-        for(uint64_t i = 0; i < J; i += max_rhs_rows) {
-            uint64_t max_range = min(i + max_rhs_rows, J);
-            uint32_t rows = (uint32_t) (max_range - i);
+        for(uint64_t i = 0; i < num_samples; i += max_rhs_rows) {
+            uint64_t max_range = min(i + max_rhs_rows, num_samples);
+            uint64_t rows = (uint64_t) (max_range - i);
 
-            materialize_rhs(samples_transpose, j, i);
+            // Create a view into the sample matrix
+            Buffer<uint64_t> sample_view(
+                {rows, N},
+                samples_transpose(i * N));
+
+            materialize_rhs(sample_view, j, *rhs_buf);
 
             cblas_dgemm(
                 CblasRowMajor,

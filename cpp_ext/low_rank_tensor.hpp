@@ -16,28 +16,24 @@ public:
     uint32_t N;
     uint64_t R;
 
-    Buffer<double> partial_evaluation;
     Buffer<double> sigma;
     Buffer<double> col_norms;
 
     bool is_static;
     double normsq;
 
-    // THERE IS A PROBLEM HERE! WE CANNOT HARDCODE
-    // the value J here... 
-    LowRankTensor(uint64_t R, uint64_t J,
-        uint64_t max_rhs_rows, 
+    unique_ptr<Buffer<double>> partial_evaluation;
+
+    LowRankTensor(uint64_t R, uint64_t max_rhs_rows, 
         py::list U_py
         )
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
     U(U_py_bufs->buffers),
-    partial_evaluation({J, R}),
     sigma({R}),
     col_norms({(uint64_t) U_py_bufs->length, R})
     {
         this->max_rhs_rows = max_rhs_rows;
-        this->J = J;
         this->R = R;
         this->N = U_py_bufs->length;
 
@@ -58,7 +54,6 @@ public:
     :
     U_py_bufs(new NPBufferList<double>(U_py)),
     U(U_py_bufs->buffers),
-    partial_evaluation({1}),
     sigma({R}),
     col_norms({(uint64_t) U_py_bufs->length, R})
     {
@@ -88,56 +83,49 @@ public:
         double inner_prod = ATB_chain_prod_sum(U_other, U, sigma_other, sigma);
 
         return max(self_normsq + other_normsq - 2 * inner_prod, 0.0);
-    }
-
-    // Convenience method for RHS sampling 
-    void materialize_partial_evaluation(Buffer<uint64_t> &samples_transpose, 
-        uint64_t j) {
-        get_sigma(sigma, -1);
-
-        #pragma omp parallel for 
-        for(uint32_t i = 0; i < J; i++) {
-            std::copy(sigma(), sigma(R), partial_evaluation(i * R));
-            for(uint32_t k = 0; k < N; k++) {
-                if(k != j) {
-                    for(uint32_t u = 0; u < R; u++) {
-                        partial_evaluation[i * R + u] *= U_py_bufs->buffers[k][samples_transpose[i * N + k] * R + u];
-                    }
-                } 
-            }
-        }
-    }
+    } 
 
     /*
     * Fills rhs_buf with an evaluation of the tensor starting from the
     * specified index in the array of samples. 
     */
-    void materialize_rhs(Buffer<uint64_t> &samples_transpose, uint64_t j, uint64_t row_pos) {
-        Buffer<double> &temp_buf = (*rhs_buf);
-        uint64_t max_range = min(row_pos + max_rhs_rows, J);
-        uint32_t M = (uint32_t) (max_range - row_pos);
-        uint32_t N = (uint32_t) dims[j]; 
+    void materialize_rhs(Buffer<uint64_t> &samples_transpose, uint64_t j, Buffer<double> &rhs_buf) {
+        get_sigma(sigma, -1);
+
+        Buffer<double> partial_eval({samples_transpose.shape[0], R});
+
+        #pragma omp parallel for 
+        for(uint32_t i = 0; i < buf.shape[0]; i++) {
+            std::copy(sigma(), sigma(R), partial_evaluation(i * R));
+            for(uint32_t k = 0; k < N; k++) {
+                if(k != j) {
+                    for(uint32_t u = 0; u < R; u++) {
+                        partial_eval[i * R + u] *= U_py_bufs->buffers[k][samples_transpose[i * N + k] * R + u];
+                    }
+                } 
+            }
+        }
 
         cblas_dgemm(
             CblasRowMajor,
             CblasNoTrans,
             CblasTrans,
-            M,
-            N,
+            partial_eval.shape[0],
+            rhs_buf.shape[1],
             R,
             1.0,
-            partial_evaluation(row_pos, 0),
+            partial_eval(),
             R,
             U_py_bufs->buffers[j](),
             R,
             0.0,
-            temp_buf(),
+            rhs_buf(),
             N
         );
     }
 
     void preprocess(Buffer<uint64_t> &samples_transpose, uint64_t j) {
-        materialize_partial_evaluation(samples_transpose, j);
+
     }
 
     void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
