@@ -123,14 +123,13 @@ def numerical_integration_test():
             #test = np.einsum('i,ji,ki->jk', sigma_lhs, lhs.U[0], lhs.U[1])
 
 def image_test():
-    J = 30000 
+    J = 40000
 
     trial_count = 1
-    iterations = 3
+    iterations = 70
     result = {}
 
     samplers = ["efficient"]
-    R_values = [32]
 
     img = Image.open("data/mandrill.png")
     img.load()
@@ -138,29 +137,39 @@ def image_test():
     max_value = 255.0
     img_array = np.asarray(img, dtype="double") / max_value
     tensor_dims = np.array(img_array.shape)
-    rhs = PyDenseTensor(img_array) 
+    rhs = PyDenseTensor(img_array)
+    rhs_norm = la.norm(img_array)
     print("Constructed dense tensor...")
 
     method = "efficient"
+    R = 120
 
-    for R in R_values: 
-        result[R] = {}
-        for sampler in samplers:
-            lhs = PyLowRank(tensor_dims, R, seed=923845)
-            lhs.ten.renormalize_columns(-1)
+    lhs = PyLowRank(tensor_dims, R, seed=923845)
+    lhs.ten.renormalize_columns(-1)
 
-            als = ALS(lhs.ten, rhs.ten)
-            als.initialize_ds_als(J, method)
+    als = ALS(lhs.ten, rhs.ten)
+    als.initialize_ds_als(J, method)
 
-            for i in range(iterations):
-                for j in range(lhs.N):
-                    als.execute_ds_als_update(j, True, True) 
-    
-                sigma_lhs = np.zeros(R, dtype=np.double) 
-                lhs.ten.get_sigma(sigma_lhs, -1)
-                approx = np.einsum('r,ir,jr,kr->ijk', sigma_lhs, lhs.U[0], lhs.U[1], lhs.U[2])
-                loss = la.norm(approx - img_array)
-                print(loss)
+    def generate_approx(ten, ground_truth):
+        sigma_lhs = np.zeros(R, dtype=np.double) 
+        lhs.ten.get_sigma(sigma_lhs, -1)
+        approx = np.einsum('r,ir,jr,kr->ijk', sigma_lhs, lhs.U[0][:tensor_dims[0]], lhs.U[1][:tensor_dims[1]], lhs.U[2])
+        
+        return approx
+
+    for i in range(iterations):
+        for j in range(lhs.N):
+            als.execute_ds_als_update(j, True, True) 
+
+        approx = generate_approx(lhs, img_array)
+        diff_norm = la.norm(approx - img_array)
+        fit = 1 - diff_norm / rhs_norm
+        print(f"Fit: {fit}")
+
+    approx = generate_approx(lhs, img_array) 
+    approx_norm = np.maximum(np.minimum(approx, 1.0), 0.0)
+    image = Image.fromarray(np.uint8(approx_norm * max_value))
+    image.save("data/lowrank_approximation.png")
 
 
 if __name__=='__main__':
