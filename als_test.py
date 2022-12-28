@@ -20,7 +20,7 @@ def sparse_tensor_test():
     J = 2 ** 16 
 
     trial_count = 5
-    iterations = 40
+    iterations = 40 
     result = {}
 
     samplers = ["efficient"]
@@ -70,6 +70,17 @@ def low_rank_test():
 
     #with open('outputs/low_rank_comparison.json', 'w') as outfile:
     #    json.dump(result, outfile, indent=4)
+
+def image_test():
+    J = 30000 
+
+    trial_count = 1
+    iterations = 20
+    result = {}
+
+    samplers = ["efficient"]
+    R_values = [10]
+
 
 def numerical_integration_test():
     I = 10000
@@ -122,6 +133,7 @@ def numerical_integration_test():
             #test = np.einsum('i,ji,ki->jk', sigma_lhs, lhs.U[0], lhs.U[1])
 
 if __name__=='__main__':
-    low_rank_test()
+    #low_rank_test() 
     #numerical_integration_test() 
     #sparse_tensor_test()
+    image_test()

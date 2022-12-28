@@ -16,9 +16,12 @@ public:
     Buffer<uint64_t> prefix_prod;
     DenseTensor(py::array_t<VAL_T> tensor_py, uint64_t max_rhs_rows) 
     :   tensor(tensor_py),
-        dims(tensor.shape)
-        prefix_prod({dims.size()})
+        prefix_prod({tensor.shape.size()})
     {
+        for(uint64_t i = 0; i < tensor.shape.size(); i++) {
+            dims.push_back(tensor.shape[i]);
+        }
+
         this->max_rhs_rows = max_rhs_rows;
 
         prefix_prod[dims.size() - 1] = 1;
@@ -44,7 +47,7 @@ public:
         #pragma omp parallel for 
         for(uint64_t i = 0; i < num_samples; i++) {
             uint64_t offset = 0;
-            for(int u = 0; u < N; u++) {
+            for(uint32_t u = 0; u < N; u++) {
                 if(u != j) {
                     offset += samples_transpose[i * N + u] * prefix_prod[u];
                 }

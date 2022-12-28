@@ -9,6 +9,7 @@
 #include "tensor.hpp"
 #include "sparse_tensor.hpp"
 #include "low_rank_tensor.hpp"
+#include "dense_tensor.hpp"
 //#include "py_function_tensor.hpp"
 #include "uniform_sampler.hpp"
 #include "larsen_kolda_sampler.hpp"
@@ -284,6 +285,8 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
+    py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")
+        .def(py::init<py::array_t<double>, uint64_t>());
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
         .def(py::init<py::array_t<uint32_t>, py::array_t<double>, std::string>());
     /*py::class_<PyFunctionTensor, BlackBoxTensor>(m, "PyFunctionTensor")
