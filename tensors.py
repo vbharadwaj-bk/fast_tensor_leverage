@@ -12,6 +12,7 @@ from common import *
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
+from cpp_ext.als_module import DenseTensor_double 
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
@@ -98,6 +99,10 @@ class PySparseTensor:
 
         self.ten = SparseTensor(self.tensor_idxs, self.values, lookup) 
         print("Finished loading sparse tensor...")
+
+class PyDenseTensor:
+    def __init__(self, data):
+        self.ten = DenseTensor_double(data, 10000) 
 
 from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
 import ctypes

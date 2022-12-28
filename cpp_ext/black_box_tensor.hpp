@@ -13,7 +13,7 @@ class __attribute__((visibility("hidden"))) BlackBoxTensor : public Tensor {
 public:
     vector<uint64_t> dims;
     uint64_t max_rhs_rows;
-    Buffer<double>* rhs_buf; 
+    Buffer<double>* rhs_buf;
 
     virtual void preprocess(Buffer<uint64_t> &samples, uint64_t j) = 0;
     virtual void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, Buffer<double> &rhs_buf) = 0; 
