@@ -13,7 +13,7 @@ from als import *
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
-from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTensor, ALS 
+from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 def sparse_tensor_test():
@@ -60,13 +60,13 @@ def low_rank_test():
         for sampler in samplers:
             result[R][sampler] = []
             for trial in range(trial_count):
-                rhs = PyLowRank([I] * N, R, allow_rhs_mttkrp=True, J=J, seed=479873)
+                rhs = PyLowRank([I] * N, R, allow_rhs_mttkrp=True, seed=479873)
                 rhs.ten.renormalize_columns(-1)
 
                 # Specify a seed here to make everything deterministic
                 lhs = PyLowRank(rhs.dims, R)
                 lhs.ten.renormalize_columns(-1)
-                result[R][sampler].append(als(lhs, rhs, J, sampler, iterations))
+                result[R][sampler].append(als_exact_comparison(lhs, rhs, J, sampler, iterations))
 
     #with open('outputs/low_rank_comparison.json', 'w') as outfile:
     #    json.dump(result, outfile, indent=4)
@@ -120,7 +120,6 @@ def numerical_integration_test():
             #sigma_lhs = np.zeros(R, dtype=np.double) 
             #lhs.ten.get_sigma(sigma_lhs, -1)
             #test = np.einsum('i,ji,ki->jk', sigma_lhs, lhs.U[0], lhs.U[1])
-
 
 if __name__=='__main__':
     low_rank_test()
