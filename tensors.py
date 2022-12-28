@@ -15,7 +15,7 @@ from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTe
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
-    def __init__(self, dims, R, allow_rhs_mttkrp=False, J=None, init_method="gaussian", seed=None):
+    def __init__(self, dims, R, allow_rhs_mttkrp=False, init_method="gaussian", seed=None):
         if seed is None:
             rng = np.random.default_rng()
         else:
@@ -37,7 +37,7 @@ class PyLowRank:
                 self.U[i][dims[i]:self.dims[i]] = 0.0
 
             if allow_rhs_mttkrp:
-                self.ten = LowRankTensor(R, J, 10000, self.U)
+                self.ten = LowRankTensor(R, 10000, self.U)
             else:
                 self.ten = LowRankTensor(R, self.U)
         else:
