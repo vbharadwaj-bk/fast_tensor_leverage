@@ -10,8 +10,7 @@ import ctypes
 from common import *
 
 import cppimport.import_hook
-from cpp_ext.efficient_krp_sampler import CP_ALS 
-from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, PyFunctionTensor, ALS 
+from cpp_ext.als_module import ALS 
 from cpp_ext.efficient_krp_sampler import CP_ALS
 from tensors import *
 

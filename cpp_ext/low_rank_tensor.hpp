@@ -22,8 +22,6 @@ public:
     bool is_static;
     double normsq;
 
-    unique_ptr<Buffer<double>> partial_evaluation;
-
     LowRankTensor(uint64_t R, uint64_t max_rhs_rows, 
         py::list U_py
         )
@@ -95,8 +93,8 @@ public:
         Buffer<double> partial_eval({samples_transpose.shape[0], R});
 
         #pragma omp parallel for 
-        for(uint32_t i = 0; i < buf.shape[0]; i++) {
-            std::copy(sigma(), sigma(R), partial_evaluation(i * R));
+        for(uint32_t i = 0; i < partial_eval.shape[0]; i++) {
+            std::copy(sigma(), sigma(R), partial_eval(i * R));
             for(uint32_t k = 0; k < N; k++) {
                 if(k != j) {
                     for(uint32_t u = 0; u < R; u++) {
@@ -120,7 +118,7 @@ public:
             R,
             0.0,
             rhs_buf(),
-            N
+            rhs_buf.shape[1]
         );
     }
 

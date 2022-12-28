@@ -9,7 +9,7 @@
 #include "tensor.hpp"
 #include "sparse_tensor.hpp"
 #include "low_rank_tensor.hpp"
-#include "py_function_tensor.hpp"
+//#include "py_function_tensor.hpp"
 #include "uniform_sampler.hpp"
 #include "larsen_kolda_sampler.hpp"
 #include "efficient_krp_sampler.hpp"
