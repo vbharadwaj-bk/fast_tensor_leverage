@@ -179,10 +179,10 @@ def image_test():
     #image.save("data/lowrank_approximation.png")
 
 def image_classification_test():
-    J = 40000
-    classifier = TensorClassifier("mnist", J, "efficient")
+    J = 50000
+    classifier = TensorClassifier("mnist", J, "efficient", R=25, max_iter=30)
     classifier.train()
-    print("Completed training process...")
+    print("Completed training...")
 
 if __name__=='__main__':
     #low_rank_test() 
