@@ -287,6 +287,8 @@ PYBIND11_MODULE(als_module, m) {
         .def("renormalize_columns", &LowRankTensor::renormalize_columns);
     py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")
         .def(py::init<py::array_t<double>, uint64_t>());
+    py::class_<DenseTensor<float>, BlackBoxTensor>(m, "DenseTensor_float")
+        .def(py::init<py::array_t<float>, uint64_t>());
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
         .def(py::init<py::array_t<uint32_t>, py::array_t<double>, std::string>());
     /*py::class_<PyFunctionTensor, BlackBoxTensor>(m, "PyFunctionTensor")

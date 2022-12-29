@@ -12,7 +12,7 @@ from common import *
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
-from cpp_ext.als_module import DenseTensor_double 
+from cpp_ext.als_module import DenseTensor_float, DenseTensor_double 
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
@@ -102,10 +102,13 @@ class PySparseTensor:
 
 class PyDenseTensor:
     def __init__(self, data):
-        self.ten = DenseTensor_double(data, 10000) 
+        if np.issubdtype(data.dtype, np.float32):
+            print("Initializing float32 tensor...")
+            self.ten = DenseTensor_float(data, 10000) 
+        elif np.issubdtype(data.dtype, np.float64):
+            self.ten = DenseTensor_double(data, 10000) 
 
-from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
-import ctypes
+#from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
 
 #@jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)
 #def test_function(out_buffer, samples, j, row_pos, M, Ij):
