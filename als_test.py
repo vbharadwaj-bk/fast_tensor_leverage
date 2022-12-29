@@ -11,6 +11,7 @@ from PIL import Image
 from common import *
 from tensors import *
 from als import *
+from image_classification import * 
 
 import cppimport.import_hook
 from cpp_ext.efficient_krp_sampler import CP_ALS 
@@ -44,7 +45,7 @@ def sparse_tensor_test():
         json.dump(result, outfile, indent=4)
 
 def low_rank_test():
-    J = 30000 
+    J = 30000
 
     trial_count = 1
     iterations = 20
@@ -157,23 +158,35 @@ def image_test():
         
         return approx
 
+    start = time.time()
     for i in range(iterations):
+        print(f"Starting iteration {i}")
         for j in range(lhs.N):
             als.execute_ds_als_update(j, True, True) 
 
-        approx = generate_approx(lhs, img_array)
-        diff_norm = la.norm(approx - img_array)
-        fit = 1 - diff_norm / rhs_norm
-        print(f"Fit: {fit}")
+        #approx = generate_approx(lhs, img_array)
+        #diff_norm = la.norm(approx - img_array)
+        #fit = 1 - diff_norm / rhs_norm
+        #print(f"Fit: {fit}")
+
+    end = time.time()
+    print(f"Elapsed: {end-start}")
+
 
     approx = generate_approx(lhs, img_array) 
     approx_norm = np.maximum(np.minimum(approx, 1.0), 0.0)
     image = Image.fromarray(np.uint8(approx_norm * max_value))
-    image.save("data/lowrank_approximation.png")
+    #image.save("data/lowrank_approximation.png")
 
+def image_classification_test():
+    J = 40000
+    classifier = TensorClassifier("mnist", J, "efficient")
+    classifier.train()
+    print("Completed training process...")
 
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
     #sparse_tensor_test()
-    image_test()
+    #image_test()
+    image_classification_test()
