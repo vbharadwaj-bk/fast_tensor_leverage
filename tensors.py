@@ -103,7 +103,6 @@ class PySparseTensor:
 class PyDenseTensor:
     def __init__(self, data):
         if np.issubdtype(data.dtype, np.float32):
-            print("Initializing float32 tensor...")
             self.ten = DenseTensor_float(data, 10000) 
         elif np.issubdtype(data.dtype, np.float64):
             self.ten = DenseTensor_double(data, 10000) 
