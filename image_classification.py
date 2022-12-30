@@ -1,9 +1,11 @@
 import numpy as np
 import numpy.linalg as la
 import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
 import time
 import os
 
+import pickle
 from common import *
 from tensors import *
 from als import *
@@ -24,62 +26,92 @@ class TensorClassifier:
         self.max_iter = max_iter
         self.method = method 
 
-    def train(self):
-        param_map = {
-            "mnist": torchvision.datasets.MNIST
+        self.param_map = {
+            "mnist": torchvision.datasets.MNIST,
+            "cifar10": torchvision.datasets.CIFAR10
         } 
 
-        root = os.getenv('TORCH_DATASET_FOLDER')  
-        if root is None:
+        self.root = os.getenv('TORCH_DATASET_FOLDER')  
+        if self.root is None:
             print("Unset environment variable TORCH_DATASET_FOLDER.")
             exit(1) 
-        else:
-            dataset_class = param_map[self.dataset_name]
-            dataset = dataset_class(f'{root}/', download=True, train=True, transform=torchvision.transforms.ToTensor())
-            loader = torch.utils.data.DataLoader(dataset, batch_size=len(dataset), shuffle=True, num_workers=16)
-            images, labels = next(iter(loader))
-            images_sq = torch.squeeze(images)
 
-            images_np = images_sq.numpy()
-            labels_np = labels.numpy()
+    def train(self):
+        dataset_class = self.param_map[self.dataset_name]
+        dataset = dataset_class(f'{self.root}/', download=True, train=True, transform=torchvision.transforms.ToTensor())
+        loader = torch.utils.data.DataLoader(dataset, batch_size=len(dataset), shuffle=True, num_workers=16)
+        images, labels = next(iter(loader))
+        images_sq = torch.squeeze(images)
 
-            tensor_dims = images_np.shape
-            N = len(tensor_dims)
+        images_np = images_sq.numpy()
+        labels_np = labels.numpy()
 
-            print(f"Loaded dataset {self.dataset_name}...") 
-            rhs = PyDenseTensor(images_np)
-            print("Initialized dense tensor...")
+        tensor_dims = images_np.shape
+        N = len(tensor_dims)
 
-            rhs_norm = la.norm(images_np)
+        print(f"Loaded dataset {self.dataset_name}...") 
+        rhs = PyDenseTensor(images_np)
+        print("Initialized dense tensor...")
 
-            lhs = PyLowRank(images_np.shape, self.R, seed=923845)
-            lhs.ten.renormalize_columns(-1)
-            als = ALS(lhs.ten, rhs.ten)
-            als.initialize_ds_als(self.J, self.method)
+        rhs_norm = la.norm(images_np)
 
-            loss_frequency = 5
+        lhs = PyLowRank(images_np.shape, self.R)
+        lhs.ten.renormalize_columns(-1)
+        als = ALS(lhs.ten, rhs.ten)
+        als.initialize_ds_als(self.J, self.method)
 
-            def generate_approx():
-                sigma_lhs = np.zeros(self.R, dtype=np.double) 
-                lhs.ten.get_sigma(sigma_lhs, -1)
+        loss_frequency = 5
 
-                U_trunc = [lhs.U[i][:tensor_dims[i]] for i in range(N)]
-                if len(lhs.U) == 3:
-                    approx = np.einsum('r,ir,jr,kr->ijk', sigma_lhs, U_trunc[0], U_trunc[1], U_trunc[2])
-                elif len(lhs.U) == 4:
-                    approx = np.einsum('r,ir,jr,kr,lr->ijkl', sigma_lhs, U_trunc[0], U_trunc[1], U_trunc[2], U_trunc[3])
+        def generate_approx():
+            sigma_lhs = np.zeros(self.R, dtype=np.double) 
+            lhs.ten.get_sigma(sigma_lhs, -1)
 
-                return approx
+            U_trunc = [lhs.U[i][:tensor_dims[i]] for i in range(N)]
+            if len(lhs.U) == 3:
+                approx = np.einsum('r,ir,jr,kr->ijk', sigma_lhs, U_trunc[0], U_trunc[1], U_trunc[2])
+            elif len(lhs.U) == 4:
+                approx = np.einsum('r,ir,jr,kr,lr->ijkl', sigma_lhs, U_trunc[0], U_trunc[1], U_trunc[2], U_trunc[3])
 
-            print("Starting ALS...")
-            for i in range(self.max_iter):
-                print(f"Starting iteration {i}")
-                for j in range(lhs.N):
-                    als.execute_ds_als_update(j, True, True) 
+            return approx
 
-                if i % loss_frequency == 0:
-                    approx = generate_approx()
-                    diff_norm = la.norm(approx - images_np)
-                    fit = 1 - diff_norm / rhs_norm
-                    print(f"Fit: {fit}")
+        print("Starting ALS...")
+        for i in range(self.max_iter):
+            print(f"Starting iteration {i}")
+            for j in range(lhs.N):
+                als.execute_ds_als_update(j, True, True) 
 
+            if i % loss_frequency == 0:
+                approx = generate_approx()
+                diff_norm = la.norm(approx - images_np)
+                fit = 1 - diff_norm / rhs_norm
+                print(f"Fit: {fit}")
+        print("Completed ALS...")
+
+        #trained_vectors_labels={"features": lhs.U[0], "labels": labels_np} 
+        #with open("data/classifier_test.pickle", "wb") as handle:
+        #    pickle.dump(trained_vectors_labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        self.features = lhs.U[0].copy()
+
+        self.classifier = KNeighborsClassifier(n_neighbors=4)
+        self.classifier.fit(self.features, labels_np)
+        self.lhs = lhs
+
+        print("Trained K-Neighbors Classifier!")
+
+    def test(self):
+        dataset_class = self.param_map[self.dataset_name]
+        dataset = dataset_class(f'{self.root}/', download=True, train=False, transform=torchvision.transforms.ToTensor())
+        loader = torch.utils.data.DataLoader(dataset, batch_size=len(dataset), shuffle=True, num_workers=16)
+        images, labels = next(iter(loader))
+        images_sq = torch.squeeze(images)
+
+        images_np = images_sq.numpy()
+        labels_np = labels.numpy()
+
+        tensor_dims = images_np.shape
+        N = len(tensor_dims)
+
+        print(f"Loaded test set {self.dataset_name}...") 
+        rhs = PyDenseTensor(images_np)
+        print("Initialized dense tensor...")

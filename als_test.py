@@ -25,7 +25,7 @@ def sparse_tensor_test():
     iterations = 40 
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
@@ -179,8 +179,8 @@ def image_test():
     #image.save("data/lowrank_approximation.png")
 
 def image_classification_test():
-    J = 50000
-    classifier = TensorClassifier("mnist", J, "efficient", R=25, max_iter=30)
+    J = 10000 
+    classifier = TensorClassifier("mnist", J, "larsen_kolda", R=25, max_iter=30)
     classifier.train()
     print("Completed training...")
 
