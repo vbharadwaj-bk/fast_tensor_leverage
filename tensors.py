@@ -43,6 +43,9 @@ class PyLowRank:
                 self.ten = LowRankTensor(R, self.U)
         else:
             assert(False)
+    
+    def set_sigma(self, new_sigma):
+        self.ten.set_sigma(new_sigma)
 
     def compute_diff_resid(self, rhs):
         '''
