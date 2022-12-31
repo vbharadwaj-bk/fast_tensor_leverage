@@ -41,22 +41,46 @@ public:
 
     void update_sampler(uint64_t j) {
         uint64_t Ij = U[j].shape[0];
-        Buffer<double> pinv({R, R});
-        compute_pinv(U[j], pinv);
+        uint64_t rank = min(Ij, R);
+
+        Buffer<double> Q({Ij, R});
+        Buffer<double> tau({rank});
+
+        std::copy(U[j](), U[j](Ij * R), Q());
+
+        LAPACKE_dgeqrf(
+            CblasRowMajor,
+            Ij,
+            R,
+            Q(),
+            R,
+            tau()
+        );
+
+        LAPACKE_dorgqr(CblasRowMajor,
+            Ij,
+            rank,
+            rank, 
+            Q(),
+            R,
+            tau()
+        );
 
         Buffer<double> &leverage = *(factor_leverage[j]);
-        compute_DAGAT(U[j](), pinv(), leverage(), Ij, R);
-
-        distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
-            leverage(Ij)));
-
         double total = 0.0;
 
         #pragma omp parallel for reduction(+: total)
-        for(uint64_t i = 0; i < U[j].shape[0]; i++) {
+        for(uint64_t i = 0; i < Ij; i++) {
+            leverage[i] = 0.0;
+            for(uint64_t k = 0; k < R; k++) {
+                leverage[i] += Q[i * R + k] * Q[i * R + k];
+            }
             total += leverage[i]; 
         }
-    
+
+        distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
+            leverage(Ij)));
+ 
         leverage_sums[j] = total;
     }
 
