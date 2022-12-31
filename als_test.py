@@ -172,15 +172,14 @@ def image_test():
     end = time.time()
     print(f"Elapsed: {end-start}")
 
-
     approx = generate_approx(lhs, img_array) 
     approx_norm = np.maximum(np.minimum(approx, 1.0), 0.0)
     image = Image.fromarray(np.uint8(approx_norm * max_value))
     #image.save("data/lowrank_approximation.png")
 
 def image_classification_test():
-    J = 10000 
-    classifier = TensorClassifier("mnist", J, "larsen_kolda_hybrid", R=25, max_iter=30)
+    J = 60000 
+    classifier = TensorClassifier("mnist", J, "efficient", R=25, max_iter=30)
     classifier.train()
     print("Completed training...")
 
