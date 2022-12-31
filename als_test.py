@@ -25,12 +25,12 @@ def sparse_tensor_test():
     iterations = 40 
     result = {}
 
-    samplers = ["larsen_kolda"]
+    samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
 
     for R in R_values: 
         result[R] = {}
@@ -180,7 +180,7 @@ def image_test():
 
 def image_classification_test():
     J = 10000 
-    classifier = TensorClassifier("cifar10", J, "efficient", R=25, max_iter=30)
+    classifier = TensorClassifier("mnist", J, "larsen_kolda_hybrid", R=25, max_iter=30)
     classifier.train()
     print("Completed training...")
 
