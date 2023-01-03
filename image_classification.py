@@ -13,13 +13,13 @@ from als import *
 import cppimport.import_hook
 from cpp_ext.als_module import Tensor, ALS
 
-print("Loading torch and torchvision...")
-import torch
-import torchvision
-print("Torch / Torchvision loaded!")
-
 class TensorClassifier:
     def __init__(self, dataset_name, J, method, R, max_iter):
+        print("Loading torch and torchvision...")
+        import torch
+        import torchvision
+        print("Torch / Torchvision loaded!")
+
         self.dataset_name = dataset_name
         self.J = J
         self.R = R
