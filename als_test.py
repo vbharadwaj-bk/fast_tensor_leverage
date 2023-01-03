@@ -20,11 +20,11 @@ from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
 def sparse_tensor_test():
     J = 2 ** 16
 
-    trial_count = 5
-    iterations = 20
+    trial_count = 1
+    iterations = 25
     result = {}
 
-    samplers = ["larsen_kolda_hybrid"]
+    samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
