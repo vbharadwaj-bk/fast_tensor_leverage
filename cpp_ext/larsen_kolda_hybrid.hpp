@@ -169,33 +169,24 @@ public:
                         uint64_t sample_k = (*(sort_idxs[k]))[start_ranges[k] + idx_k];
                         sample[k] = sample_k;
                         weight += log((*(factor_leverage[k]))[sample_k]) - log(leverage_sums[k]);
-
-                        if(sample_k >= U[k].shape[0]) {
-                            cout << "Shape violation, exiting..." << endl; 
-                        }
                     }
                 }
 
-                if(exp(weight) >= tau && num_deterministic < 0) {
+                if(exp(weight) >= tau) {
                     uint64_t pos = sample_pos++;
 
                     for(uint64_t k = 0; k < N; k++) {
-                        //samples[k * J + pos] = sample[k]; 
-                        samples[k * J + pos] = 0; 
+                        samples[k * J + pos] = sample[k]; 
                     }
 
-                    weights[pos] = 0.0;
+                    weights[pos] = 1.0;
                     num_deterministic++;
                     p_det += exp(weight); 
                 }
             }
         }
 
-        cout << "Deterministic: " << num_deterministic 
-            <<  " " << J << endl;
-        cout << "p_det : " << p_det << endl;
-
-        std::fill(weights(), weights(J), 0.0-log((double) J));
+        std::fill(weights(num_deterministic), weights(J), 0.0-log((double) J));
 
         for(uint64_t i = num_deterministic; i < J; i++) {
             double weight;
@@ -213,16 +204,12 @@ public:
                     }
                 }
 
-                // TODO: Need to reweight these rows! 
-
-                resample = false;
                 if(exp(weight) < tau) {
                     resample = false;
                 }
             } 
             weights[i] -= weight;
-            weights[i] = exp(weights[i]); 
-            //weights[i] = (1 - p_det) * exp(weights[i]); 
+            weights[i] = (1 - p_det) * exp(weights[i]); 
         }
 
         fill_h_by_samples(samples, j);
