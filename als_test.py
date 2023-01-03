@@ -19,13 +19,13 @@ from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
 from cpp_ext.efficient_krp_sampler import CP_ALS
 
 def sparse_tensor_test():
-    J = 2 ** 16 
+    J = 2 ** 16
 
     trial_count = 5
-    iterations = 40 
+    iterations = 20
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda_hybrid"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
@@ -39,7 +39,11 @@ def sparse_tensor_test():
             for trial in range(trial_count):
                 lhs = PyLowRank(rhs.dims, R)
                 lhs.ten.renormalize_columns(-1)
+
+                start = time.time()
                 result[R][sampler].append(als_prod(lhs, rhs, J, sampler, iterations))
+                elapsed = time.time() - start
+                print(f"Elapsed: {elapsed}")
 
     with open('outputs/lk_uber_comparison.json', 'w') as outfile:
         json.dump(result, outfile, indent=4)
@@ -186,6 +190,6 @@ def image_classification_test():
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
-    #sparse_tensor_test()
+    sparse_tensor_test()
     #image_test()
-    image_classification_test()
+    #image_classification_test()

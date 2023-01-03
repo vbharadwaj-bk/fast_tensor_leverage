@@ -308,8 +308,8 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-cfg['extra_compile_args'] = ['--std=c++2a', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include', '-Ofast', '-march=native']
-cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8', '-lopenblas', '-fopenmp', '-Ofast', '-ltbb']
+cfg['extra_compile_args'] = ['--std=c++2a', '-I/global/homes/v/vbharadw/OpenBLAS_install/include', '-fopenmp', '-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include', '-g', '-march=native']
+cfg['extra_link_args'] = ['-L/global/homes/v/vbharadw/OpenBLAS_install/lib', '-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8', '-lopenblas', '-fopenmp', '-g', '-ltbb']
 cfg['dependencies'] = ['common.h', 'partition_tree.hpp', 'efficient_krp_sampler.hpp', 'sampler.hpp', 'uniform_sampler.hpp', 'larsen_kolda_sampler.hpp', 'larsen_kolda_hybrid.hpp', 'low_rank_tensor.hpp', 'sparse_tensor.hpp', 'black_box_tensor.hpp', 'tensor.hpp', 'idx_lookup.hpp','hash_lookup.hpp','sort_lookup.hpp','dense_tensor.hpp'] 
 %>
 */
