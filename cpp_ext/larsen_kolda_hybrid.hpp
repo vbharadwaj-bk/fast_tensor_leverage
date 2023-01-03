@@ -168,63 +168,62 @@ public:
                         c_idx /= intervals[k];
                         uint64_t sample_k = (*(sort_idxs[k]))[start_ranges[k] + idx_k];
                         sample[k] = sample_k;
-                        weight += log((*(factor_leverage)[k])[sample_k]) - log(leverage_sums[k]);
-                    }
-                }
-                weight = exp(weight);
-                if(weight >= tau) {
-                    uint64_t pos = sample_pos++;
-                    if(pos < J) { 
-                        for(uint64_t k = 0; k < N; k++) {
-                            samples[k * J + pos] = sample[k]; 
+                        weight += log((*(factor_leverage[k]))[sample_k]) - log(leverage_sums[k]);
+
+                        if(sample_k >= U[k].shape[0]) {
+                            cout << "Shape violation, exiting..." << endl; 
                         }
-                        weights[pos] = weight;
-                        num_deterministic++;
-                        p_det += weight; 
                     }
                 }
 
+                if(exp(weight) >= tau && num_deterministic < 0) {
+                    uint64_t pos = sample_pos++;
+
+                    for(uint64_t k = 0; k < N; k++) {
+                        //samples[k * J + pos] = sample[k]; 
+                        samples[k * J + pos] = 0; 
+                    }
+
+                    weights[pos] = 0.0;
+                    num_deterministic++;
+                    p_det += exp(weight); 
+                }
             }
         }
 
-        cout << "Deterministic: " << num_deterministic << endl;
+        cout << "Deterministic: " << num_deterministic 
+            <<  " " << J << endl;
         cout << "p_det : " << p_det << endl;
 
         std::fill(weights(), weights(J), 0.0-log((double) J));
 
-        for(uint64_t i = 0; i < J; i++) {
-            double weight = 0.0;
-            for(uint32_t k = 0; k < N; k++) {
-                if(k != j) {
-                    std::discrete_distribution<uint64_t> &dist = (*(distributions[k]));
-                    Buffer<double> &leverage = *(factor_leverage[k]);
-                    uint64_t sample = dist(gen);
-                    samples[k * J + i] = sample;
-                    weight += log(leverage_sums[k]) - log(leverage[sample]); 
+        for(uint64_t i = num_deterministic; i < J; i++) {
+            double weight;
+            bool resample = true;
+
+            while(resample) {
+                weight = 0.0;
+                for(uint32_t k = 0; k < N; k++) {
+                    if(k != j) {
+                        std::discrete_distribution<uint64_t> &dist = (*(distributions[k]));
+                        Buffer<double> &leverage = *(factor_leverage[k]);
+                        uint64_t sample = dist(gen);
+                        samples[k * J + i] = sample;
+                        weight += log(leverage[sample]) - log(leverage_sums[k]); 
+                    }
                 }
-            }
-            weights[i] += weight;
-            weights[i] = exp(weight); 
-        }
 
-        /*for(uint32_t k = 0; k < N; k++) {
-            if(k != j) {
-                Buffer<double> &leverage = *(factor_leverage[k]);
-                Buffer<uint64_t> row_buffer({J}, samples(k, 0)); // View into a row of the samples array
-                std::discrete_distribution<uint64_t> &dist = (*(distributions[k]));
+                // TODO: Need to reweight these rows! 
 
-                for(uint64_t i = 0; i < J; i++) {
-                    uint64_t sample = dist(gen);
-                    row_buffer[i] = sample;
-                    weights[i] += log(leverage_sums[k]) - log(leverage[sample]); 
+                resample = false;
+                if(exp(weight) < tau) {
+                    resample = false;
                 }
-            }
-        }
-
-        #pragma omp parallel for
-        for(uint64_t i = 0; i < J; i++) {
+            } 
+            weights[i] -= weight;
             weights[i] = exp(weights[i]); 
-        }*/
+            //weights[i] = (1 - p_det) * exp(weights[i]); 
+        }
 
         fill_h_by_samples(samples, j);
     }
