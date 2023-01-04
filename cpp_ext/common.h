@@ -296,19 +296,14 @@ void compute_pinv(Buffer<double> &in, Buffer<double> &out) {
     compute_pinv_square(M, out, target_rank);
 }
 
-
-
-
-/*typedef chrono::time_point<std::chrono::steady_clock> my_timer_t; 
-
+typedef chrono::time_point<std::chrono::steady_clock> my_timer_t; 
 
 my_timer_t start_clock() {
     return std::chrono::steady_clock::now();
 }
 
-
 double stop_clock_get_elapsed(my_timer_t &start) {
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> diff = end - start;
     return diff.count();
-}*/
+}
