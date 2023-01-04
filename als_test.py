@@ -18,18 +18,20 @@ from cpp_ext.efficient_krp_sampler import CP_ALS
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
 
 def sparse_tensor_test():
-    J = 2 ** 16
+    J = 2 ** 18
 
     trial_count = 1
-    iterations = 10
+    iterations = 50
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["exact"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [50]
+    R_values = [25]
 
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/flickr-4d.tns_converted.hdf5", lookup="sort")
 
     for R in R_values: 
         result[R] = {}
