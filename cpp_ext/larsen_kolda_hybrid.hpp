@@ -158,7 +158,12 @@ public:
         }
         else {
             uint64_t sample_pos = 0;
+
+            #pragma omp parallel
+{
             Buffer<uint64_t> sample({N});
+
+            #pragma omp for reduction(+: num_deterministic, p_det)
             for(uint64_t i = 0; i < candidates; i++) {
                 double weight = 0;
                 uint64_t c_idx = i;
@@ -173,21 +178,26 @@ public:
                 }
 
                 if(exp(weight) >= tau) {
-                    uint64_t pos = sample_pos++;
+                    uint64_t pos;
+                    #pragma omp atomic capture 
+                    pos = sample_pos++;
 
                     for(uint64_t k = 0; k < N; k++) {
                         samples[k * J + pos] = sample[k]; 
                     }
 
                     weights[pos] = 1.0;
+
                     num_deterministic++;
                     p_det += exp(weight); 
                 }
             }
+}
         }
-
         std::fill(weights(num_deterministic), weights(J), 0.0-log((double) J));
 
+        // Sample generation / regeneration is pretty cheap, but
+        // could be parallelized anyway 
         for(uint64_t i = num_deterministic; i < J; i++) {
             double weight;
             bool resample = true;

@@ -21,15 +21,15 @@ def sparse_tensor_test():
     J = 2 ** 16
 
     trial_count = 1
-    iterations = 25
+    iterations = 10
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda_hybrid"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
 
     for R in R_values: 
         result[R] = {}
@@ -44,8 +44,8 @@ def sparse_tensor_test():
                 elapsed = time.time() - start
                 print(f"Elapsed: {elapsed}")
 
-    with open('outputs/lk_uber_comparison.json', 'w') as outfile:
-        json.dump(result, outfile, indent=4)
+    #with open('outputs/lk_uber_comparison.json', 'w') as outfile:
+    #    json.dump(result, outfile, indent=4)
 
 def low_rank_test():
     J = 30000
