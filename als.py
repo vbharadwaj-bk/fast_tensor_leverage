@@ -57,6 +57,7 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
     return data 
 
 def als_prod(lhs, rhs, J, method, iter, epoch_length=5):
+    print("Starting ALS Algorithm...")
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
@@ -69,6 +70,8 @@ def als_prod(lhs, rhs, J, method, iter, epoch_length=5):
 
     iterations.append(0)
     fits.append(lhs.compute_estimated_fit(rhs))
+    #print(f"Before ALS:\tFit: {fits[-1]}")
+    #print(f"LHS Normsq: {lhs.ten.get_normsq()}")
 
     for i in range(iter):
         print(f"Starting Iteration {i+1}.")
@@ -77,6 +80,8 @@ def als_prod(lhs, rhs, J, method, iter, epoch_length=5):
                 als.execute_exact_als_update(j, True, True)
             else:
                 als.execute_ds_als_update(j, True, True)
+
+            #print(f"LHS Normsq: {lhs.ten.get_normsq()}")
 
         if (i + 1) % epoch_length == 0:
             iterations.append(i + 1)

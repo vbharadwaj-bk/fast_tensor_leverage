@@ -12,4 +12,12 @@ public:
       Buffer<double> &input,
       Buffer<double> &output
       ) = 0;
+
+
+  virtual double compute_residual_normsq(
+      Buffer<double> &sigma, 
+      vector<Buffer<double>> &U) {
+      
+      return -1.0;
+  }
 };

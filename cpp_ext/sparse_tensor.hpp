@@ -147,6 +147,10 @@ public:
           residual_normsq += values[i] * values[i] - 2 * value * values[i];
       }
 }
+
+        cout << "Residual Normsq: " << residual_normsq << endl;
+        cout << "Comparison: " << lookups[0]->compute_residual(sigma, U) << endl; 
+
         return residual_normsq;
     }
  

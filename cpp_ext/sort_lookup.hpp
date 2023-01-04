@@ -124,4 +124,66 @@ public:
       }
     }
   }
+
+  double compute_residual_normsq(
+      Buffer<double> &sigma, 
+      vector<Buffer<double>> &U) {
+
+      uint64_t R = U[0].shape[1];
+
+      double residual_normsq = 0.0;
+
+      #pragma omp parallel reduction(+: residual_normsq)
+{
+      int thread_num = omp_get_thread_num();
+      int total_threads = omp_get_num_threads();      
+
+      uint64_t chunksize = (nnz + total_threads - 1) / total_threads;
+      uint64_t lower_bound = min(chunksize * thread_num, nnz);
+      uint64_t upper_bound = min(chunksize * (thread_num + 1), nnz);
+
+      Buffer<double> partial_prod({R});
+
+      for(uint64_t i = lower_bound; i < upper_bound; i++) {
+        IDX_T* index = sort_idxs[i];
+
+        uint64_t offset = (index - idx_ptr) / N; 
+        bool recompute_partial_prod = false;
+        if(i == lower_bound) {
+          recompute_partial_prod = true;
+        }
+        else {
+          IDX_T* prev_index = sort_idxs[i];
+          for(uint64_t k = 0; k < N; k++) {
+            if(k != j && index[k] != prev_index[k]) {
+              recompute_partial_prod = true;
+            }
+          }
+        }
+
+        if(recompute_partial_prod) {
+          std::copy(sigma(), sigma(R), partial_prod()); 
+
+          for(uint64_t k = 0; k < N; k++) {
+            if(k != j) {
+              for(uint64_t u = 0; u < R; u++) {
+                partial_prod[u] *= U[k][index[k] * R + u];
+              }
+            }
+          }
+        }
+
+        double tensor_value = val_ptr[offset];
+
+        double value = 0.0; 
+        for(uint64_t u = 0; u < R; u++) {        
+          value += partial_prod[u] * U[mode_to_leave][index[mode_to_leave] * R + u]; 
+        }
+        residual_normsq += tensor_value * tensor_value - 2 * value * tensor_value;
+      }
+} 
+
+      residual_normsq += ATB_chain_prod_sum(U, U, sigma, sigma);
+      return residual_normsq;
+  }
 };
