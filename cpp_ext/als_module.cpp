@@ -74,7 +74,10 @@ public:
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> pinv({R, R});
 
+        //auto start = start_clock();
         sampler->KRPDrawSamples(j, *samples, nullptr);
+        //double sampling_time = stop_clock_get_elapsed(start);
+        //cout << "Sampling Time: " << sampling_time << endl;
 
         // This step is unecessary, but we keep it in anyway
         #pragma omp parallel for collapse(2)
