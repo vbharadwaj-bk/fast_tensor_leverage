@@ -29,7 +29,7 @@ if __name__=='__main__':
     sample_counts = [2 ** 16] 
     R_values = [25, 75, 125]
     samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
-    trial_count = 5
+    trial_count = 4
 
     # Test Configuration ==============================
     #sample_counts = [2 ** 16] 
@@ -71,5 +71,7 @@ if __name__=='__main__':
                 results.extend(chained_list)
 
                 if rank == 0:
+                    print(f"Length of Result List: {len(results)}")
                     with open(f'outputs/{tensor_name}_sparse_traces.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
+
