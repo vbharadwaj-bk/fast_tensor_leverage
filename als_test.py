@@ -18,10 +18,12 @@ from cpp_ext.efficient_krp_sampler import CP_ALS
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
 
 def sparse_tensor_test():
-    J = 2 ** 17
+    J = 2 ** 16
 
     trial_count = 1
-    iterations = 50
+    max_iterations = 100
+    stop_tolerance = 1e-4
+
     result = {}
 
     samplers = ["efficient"]
@@ -36,6 +38,7 @@ def sparse_tensor_test():
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-1.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nips.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/flickr-4d.tns_converted.hdf5", lookup="sort")
+
     for R in R_values: 
         result[R] = {}
         for sampler in samplers:
@@ -45,7 +48,7 @@ def sparse_tensor_test():
                 lhs.ten.renormalize_columns(-1)
 
                 start = time.time()
-                result[R][sampler].append(als_prod(lhs, rhs, J, sampler, iterations, epoch_length=5))
+                result[R][sampler].append(als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance))
                 elapsed = time.time() - start
                 print(f"Elapsed: {elapsed}")
 
