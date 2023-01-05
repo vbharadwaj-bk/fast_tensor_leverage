@@ -23,11 +23,18 @@ if __name__=='__main__':
     max_iterations = 100                 # For now, this needs to stay a multiple of 5! 
     stop_tolerance = 1e-4
     sample_counts = [2 ** 16 + 8192 * i for i in range(8)]
-    R_values = [25, 75, 125]
+    R_values = [25, 50, 75, 100, 125]
+    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
     trial_count = 5
 
-    tensor_name = "uber"
-    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
+    # Test Configuration ==============================
+    #sample_counts = [2 ** 16] 
+    #R_values = [25]
+    #samplers = ["larsen_kolda"] 
+    #trial_count = 1
+    # =================================================
+
+    tensor_name = "uber" 
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort")
