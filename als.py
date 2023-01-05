@@ -57,7 +57,7 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
     return data 
 
 def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5):
-    print("Starting ALS Algorithm...")
+    #print("Starting ALS Algorithm...")
     data = []
 
     als = ALS(lhs.ten, rhs.ten)
@@ -74,7 +74,7 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5):
     #print(f"LHS Normsq: {lhs.ten.get_normsq()}")
 
     for i in range(max_iter):
-        print(f"Starting Iteration {i+1}.")
+        #print(f"Starting Iteration {i+1}.")
         for j in range(lhs.N):
             if method == "exact":
                 als.execute_exact_als_update(j, True, True)
@@ -84,7 +84,7 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5):
         if (i + 1) % epoch_length == 0:
             iterations.append(i + 1)
             fits.append(lhs.compute_estimated_fit(rhs))
-            print(f"Iteration: {i+1}\tFit: {fits[-1]}")
+            #print(f"Iteration: {i+1}\tFit: {fits[-1]}")
             
             # Use the same stopping condition as L&K 
             if len(fits) > 4 and np.max(fits[-3:]) < np.max(fits[:-3]) + stop_tolerance:
