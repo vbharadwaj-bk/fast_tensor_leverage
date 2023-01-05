@@ -120,9 +120,9 @@ public:
       // There is likely a faster way to do this computation... but okay, let's get it working first.
 
       uint64_t R = U[0].shape[1];
-      Buffer<double> chain_had_prod({R, R});
+      double residual_normsq = 0.0;
 
-      double residual_normsq = ATB_chain_prod_sum(U, U, sigma, sigma);
+      double value_sum = 0.0;
 
       #pragma omp parallel
 {
@@ -131,7 +131,7 @@ public:
           base_ptrs.push_back(nullptr);
       }
       
-      #pragma omp for reduction (+:residual_normsq)
+      #pragma omp for reduction (+:residual_normsq, value_sum)
       for(uint64_t i = 0; i < nnz; i++) {
           for(uint64_t j = 0; j < N; j++) {
               base_ptrs[j] = U[j](indices[i * N + j] * R); 
@@ -145,12 +145,14 @@ public:
               value += coord_buffer;
           }
           residual_normsq += values[i] * values[i] - 2 * value * values[i];
+          value_sum += value;
       }
 }
 
-        cout << "Residual Normsq: " << residual_normsq << endl;
-        cout << "Comparison: " << lookups[0]->compute_residual(sigma, U) << endl; 
-
+        cout << "Value Sum: " << value_sum << endl;
+        residual_normsq += ATB_chain_prod_sum(U, U, sigma, sigma);
+        double comparison_sum = lookups[0]->compute_residual_normsq(sigma, U);
+        cout << residual_normsq << " " << comparison_sum << endl;
         return residual_normsq;
     }
  

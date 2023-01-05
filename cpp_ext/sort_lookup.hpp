@@ -130,10 +130,11 @@ public:
       vector<Buffer<double>> &U) {
 
       uint64_t R = U[0].shape[1];
+      uint64_t j = mode_to_leave;
 
       double residual_normsq = 0.0;
-
-      #pragma omp parallel reduction(+: residual_normsq)
+      double value_sum = 0.0;
+      #pragma omp parallel reduction(+: residual_normsq, value_sum)
 {
       int thread_num = omp_get_thread_num();
       int total_threads = omp_get_num_threads();      
@@ -153,9 +154,9 @@ public:
           recompute_partial_prod = true;
         }
         else {
-          IDX_T* prev_index = sort_idxs[i];
-          for(uint64_t k = 0; k < N; k++) {
-            if(k != j && index[k] != prev_index[k]) {
+          IDX_T* prev_index = sort_idxs[i-1];
+          for(uint64_t k = 0; k < (uint64_t) N; k++) {
+            if((k != j) && (index[k] != prev_index[k])) {
               recompute_partial_prod = true;
             }
           }
@@ -164,7 +165,7 @@ public:
         if(recompute_partial_prod) {
           std::copy(sigma(), sigma(R), partial_prod()); 
 
-          for(uint64_t k = 0; k < N; k++) {
+          for(uint64_t k = 0; k < (uint64_t) N; k++) {
             if(k != j) {
               for(uint64_t u = 0; u < R; u++) {
                 partial_prod[u] *= U[k][index[k] * R + u];
@@ -177,12 +178,15 @@ public:
 
         double value = 0.0; 
         for(uint64_t u = 0; u < R; u++) {        
-          value += partial_prod[u] * U[mode_to_leave][index[mode_to_leave] * R + u]; 
+          value += partial_prod[u] * U[j][index[j] * R + u]; 
         }
+        value_sum += value;
+
         residual_normsq += tensor_value * tensor_value - 2 * value * tensor_value;
       }
-} 
+}
 
+      cout << "Value Sum: " << value_sum << endl;
       residual_normsq += ATB_chain_prod_sum(U, U, sigma, sigma);
       return residual_normsq;
   }
