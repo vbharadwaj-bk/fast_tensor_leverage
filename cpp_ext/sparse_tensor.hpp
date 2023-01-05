@@ -117,43 +117,7 @@ public:
     }
 
     double compute_residual_normsq(Buffer<double> &sigma, vector<Buffer<double>> &U) {
-      // There is likely a faster way to do this computation... but okay, let's get it working first.
-
-      uint64_t R = U[0].shape[1];
-      double residual_normsq = 0.0;
-
-      double value_sum = 0.0;
-
-      #pragma omp parallel
-{
-      vector<double*> base_ptrs;
-      for(uint64_t j = 0; j < N; j++) {
-          base_ptrs.push_back(nullptr);
-      }
-      
-      #pragma omp for reduction (+:residual_normsq, value_sum)
-      for(uint64_t i = 0; i < nnz; i++) {
-          for(uint64_t j = 0; j < N; j++) {
-              base_ptrs[j] = U[j](indices[i * N + j] * R); 
-          } 
-          double value = 0.0;
-          for(uint64_t k = 0; k < R; k++) {
-              double coord_buffer = sigma[k];
-              for(uint64_t j = 0; j < N; j++) {
-                  coord_buffer *= base_ptrs[j][k]; 
-              }
-              value += coord_buffer;
-          }
-          residual_normsq += values[i] * values[i] - 2 * value * values[i];
-          value_sum += value;
-      }
-}
-
-        cout << "Value Sum: " << value_sum << endl;
-        residual_normsq += ATB_chain_prod_sum(U, U, sigma, sigma);
-        double comparison_sum = lookups[0]->compute_residual_normsq(sigma, U);
-        cout << residual_normsq << " " << comparison_sum << endl;
-        return residual_normsq;
+        return lookups[0]->compute_residual_normsq(sigma, U);
     }
  
     double get_normsq() {

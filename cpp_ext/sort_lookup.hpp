@@ -186,7 +186,6 @@ public:
       }
 }
 
-      cout << "Value Sum: " << value_sum << endl;
       residual_normsq += ATB_chain_prod_sum(U, U, sigma, sigma);
       return residual_normsq;
   }
