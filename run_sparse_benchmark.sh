@@ -5,4 +5,4 @@
 #SBATCH -t 04:00:00
 
 . modules_perlmutter.sh
-srun -N 4 -n 4 python als_test.py 
+srun -N 4 -n 4 -u python sparse_tensor_benchmark.py 
