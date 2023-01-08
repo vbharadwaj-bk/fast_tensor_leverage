@@ -123,6 +123,8 @@ public:
         }
       }
     }
+
+    //cout << "Found Nonzeros: " << found_count << endl;
   }
 
   double compute_residual_normsq(

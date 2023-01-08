@@ -22,12 +22,12 @@ if __name__=='__main__':
     rank = comm.Get_rank()
     num_ranks = comm.Get_size() 
 
-    max_iterations = 100                 # For now, this needs to stay a multiple of 5! 
+    max_iterations = 40   # For now, this needs to stay a multiple of 5! 
     stop_tolerance = 1e-4
  
     #sample_counts = [2 ** 16 + 8192 * 2 * i for i in range(4)]
     sample_counts = [2 ** 16] 
-    R_values = [25, 75, 125]
+    R_values = [75, 100, 125]
     samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
     trial_count = 4
 
@@ -42,7 +42,7 @@ if __name__=='__main__':
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "uber" 
+    tensor_name = "amazon-reviews" 
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort")
@@ -72,6 +72,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_sparse_traces.json', 'w') as outfile:
+                    with open(f'outputs/{tensor_name}_sparse_traces_extended.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
 
