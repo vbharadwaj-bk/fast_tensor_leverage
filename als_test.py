@@ -21,8 +21,8 @@ def sparse_tensor_test():
     J = 2 ** 16
 
     trial_count = 1
-    max_iterations = 200 
-    stop_tolerance = 1e-4
+    max_iterations = 10
+    stop_tolerance = 1e-5
 
     result = {}
 
@@ -30,8 +30,8 @@ def sparse_tensor_test():
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
