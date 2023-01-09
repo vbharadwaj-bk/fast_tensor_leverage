@@ -17,7 +17,7 @@ import cppimport.import_hook
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
 
 def sparse_tensor_test():
-    J = 2 ** 19
+    J = 2 ** 16
 
     trial_count = 1
     max_iterations = 5
@@ -25,18 +25,18 @@ def sparse_tensor_test():
 
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [25]
+    R_values = [100]
 
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-1.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nips.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/flickr-4d.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/flickr-4d.tns_converted.hdf5", lookup="sort")
 
     for R in R_values: 
         result[R] = {}
@@ -46,10 +46,10 @@ def sparse_tensor_test():
                 lhs = PyLowRank(rhs.dims, R)
                 lhs.ten.renormalize_columns(-1)
 
-                print("Starting exact initialization")
-                als = ALS(lhs.ten, rhs.ten)
-                for j in range(lhs.N):
-                    als.execute_exact_als_update(j, True, True)
+                #print("Starting exact initialization")
+                #als = ALS(lhs.ten, rhs.ten)
+                #for j in range(lhs.N):
+                #    als.execute_exact_als_update(j, True, True)
 
                 # Initialize with a round of exact ALS
                 fit = lhs.compute_estimated_fit(rhs)

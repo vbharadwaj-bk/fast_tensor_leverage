@@ -8,11 +8,12 @@
 #include "sampler.hpp"
 #include "tensor.hpp"
 #include "low_rank_tensor.hpp"
-
+#include "json.hpp"
 #include <execution>
 #include <algorithm>
 
 using namespace std;
+using json = nlohmann::json;
 
 class __attribute__((visibility("hidden"))) ALS {
 public:
@@ -25,10 +26,13 @@ public:
     unique_ptr<Buffer<uint64_t>> samples;
     unique_ptr<Buffer<uint64_t>> samples_transpose;
 
+    json statistics;
+
     ALS(LowRankTensor &cp_dec, Tensor &gt) : 
         cp_decomp(cp_dec),
         ground_truth(gt)    
     {
+        statistics["test"] = 1.0;
         // Empty
     }
 
@@ -155,8 +159,12 @@ public:
             }
         }
 
+
+        start = start_clock();
         std::fill(pinv(), pinv(R * R), 0.0);
         compute_pinv(h_dedup, pinv);  
+        double pinv_computation_time = stop_clock_get_elapsed(start);
+        cout << "PINV Computation Time: " << pinv_computation_time << endl;
 
         #pragma omp parallel for collapse(2)
         for(uint32_t i = 0; i < num_unique; i++) {
@@ -176,6 +184,8 @@ public:
         cout << "DMTTKRP Time: " << sampling_time << endl;
 
         // Multiply gram matrix result by the pseudo-inverse
+
+        start = start_clock();
         cblas_dsymm(
             CblasRowMajor,
             CblasRight,
@@ -191,6 +201,8 @@ public:
             cp_decomp.U[j](),
             R
         );
+        double pinv_time = stop_clock_get_elapsed(start);
+        cout << "PINV Time: " << pinv_time << endl;
 
         start = start_clock();
         if(renormalize) {
