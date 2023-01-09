@@ -30,8 +30,8 @@ def sparse_tensor_test():
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
@@ -48,7 +48,7 @@ def sparse_tensor_test():
                 lhs.ten.renormalize_columns(-1)
 
                 start = time.time()
-                result[R][sampler].append(als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance))
+                result[R][sampler].append(als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance, verbose=True))
                 elapsed = time.time() - start
                 print(f"Elapsed: {elapsed}")
 
