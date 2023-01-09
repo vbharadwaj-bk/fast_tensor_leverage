@@ -26,7 +26,7 @@ def sparse_tensor_test():
 
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["exact"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
