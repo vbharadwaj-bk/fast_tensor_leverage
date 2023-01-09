@@ -166,14 +166,15 @@ public:
     * the product of all column norms is returned. 
     */
     void get_sigma(Buffer<double> &sigma_out, int j) {
-        std::fill(sigma_out(), sigma_out(R), 1.0);
+        /*std::fill(sigma_out(), sigma_out(R), 1.0);
         for(uint32_t i = 0; i < N; i++) {
             if((int) i != j) {
                 for(uint32_t v = 0; v < R; v++) { 
                     sigma_out[v] *= col_norms[i * R + v];
                 }
             }
-        }
+        }*/
+        std::copy(sigma(), sigma(R), sigma_out());
     }
 
     void get_sigma_py(py::array_t<double> sigma_py_out, int j) {
@@ -184,8 +185,6 @@ public:
     // Pass j = -1 to renormalize all factor matrices.
     // The array sigma is always updated 
     void renormalize_columns(int j) {
-        std::fill(sigma(), sigma(R), 1.0);
-
         for(int i = 0; i < (int) N; i++) {
             if(j == -1 || j == i) {
 
@@ -231,6 +230,18 @@ public:
                     } 
                 }
             }
+        }
+
+        if(j == -1) {
+            std::fill(sigma(), sigma(R), 1.0);
+            for(int i = 0; i < (int) N; i++) {
+                for(uint32_t v = 0; v < R; v++) {
+                    sigma[v] *= col_norms[i * R + v];
+                }
+            }
+        }
+        else {
+            std::copy(col_norms(j * R), col_norms((j+1) * R), sigma());
         }
     }
 };
