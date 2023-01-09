@@ -10,10 +10,8 @@ import h5py
 from common import *
 
 import cppimport.import_hook
-from cpp_ext.efficient_krp_sampler import CP_ALS 
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS
 from cpp_ext.als_module import DenseTensor_float, DenseTensor_double 
-from cpp_ext.efficient_krp_sampler import CP_ALS
 
 class PyLowRank:
     def __init__(self, dims, R, allow_rhs_mttkrp=False, init_method="gaussian", seed=None):
@@ -93,6 +91,7 @@ class PySparseTensor:
             self.tensor_idxs[:, i] = f[f'MODE_{i}'][:] - self.min_idxs[i]
 
         self.values = f['VALUES'][:]
+        print("Loaded tensor values from disk...")
 
         if preprocessing is not None:
             if preprocessing == "log_count":
