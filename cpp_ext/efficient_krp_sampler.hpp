@@ -194,9 +194,16 @@ public:
     }
 
     void fill_buffer_random_draws(double* data, uint64_t len) {
+        #pragma omp parallel
+{
+        int thread_id = omp_get_thread_num();
+        auto &local_gen = par_gen[thread_id];
+
+        #pragma omp for
         for(uint64_t i = 0; i < len; i++) {
-            data[i] = dis(gen);
+            data[i] = dis(local_gen);
         }
+}
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {

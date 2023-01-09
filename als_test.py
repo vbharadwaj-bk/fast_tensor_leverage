@@ -20,12 +20,12 @@ def sparse_tensor_test():
     J = 2 ** 19
 
     trial_count = 1
-    max_iterations = 10
+    max_iterations = 5
     stop_tolerance = 1e-5
 
     result = {}
 
-    samplers = ["larsen_kolda"]
+    samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [25]
 
@@ -70,7 +70,7 @@ def low_rank_test():
     iterations = 20
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda"]
     R_values = [32]
 
     I = 2 ** 9
