@@ -74,7 +74,6 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
     iterations.append(0)
     fits.append(lhs.compute_estimated_fit(rhs))
     verb_print(f"Before ALS:\tFit: {fits[-1]}")
-    verb_print(f"LHS Normsq: {lhs.ten.get_normsq()}")
 
     for i in range(max_iter):
         verb_print(f"Starting Iteration {i+1}.")
