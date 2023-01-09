@@ -63,7 +63,10 @@ public:
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> pinv({R, R});
 
+        auto start = start_clock();
         sampler->KRPDrawSamples(j, *samples, nullptr);
+        double sampling_draw_time = stop_clock_get_elapsed(start);
+        cout << "Time to Draw Samples: " << sampling_draw_time << endl;
 
         // This step is unecessary, but we keep it in anyway
         #pragma omp parallel for collapse(2)
@@ -162,7 +165,7 @@ public:
             }
         }
 
-        auto start = start_clock();
+        start = start_clock();
         ground_truth.execute_downsampled_mttkrp(
                 samples_dedup,
                 h_dedup,
@@ -170,7 +173,7 @@ public:
                 mttkrp_res 
                 );
         double sampling_time = stop_clock_get_elapsed(start);
-        //cout << "DMTTKRP Time: " << sampling_time << endl;
+        cout << "DMTTKRP Time: " << sampling_time << endl;
 
         // Multiply gram matrix result by the pseudo-inverse
         cblas_dsymm(
@@ -189,12 +192,16 @@ public:
             R
         );
 
+        start = start_clock();
         if(renormalize) {
             cp_decomp.renormalize_columns(j);
         }
         if(update_sampler) {
             sampler->update_sampler(j);
         }
+        double update_time = stop_clock_get_elapsed(start);
+        cout << "Renorm + Sampler Update Time: " << update_time << endl;
+
     }
 
     void execute_exact_als_update(uint32_t j, 

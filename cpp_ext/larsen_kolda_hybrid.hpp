@@ -196,8 +196,12 @@ public:
         }
         std::fill(weights(num_deterministic), weights(J), 0.0-log((double) J));
 
-        // Sample generation / regeneration is pretty cheap, but
-        // could be parallelized anyway 
+        #pragma omp parallel
+{
+        int thread_id = omp_get_thread_num();
+        auto &local_gen = par_gen[thread_id];
+
+        #pragma omp for
         for(uint64_t i = num_deterministic; i < J; i++) {
             double weight;
             bool resample = true;
@@ -208,7 +212,7 @@ public:
                     if(k != j) {
                         std::discrete_distribution<uint64_t> &dist = (*(distributions[k]));
                         Buffer<double> &leverage = *(factor_leverage[k]);
-                        uint64_t sample = dist(gen);
+                        uint64_t sample = dist(local_gen);
                         samples[k * J + i] = sample;
                         weight += log(leverage[sample]) - log(leverage_sums[k]); 
                     }
@@ -221,6 +225,7 @@ public:
             weights[i] -= weight;
             weights[i] = (1 - p_det) * exp(weights[i]); 
         }
+}
 
         fill_h_by_samples(samples, j);
     }
