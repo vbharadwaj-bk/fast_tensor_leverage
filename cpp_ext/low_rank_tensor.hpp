@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <random>
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
@@ -166,14 +167,6 @@ public:
     * the product of all column norms is returned. 
     */
     void get_sigma(Buffer<double> &sigma_out, int j) {
-        /*std::fill(sigma_out(), sigma_out(R), 1.0);
-        for(uint32_t i = 0; i < N; i++) {
-            if((int) i != j) {
-                for(uint32_t v = 0; v < R; v++) { 
-                    sigma_out[v] *= col_norms[i * R + v];
-                }
-            }
-        }*/
         std::copy(sigma(), sigma(R), sigma_out());
     }
 
@@ -181,6 +174,12 @@ public:
         Buffer<double> sigma_py(sigma_py_out);
         get_sigma(sigma_py, j);
     }
+
+    /*void multiply_by_random_entries() {
+        for(uint32_t i = 0; i < N; i++) {
+
+        }
+    }*/
 
     // Pass j = -1 to renormalize all factor matrices.
     // The array sigma is always updated 
@@ -240,6 +239,23 @@ public:
         }
         else {
             std::copy(col_norms(j * R), col_norms((j+1) * R), sigma());
+        }
+    }
+
+    // This function is just for testing purposes
+    void multiply_random_factor_entries(double rho, double A) { 
+        std::random_device rd();
+        std::mt19937 gen(rd());
+        std::bernoulli_distribution coin(rho);
+        for(int j = 0; j < (int) N; j++) {
+            uint64_t Ij = U[j].shape[0];
+            for(uint64_t i = 0; i < Ij; i++) {
+                for(uint64_t k = 0; k < R; k++) {
+                    if(coin) {
+                        U[j][i * R + k] *= A;
+                    }
+                }
+            }
         }
     }
 };

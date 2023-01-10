@@ -37,7 +37,8 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, uint64_t, py::list>()) 
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
-        .def("renormalize_columns", &LowRankTensor::renormalize_columns);
+        .def("renormalize_columns", &LowRankTensor::renormalize_columns)
+        .def("multiply_random_factor_entries", &LowRankTensor::multiply_random_factor_entries);
     py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")
         .def(py::init<py::array_t<double>, uint64_t>());
     py::class_<DenseTensor<float>, BlackBoxTensor>(m, "DenseTensor_float")
@@ -53,7 +54,7 @@ PYBIND11_MODULE(als_module, m) {
         .def("execute_exact_als_update", &ALS::execute_exact_als_update)
         .def("execute_ds_als_update", &ALS::execute_ds_als_update);
 
-    m.def("test_pinv_multithreading", &test_pinv_multithreading);
+    m.def("test_dsyrk_multithreading", &test_dsyrk_multithreading);
 }
 
 /*
