@@ -53,8 +53,8 @@ def sparse_tensor_test():
                 #    als.execute_exact_als_update(j, True, True)
 
                 # Initialize with a round of exact ALS
-                fit = lhs.compute_estimated_fit(rhs)
-                print(f"Fit after initialization: {fit}")
+                #fit = lhs.compute_estimated_fit(rhs)
+                #print(f"Fit after initialization: {fit}")
 
                 start = time.time()
                 result[R][sampler].append(als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance, verbose=True))
@@ -204,15 +204,17 @@ def image_classification_test():
     print("Completed training...")
 
 def dsyrk_multithreading_test():
-    I, R = 10000, 25
+    I, R = 10000000, 25
     U = np.random.rand(I, R)
+    start = time.time()
     ALS_Module.test_pinv_multithreading(U)
-    print("Test complete!")
+    elapsed = time.time() - start
+    print(f"Elapsed: {elapsed}s")
 
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
-    #sparse_tensor_test()
+    sparse_tensor_test()
     #image_test()
     #image_classification_test()
-    dsyrk_multithreading_test()
+    #dsyrk_multithreading_test()
