@@ -187,7 +187,6 @@ public:
     void renormalize_columns(int j) {
         for(int i = 0; i < (int) N; i++) {
             if(j == -1 || j == i) {
-
                 std::fill(col_norms(i * R), 
                     col_norms((i + 1) * R), 0.0);
 
@@ -215,19 +214,18 @@ public:
                     col_norms[i * R + v] = sqrt(col_norms[i * R + v]);
                 }
 
+
                 for(uint32_t v = 0; v < R; v++) {
-                    // Renormalization only occurs when the column norm
-                    // is large enough. Should change this to a cutoff parameter... 
-                    double divisor = col_norms[i * R + v];
-                    if(divisor > 1e-7) {
-                        #pragma omp parallel for
-                        for(uint32_t u = 0; u < dims[i]; u++) {
-                            U[i][u * R + v] /= divisor; 
-                        }
-                    }
-                    else {
+                    if(col_norms[i * R + v] <= 1e-7) {
                         col_norms[i * R + v] = 1.0;
-                    } 
+                    }
+                }
+
+                #pragma omp parallel for
+                for(uint32_t u = 0; u < dims[i]; u++) {
+                    for(uint32_t v = 0; v < R; v++) {
+                        U[i][u * R + v] /= col_norms[i * R + v]; 
+                    }
                 }
             }
         }

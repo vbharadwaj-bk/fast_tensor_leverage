@@ -26,7 +26,7 @@ def sparse_tensor_test():
 
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [100]
 
@@ -204,7 +204,7 @@ def image_classification_test():
     print("Completed training...")
 
 def dsyrk_multithreading_test():
-    I, R = 10000000, 25
+    I, R = 4000000, 100
     U = np.random.rand(I, R)
     start = time.time()
     ALS_Module.test_pinv_multithreading(U)
@@ -214,7 +214,7 @@ def dsyrk_multithreading_test():
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
-    sparse_tensor_test()
+    #sparse_tensor_test()
     #image_test()
     #image_classification_test()
-    #dsyrk_multithreading_test()
+    dsyrk_multithreading_test()
