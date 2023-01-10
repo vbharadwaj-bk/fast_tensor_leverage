@@ -16,6 +16,7 @@
 #include "larsen_kolda_hybrid.hpp"
 #include "efficient_krp_sampler.hpp"
 #include "als.hpp"
+#include "tests.hpp"
 
 #include <execution>
 #include <algorithm>
@@ -51,6 +52,8 @@ PYBIND11_MODULE(als_module, m) {
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
         .def("execute_exact_als_update", &ALS::execute_exact_als_update)
         .def("execute_ds_als_update", &ALS::execute_ds_als_update);
+
+    m.def("test_pinv_multithreading", &test_pinv_multithreading);
 }
 
 /*
@@ -83,6 +86,7 @@ cfg['dependencies'] = [ 'common.h',
                         'hash_lookup.hpp',
                         'sort_lookup.hpp',
                         'dense_tensor.hpp',
+                        'tests.hpp',
                         'als.hpp'] 
 %>
 */

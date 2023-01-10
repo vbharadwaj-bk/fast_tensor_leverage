@@ -40,7 +40,7 @@ public:
     }
 
     void update_sampler(uint64_t j) {
-        uint64_t Ij = U[j].shape[0];
+        /*uint64_t Ij = U[j].shape[0];
         uint64_t rank = min(Ij, R);
 
         Buffer<double> Q({Ij, R});
@@ -81,6 +81,23 @@ public:
         distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
             leverage(Ij)));
  
+        leverage_sums[j] = total;*/
+        uint64_t Ij = U[j].shape[0];
+        Buffer<double> pinv({R, R});
+        compute_pinv(U[j], pinv);
+
+        Buffer<double> &leverage = *(factor_leverage[j]);
+        compute_DAGAT(U[j](), pinv(), leverage(), Ij, R);
+
+        distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
+            leverage(Ij)));
+
+        double total = 0.0;
+
+        #pragma omp parallel for reduction(+: total)
+        for(uint64_t i = 0; i < U[j].shape[0]; i++) {
+            total += leverage[i];
+        }
         leverage_sums[j] = total;
     }
 

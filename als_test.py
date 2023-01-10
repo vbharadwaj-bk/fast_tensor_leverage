@@ -14,6 +14,7 @@ from als import *
 from image_classification import * 
 
 import cppimport.import_hook
+import cpp_ext.als_module as ALS_Module
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
 
 def sparse_tensor_test():
@@ -25,7 +26,7 @@ def sparse_tensor_test():
 
     result = {}
 
-    samplers = ["larsen_kolda"]
+    samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [100]
 
@@ -202,9 +203,16 @@ def image_classification_test():
     classifier.train()
     print("Completed training...")
 
+def dsyrk_multithreading_test():
+    I, R = 10000, 25
+    U = np.random.rand(I, R)
+    ALS_Module.test_pinv_multithreading(U)
+    print("Test complete!")
+
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
-    sparse_tensor_test()
+    #sparse_tensor_test()
     #image_test()
     #image_classification_test()
+    dsyrk_multithreading_test()
