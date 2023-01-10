@@ -1,34 +1,64 @@
 #pragma once
 
 #include <iostream>
-#include <random>
 #include "common.h"
 
 using namespace std;
 
 // Catchall file for test functions
 
-void test_pinv_multithreading(py::array_t<double> U_py) {
-    std::mt19937 gen(1);
-
+void test_dsyrk_multithreading(py::array_t<double> U_py) {
     Buffer<double> U(U_py);
-
     uint64_t Ij = U.shape[0];
     uint64_t R = U.shape[1];
-    Buffer<double> pinv({R, R});
-    compute_pinv(U, pinv);
+    Buffer<double> M({R, R});
+    std::fill(M(), M(R * R), 0.0);
 
-    Buffer<double> leverage({U.shape[0]}); 
-    compute_DAGAT(U(), pinv(), leverage(), Ij, R);
 
-    double total = 0.0;
+    #pragma omp parallel
+    {
+        int num_threads = omp_get_num_threads();
+        int thread_id = omp_get_thread_num();
+        uint64_t work = (Ij + num_threads - 1) / num_threads;
+        uint64_t start = min(work * thread_id, Ij);
+        uint64_t end = min(work * (thread_id + 1), Ij);
 
-    #pragma omp parallel for reduction(+: total)
-    for(uint64_t i = 0; i < U.shape[0]; i++) {
-        total += leverage[i];
+        if(end - start > 0) {
+            Buffer<double> local({R, R});
+            cblas_dsyrk(CblasRowMajor, 
+                        CblasUpper, 
+                        CblasTrans,
+                        R,
+                        end-start, 
+                        1.0, 
+                        U(start * R), 
+                        R, 
+                        0.0, 
+                        local(), 
+                        R);
+
+            for(uint64_t i = 0; i < R * R; i++) {
+                #pragma omp atomic
+                M[i] += local[i];
+            }
+        }
+
     }
 
-    std::discrete_distribution<uint64_t> dist(leverage(), leverage(Ij));
-    cout << dist(gen) << endl;
-    cout << total << endl;
+
+    /*cblas_dgemm(CblasRowMajor,
+        CblasTrans,
+        CblasNoTrans,
+        R,
+        R,
+        Ij,
+        1.0,
+        U(),
+        R,
+        U(),
+        R,
+        0.0,
+        M(),
+        R
+    );*/
 }

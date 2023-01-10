@@ -67,10 +67,10 @@ public:
         Buffer<double> mttkrp_res({Ij, R});
         Buffer<double> pinv({R, R});
 
-        auto start = start_clock();
+        //auto start = start_clock();
         sampler->KRPDrawSamples(j, *samples, nullptr);
-        double sampling_draw_time = stop_clock_get_elapsed(start);
-        cout << "Time to Draw Samples: " << sampling_draw_time << endl;
+        //double sampling_draw_time = stop_clock_get_elapsed(start);
+        //cout << "Time to Draw Samples: " << sampling_draw_time << endl;
 
         // This step is unecessary, but we keep it in anyway
         #pragma omp parallel for collapse(2)
@@ -160,11 +160,11 @@ public:
         }
 
 
-        start = start_clock();
+        //start = start_clock();
         std::fill(pinv(), pinv(R * R), 0.0);
         compute_pinv(h_dedup, pinv);  
-        double pinv_computation_time = stop_clock_get_elapsed(start);
-        cout << "PINV Computation Time: " << pinv_computation_time << endl;
+        //double pinv_computation_time = stop_clock_get_elapsed(start);
+        //cout << "PINV Computation Time: " << pinv_computation_time << endl;
 
         #pragma omp parallel for collapse(2)
         for(uint32_t i = 0; i < num_unique; i++) {
@@ -173,19 +173,19 @@ public:
             }
         }
 
-        start = start_clock();
+        //start = start_clock();
         ground_truth.execute_downsampled_mttkrp(
                 samples_dedup,
                 h_dedup,
                 j,
                 mttkrp_res 
                 );
-        double sampling_time = stop_clock_get_elapsed(start);
-        cout << "DMTTKRP Time: " << sampling_time << endl;
+        //double sampling_time = stop_clock_get_elapsed(start);
+        //cout << "DMTTKRP Time: " << sampling_time << endl;
 
         // Multiply gram matrix result by the pseudo-inverse
 
-        start = start_clock();
+        //start = start_clock();
         cblas_dsymm(
             CblasRowMajor,
             CblasRight,
@@ -201,20 +201,20 @@ public:
             cp_decomp.U[j](),
             R
         );
-        double pinv_time = stop_clock_get_elapsed(start);
-        cout << "PINV Time: " << pinv_time << endl;
+        //double pinv_time = stop_clock_get_elapsed(start);
+        //cout << "PINV Time: " << pinv_time << endl;
 
         if(renormalize) {
-            start = start_clock();
+            //start = start_clock();
             cp_decomp.renormalize_columns(j);
-            double renormalization_time = stop_clock_get_elapsed(start);
-            cout << "Renormalization Time: " << renormalization_time << endl;
+            //double renormalization_time = stop_clock_get_elapsed(start);
+            //cout << "Renormalization Time: " << renormalization_time << endl;
         }
         if(update_sampler) {
-            start = start_clock();
+            //start = start_clock();
             sampler->update_sampler(j);
-            double update_time = stop_clock_get_elapsed(start);
-            cout << "Sampler Update Time: " << update_time << endl;
+            //double update_time = stop_clock_get_elapsed(start);
+            //cout << "Sampler Update Time: " << update_time << endl;
         }
 
     }

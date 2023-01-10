@@ -17,10 +17,9 @@ FLAME_LIB=/global/homes/v/vbharadw/amd-aocl/amd-libflame/lib/LP64
 export LD_LIBRARY_PATH=$OPENBLAS_LIB:$TBB_LIB:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=$BLIS_LIB:$FLAME_LIB:$TBB_LIB:$LD_LIBRARY_PATH
 
-export MKL_NUM_THREADS=128
 export OMP_MAX_ACTIVE_LEVELS=2 
 export OMP_NUM_THREADS=128
-export KMP_BLOCKTIME=0
+#export KMP_BLOCKTIME=0
 
 
 export TORCH_DATASET_FOLDER=/pscratch/sd/v/vbharadw/torch_datasets

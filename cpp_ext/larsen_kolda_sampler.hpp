@@ -104,7 +104,6 @@ public:
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
         std::fill(weights(), weights(J), 0.0-log((double) J));
 
-        auto start = start_clock();
         for(uint32_t k = 0; k < N; k++) {
             if(k != j) {
                 Buffer<double> &leverage = *(factor_leverage[k]);
@@ -125,8 +124,6 @@ public:
 }
             }
         }
-        double elapsed = stop_clock_get_elapsed(start);
-        cout << "Time to generate random samples: " << elapsed << endl; 
 
         #pragma omp parallel for
         for(uint64_t i = 0; i < J; i++) {
