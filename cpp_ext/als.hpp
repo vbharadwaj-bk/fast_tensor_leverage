@@ -204,15 +204,18 @@ public:
         double pinv_time = stop_clock_get_elapsed(start);
         cout << "PINV Time: " << pinv_time << endl;
 
-        start = start_clock();
         if(renormalize) {
+            start = start_clock();
             cp_decomp.renormalize_columns(j);
+            double renormalization_time = stop_clock_get_elapsed(start);
+            cout << "Renormalization Time: " << renormalization_time << endl;
         }
         if(update_sampler) {
+            start = start_clock();
             sampler->update_sampler(j);
+            double update_time = stop_clock_get_elapsed(start);
+            cout << "Sampler Update Time: " << update_time << endl;
         }
-        double update_time = stop_clock_get_elapsed(start);
-        cout << "Renorm + Sampler Update Time: " << update_time << endl;
 
     }
 
