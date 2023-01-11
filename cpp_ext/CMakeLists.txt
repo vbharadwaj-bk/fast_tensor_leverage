@@ -2,9 +2,46 @@ cmake_minimum_required(VERSION 3.14)
 
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CPP_COMPILER g++)
+
 project(efficient_krp_sampler) 
 
-add_executable(sampler_test main.cpp)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_FIND_LIBRARY_PREFIXES lib)
+find_package(Python COMPONENTS Interpreter Development)
+find_package(pybind11 CONFIG)
+find_package(OpenMP REQUIRED)
+
+add_executable(sampler_test 
+    main.cpp
+    common.h
+)
+
+#message("Hello!")
+#message("${pybind11_INCLUDE_DIR}")
+#message("Hello!")
+
+target_include_directories(sampler_test
+    PRIVATE
+    ${Python_INCLUDE_DIRS}
+    /global/homes/v/vbharadw/OpenBLAS_install/include
+)
+
+target_link_directories(sampler_test
+    PRIVATE
+    pybind11::pybind11
+    pybind11::headers
+    #${Python_LIBRARIES}
+    #${Python_LIBRARY_DIRS}
+    #${Python_RUNTIME_LIBRARY_DIRS}
+    /global/homes/v/vbharadw/OpenBLAS_install/lib
+)
+
+target_link_libraries(sampler_test 
+    openblas
+    OpenMP::OpenMP_CXX
+    pybind11::pybind11
+    pybind11::headers
+)
 
 #common.h
 #partition_tree.hpp
