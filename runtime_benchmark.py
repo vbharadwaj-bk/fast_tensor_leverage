@@ -30,14 +30,17 @@ if __name__=='__main__':
     data["trial_count"] = trial_count 
 
     # Eliminates cold start 
-    U = [np.random.rand(500, 25) for i in range(2)]
-    sample_buffer = np.zeros((J, 25), dtype=np.uint64)
-    sampler = Sampler(U, J, 25, "efficient")        
-    sampler.KRPDrawSamples(0, sample_buffer)
-    # End cold start elimination
+    def cold_start():
+        U = [np.random.rand(500, 25) for i in range(2)]
+        sample_buffer = np.zeros((J, 25), dtype=np.uint64)
+        sampler = Sampler(U, J, 25, "efficient") 
+        #sampler.KRPDrawSamples(0, sample_buffer)
+
+    cold_start()
+    exit(1)
 
     # Benchmark the effect of increasing I
-    for i in range(20):
+    for i in range(0, 1):
         print(i)
         base_I = 2 ** 6
         I, R, Nm1 = base_I * 2 ** i, 32, 3 
@@ -47,19 +50,20 @@ if __name__=='__main__':
         construction_times = []
         sampling_times = []
 
-        for j in range(trial_count):
-            collected = gc.collect()
-            #start_construct = time.time()
+        for j in range(5):
+            start_construct = time.time()
             sampler = Sampler(U, J, R, "efficient")
-            #print(sys.getrefcount(sampler)) 
-            #construction_time = time.time() - start_construct
+            construction_time = time.time() - start_construct
 
-            #start_sample = time.time()
+            start_sample = time.time()
             sampler.KRPDrawSamples(0, sample_buffer)
-            #sampling_time = time.time() - start_sample
+            sampling_time = time.time() - start_sample
 
-            #construction_times.append(construction_time)
-            #sampling_times.append(sampling_time)
+            construction_times.append(construction_time)
+            sampling_times.append(sampling_time)
+
+            print(construction_time)
+            print(sampling_time)
 
         data["I_trace"].append({"I": I, "R": R, "N": Nm1, 
             "construction_times": construction_times, 

@@ -41,7 +41,6 @@ public:
         this->R = R;
         R2 = R * R;
 
-
         // Set up independent random streams for different threads.
         // As written, might be more complicated than it needs to be. 
         #pragma omp parallel

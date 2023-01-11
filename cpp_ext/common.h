@@ -95,6 +95,7 @@ public:
 
         managed_ptr.reset(new T[buffer_size]);
         ptr = managed_ptr.get();
+        cout << "Allocated memory!" << endl;
     }
 
     Buffer(initializer_list<uint64_t> args, T* ptr) {
@@ -128,6 +129,12 @@ public:
     }
 
     ~Buffer() {
+        cout << "Calling buffer destructor..." << endl;
+        T* m_ptr = managed_ptr.release();
+        if(m_ptr != nullptr) {
+            delete[] m_ptr;
+            cout << "Destroyed allocated memory!" << endl;
+        }
     }
 };
 
