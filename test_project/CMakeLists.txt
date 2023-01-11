@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CPP_COMPILER g++)
 project(test) 
+find_package(OpenMP REQUIRED)
 
 add_executable(test test.cpp)
 target_include_directories(test PRIVATE 
