@@ -11,7 +11,6 @@ from common import *
 
 import cppimport.import_hook
 from cpp_ext.als_module import ALS 
-from cpp_ext.efficient_krp_sampler import CP_ALS
 from tensors import *
 
 def als_exact_comparison(lhs, rhs, J, method, iter):
