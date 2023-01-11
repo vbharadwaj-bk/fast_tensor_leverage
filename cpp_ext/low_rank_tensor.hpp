@@ -243,15 +243,16 @@ public:
     }
 
     // This function is just for testing purposes
-    void multiply_random_factor_entries(double rho, double A) { 
-        std::random_device rd();
+    void multiply_random_factor_entries(double rho, double A) {
+        cout << "Randomly spiking entries..." << endl;
+        std::random_device rd;
         std::mt19937 gen(rd());
         std::bernoulli_distribution coin(rho);
         for(int j = 0; j < (int) N; j++) {
             uint64_t Ij = U[j].shape[0];
             for(uint64_t i = 0; i < Ij; i++) {
                 for(uint64_t k = 0; k < R; k++) {
-                    if(coin) {
+                    if(coin(gen)) {
                         U[j][i * R + k] *= A;
                     }
                 }

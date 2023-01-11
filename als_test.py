@@ -68,20 +68,21 @@ def low_rank_test():
     J = 20000
 
     trial_count = 5
-    iterations = 20
+    iterations = 45
     result = {}
 
-    samplers = ["uniform", "larsen_kolda"]
-    R_values = [32]
+    samplers = ["larsen_kolda_hybrid", "efficient"]
+    R_values = [100]
 
-    I = 2 ** 12
-    N = 4
+    I = 2 ** 8
+    N = 5
 
     max_iterations = 20
     stop_tolerance = 1e-4
 
     for R in R_values: 
         rhs = PyLowRank([I] * N, 2 * R, allow_rhs_mttkrp=True, seed=479873)
+        rhs.ten.multiply_random_factor_entries(0.01, 5.0)
         rhs.ten.renormalize_columns(-1)
         result[R] = {}
         for sampler in samplers:
@@ -90,7 +91,12 @@ def low_rank_test():
                 # Specify a seed here to make everything deterministic
                 lhs = PyLowRank(rhs.dims, R, seed=5872343)
                 lhs.ten.renormalize_columns(-1)
+                print("=" * 20)
+                print("Starting trial...")
                 result[R][sampler].append(als_exact_comparison(lhs, rhs, J, sampler, max_iterations))
+                print("Finished trial...")
+                print("=" * 20)
+
 
     with open('outputs/low_rank_comparison.json', 'w') as outfile:
         json.dump(result, outfile, indent=4)

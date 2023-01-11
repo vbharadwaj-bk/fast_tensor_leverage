@@ -42,7 +42,7 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
                 ratio = 1.0
 
             fit = lhs.compute_estimated_fit(rhs)
-            print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, Fit: {fit}")
+            print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, AResidual: {residual_approx}, Fit: {fit}")
 
             data_entry = {}
             data_entry["fit"] = fit 
