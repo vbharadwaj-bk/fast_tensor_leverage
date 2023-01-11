@@ -6,6 +6,7 @@ test_project/build/*
 outputs/*
 data/*
 cpp_ext/sparsehash/*
+cpp_ext/build/*
 paper_data_archive/*
 
 visualization/*
