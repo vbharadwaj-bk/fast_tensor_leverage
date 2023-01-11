@@ -49,8 +49,8 @@ public:
 template<typename T>
 class __attribute__((visibility("hidden"))) Buffer {
     py::buffer_info info;
+    unique_ptr<T[]> managed_ptr;
     T* ptr;
-    bool own_memory;
     uint64_t dim0;
     uint64_t dim1;
 
@@ -59,8 +59,8 @@ public:
 
     Buffer(Buffer&& other)
         :   info(std::move(other.info)), 
+            managed_ptr(std::move(other.managed_ptr)),
             ptr(std::move(other.ptr)),
-            own_memory(other.own_memory),
             dim0(other.dim0),
             dim1(other.dim1),
             shape(std::move(other.shape))
@@ -79,7 +79,6 @@ public:
         for(int64_t i = 0; i < info.ndim; i++) {
             shape.push_back(info.shape[i]);
         }
-        own_memory = false;
     }
 
     Buffer(initializer_list<uint64_t> args) {
@@ -94,8 +93,8 @@ public:
             dim1 = shape[1];
         }
 
-        ptr = (T*) malloc(sizeof(T) * buffer_size);
-        own_memory = true;
+        managed_ptr.reset(new T[buffer_size]);
+        ptr = managed_ptr.get();
     }
 
     Buffer(initializer_list<uint64_t> args, T* ptr) {
@@ -109,8 +108,6 @@ public:
         }
 
         this->ptr = ptr;
-
-        own_memory = false;
     }
 
     T* operator()() {
@@ -131,9 +128,6 @@ public:
     }
 
     ~Buffer() {
-        if(own_memory) {
-            free(ptr);
-        }
     }
 };
 

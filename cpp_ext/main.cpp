@@ -1,6 +1,6 @@
 #include <iostream>
 
-//#include "common.h"
+#include "common.h"
 
 using namespace std;
 
