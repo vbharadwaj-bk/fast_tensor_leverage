@@ -37,7 +37,7 @@ if __name__=='__main__':
     # End cold start elimination
 
     # Benchmark the effect of increasing I
-    for i in range(5):
+    for i in range(20):
         print(i)
         base_I = 2 ** 6
         I, R, Nm1 = base_I * 2 ** i, 32, 3 
