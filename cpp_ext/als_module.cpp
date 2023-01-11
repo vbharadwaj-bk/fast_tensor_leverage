@@ -27,6 +27,41 @@
 using namespace std;
 namespace py = pybind11;
 
+class __attribute__((visibility("hidden"))) PySampler {
+public:
+    unique_ptr<NPBufferList<double>> U_py_bufs;
+    unique_ptr<Sampler> sampler;
+    PySampler(py::list U_py, int64_t J, int64_t R)
+    :
+    U_py_bufs(new NPBufferList<double>(U_py)),
+    sampler(J, R, (*U_py_bufs).buffers) 
+    {
+    }
+
+    // Can expose this function for debugging
+    /*void KRPDrawSamples_explicit_random(uint32_t j, py::array_t<uint64_t> samples_py, py::array_t<double> random_draws_py) {
+        Buffer<uint64_t> samples(samples_py);
+        Buffer<double> random_draws(random_draws_py);
+        sampler->KRPDrawSamples(j, samples, &random_draws); 
+    }*/
+
+    void KRPDrawSamples(uint32_t j, 
+            py::array_t<uint64_t> samples_py) {
+        Buffer<uint64_t> samples(samples_py);
+        sampler.KRPDrawSamples(j, samples, nullptr);
+    }
+
+    void KRPDrawSamples_materialize(uint32_t j, 
+            py::array_t<uint64_t> samples_py, 
+            py::array_t<double> h_out_py) {
+        Buffer<uint64_t> samples(samples_py);
+        Buffer<double> h_out(h_out_py);
+        sampler.KRPDrawSamples(j, samples, nullptr);
+        std::copy(sampler.h(), sampler.h(sampler.J * sampler.R), h_out()); 
+    }
+};
+
+
 PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
         .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py)
@@ -53,7 +88,11 @@ PYBIND11_MODULE(als_module, m) {
         .def("initialize_ds_als", &ALS::initialize_ds_als) 
         .def("execute_exact_als_update", &ALS::execute_exact_als_update)
         .def("execute_ds_als_update", &ALS::execute_ds_als_update);
-
+    py::class_<PySampler>(m, "Sampler")
+        .def(py::init<py::list, int64_t, int64_t>()) 
+        .def("KRPDrawSamples", &PySampler::KRPDrawSamples)
+        .def("KRPDrawSamples_materialize", &PySampler::KRPDrawSamples_materialize)
+        ;
     m.def("test_dsyrk_multithreading", &test_dsyrk_multithreading);
 }
 

@@ -12,7 +12,6 @@ from als import *
 from image_classification import * 
 
 import cppimport.import_hook
-from cpp_ext.efficient_krp_sampler import CP_ALS 
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
 
 # We will run this benchmark across multiple nodes. 
