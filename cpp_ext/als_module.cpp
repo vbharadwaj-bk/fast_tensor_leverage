@@ -76,11 +76,7 @@ public:
         Buffer<double> h_out(h_out_py);
         sampler->KRPDrawSamples(j, samples, nullptr);
         std::copy(sampler->h(), sampler->h(sampler->J * sampler->R), h_out()); 
-    }
-
-    ~PySampler() {
-        sampler.release();
-    }
+    } 
 };
 
 
@@ -131,8 +127,8 @@ blis_link_loc=None
 
 tbb_include='-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include'
 tbb_link_location='-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
-cfg['extra_compile_args'] = [openblas_include, tbb_include, '--std=c++2a', '-fopenmp', '-g', '-march=native']
-cfg['extra_link_args'] = [openblas_link_location, tbb_link_location, '-lopenblas', '-fopenmp', '-g', '-ltbb']
+cfg['extra_compile_args'] = [openblas_include, tbb_include, '--std=c++2a', '-fopenmp', '-Ofast', '-march=native']
+cfg['extra_link_args'] = [openblas_link_location, tbb_link_location, '-lopenblas', '-fopenmp', '-Ofast', '-ltbb']
 cfg['dependencies'] = [ 'common.h', 
                         'partition_tree.hpp', 
                         'efficient_krp_sampler.hpp', 

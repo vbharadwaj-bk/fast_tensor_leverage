@@ -56,4 +56,6 @@ public:
                 result 
                 );
     }
+
+    virtual ~Tensor() {};
 };
