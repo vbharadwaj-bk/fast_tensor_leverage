@@ -20,4 +20,6 @@ public:
       
       return -1.0;
   }
+
+  virtual ~IdxLookup() {};
 };

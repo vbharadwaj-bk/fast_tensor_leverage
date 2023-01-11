@@ -87,7 +87,8 @@ public:
                 }
             }
         }
-    } 
+    }
+    virtual ~Sampler() {};
 };
 
 void compute_DAGAT(double* A, double* G, 

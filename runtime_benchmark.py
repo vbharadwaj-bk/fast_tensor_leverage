@@ -30,17 +30,14 @@ if __name__=='__main__':
     data["trial_count"] = trial_count 
 
     # Eliminates cold start 
-    def cold_start():
-        U = [np.random.rand(500, 25) for i in range(2)]
-        sample_buffer = np.zeros((J, 25), dtype=np.uint64)
-        sampler = Sampler(U, J, 25, "efficient") 
-        #sampler.KRPDrawSamples(0, sample_buffer)
 
-    cold_start()
-    exit(1)
+    U = [np.random.rand(500, 25) for i in range(2)]
+    sample_buffer = np.zeros((J, 25), dtype=np.uint64)
+    sampler = Sampler(U, J, 25, "efficient") 
+    sampler.KRPDrawSamples(0, sample_buffer)
 
     # Benchmark the effect of increasing I
-    for i in range(0, 1):
+    for i in range(0, 20):
         print(i)
         base_I = 2 ** 6
         I, R, Nm1 = base_I * 2 ** i, 32, 3 
@@ -62,14 +59,9 @@ if __name__=='__main__':
             construction_times.append(construction_time)
             sampling_times.append(sampling_time)
 
-            print(construction_time)
-            print(sampling_time)
-
         data["I_trace"].append({"I": I, "R": R, "N": Nm1, 
             "construction_times": construction_times, 
             "sampling_times": sampling_times})
-
-    exit(1)
 
     for i in range(5):
         print(i)

@@ -40,7 +40,7 @@ public:
             lambda({U_matrices.size() + 1, R}),
             scaled_h({J, R}),
             dis(0.0, 1.0) 
-    {    
+    {   
         eigenvalue_tolerance = 1e-8; // Tolerance of eigenvalues for symmetric PINV 
     
         for(uint32_t i = 0; i < N; i++) {
