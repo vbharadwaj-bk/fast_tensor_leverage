@@ -29,19 +29,19 @@ if __name__=='__main__':
     data["J"] = J
     data["trial_count"] = trial_count 
 
-    # Eliminates cold start 
-
-    U = [np.random.rand(500, 25) for i in range(2)]
+    # Eliminate cold start 
+    U = [np.random.normal(size=(500, 25)) for i in range(2)]
     sample_buffer = np.zeros((J, 25), dtype=np.uint64)
     sampler = Sampler(U, J, 25, "efficient") 
     sampler.KRPDrawSamples(0, sample_buffer)
+    # Eliminate cold start 
 
     # Benchmark the effect of increasing I
     for i in range(0, 20):
         print(i)
         base_I = 2 ** 6
-        I, R, Nm1 = base_I * 2 ** i, 32, 3 
-        U = [np.random.rand(I, R) for i in range(Nm1 + 1)]
+        I, R, N = base_I * 2 ** i, 32, 3 
+        U = [np.random.normal(size=(I, R)) for i in range(N)]
         sample_buffer = np.zeros((J, R), dtype=np.uint64)
 
         construction_times = []
@@ -53,20 +53,20 @@ if __name__=='__main__':
             construction_time = time.time() - start_construct
 
             start_sample = time.time()
-            sampler.KRPDrawSamples(0, sample_buffer)
+            sampler.KRPDrawSamples(N+1, sample_buffer)
             sampling_time = time.time() - start_sample
 
             construction_times.append(construction_time)
             sampling_times.append(sampling_time)
 
-        data["I_trace"].append({"I": I, "R": R, "N": Nm1, 
+        data["I_trace"].append({"I": I, "R": R, "N": N, 
             "construction_times": construction_times, 
             "sampling_times": sampling_times})
 
-    for i in range(5):
+    for i in range(4):
         print(i)
-        I, R, Nm1 = 2 ** 22, 16 * 2 ** i, 3 
-        U = [np.random.rand(I, R) for i in range(Nm1 + 1)]
+        I, R, N = 2 ** 22, 16 * (2 ** i), 3 
+        U = [np.random.normal(size=(I, R)) for i in range(N)]
         sample_buffer = np.zeros((J, R), dtype=np.uint64)
 
         construction_times = []
@@ -78,20 +78,20 @@ if __name__=='__main__':
             construction_time = time.time() - start_construct
 
             start_sample = time.time()
-            sampler.KRPDrawSamples(0, sample_buffer)
+            sampler.KRPDrawSamples(N+1, sample_buffer)
             sampling_time = time.time() - start_sample
 
             construction_times.append(construction_time)
             sampling_times.append(sampling_time)
 
-        data["R_trace"].append({"I": I, "R": R, "N": Nm1, 
+        data["R_trace"].append({"I": I, "R": R, "N": N, 
             "construction_times": construction_times, 
             "sampling_times": sampling_times})
 
     for i in range(8):
         print(i)
-        I, R, Nm1 = 2 ** 22, 32, 2 + i 
-        U = [np.random.rand(I, R) for i in range(Nm1 + 1)]
+        I, R, N = 2 ** 22, 32, 2 + i 
+        U = [np.random.normal(size=(I, R)) for i in range(N)]
         sample_buffer = np.zeros((J, R), dtype=np.uint64)
 
         construction_times = []
@@ -103,13 +103,13 @@ if __name__=='__main__':
             construction_time = time.time() - start_construct
 
             start_sample = time.time()
-            sampler.KRPDrawSamples(0, sample_buffer)
+            sampler.KRPDrawSamples(N+1, sample_buffer)
             sampling_time = time.time() - start_sample
 
             construction_times.append(construction_time)
             sampling_times.append(sampling_time)
 
-        data["N_trace"].append({"I": I, "R": R, "N": Nm1, 
+        data["N_trace"].append({"I": I, "R": R, "N": N, 
             "construction_times": construction_times, 
             "sampling_times": sampling_times})
 
