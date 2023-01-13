@@ -40,11 +40,12 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
             else:
                 ratio = 1.0
 
-            fit = lhs.compute_estimated_fit(rhs)
-            print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, AResidual: {residual_approx}, Fit: {fit}")
+            #fit = lhs.compute_estimated_fit(rhs)
+            print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, AResidual: {residual_approx}")
 
             data_entry = {}
-            data_entry["fit"] = fit 
+            #data_entry["fit"] = fit 
+            data_entry["fit"] = -1.0 
             data_entry["exact_solve_residual"] = residual
             data_entry["approx_solve_residual"] = residual_approx
             data_entry["exact_solve_residual_normalized"] = residual / rhs_norm

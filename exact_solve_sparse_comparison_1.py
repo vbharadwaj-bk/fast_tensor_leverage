@@ -18,7 +18,7 @@ if __name__=='__main__':
 
     trial_count = 5
     J = 2 ** 16
-    R= 75
+    R= 25
     samplers = ["larsen_kolda_hybrid", "efficient"]
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort")
  
