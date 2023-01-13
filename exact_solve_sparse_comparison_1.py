@@ -11,7 +11,7 @@ from experiment import *
 # and 
 
 if __name__=='__main__':
-    tensor_name = "amazon-reviews"
+    tensor_name = "uber"
     experiment = Experiment(f"outputs/{tensor_name}_exact_solve_comp_1.json")
     data = experiment.data
     max_iterations = 10   # For now, this needs to stay a multiple of 5! 

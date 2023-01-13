@@ -191,4 +191,62 @@ public:
       residual_normsq += ATB_chain_prod_sum(U, U, sigma, sigma);
       return residual_normsq;
   }
+
+  void execute_exact_mttkrp(
+      vector<Buffer<double>> &U, 
+      Buffer<double> &mttkrp_res) {
+
+      uint64_t R = U[0].shape[1];
+      uint64_t j = mode_to_leave;
+
+      #pragma omp parallel 
+{
+      int thread_num = omp_get_thread_num();
+      int total_threads = omp_get_num_threads();      
+
+      uint64_t chunksize = (nnz + total_threads - 1) / total_threads;
+      uint64_t lower_bound = min(chunksize * thread_num, nnz);
+      uint64_t upper_bound = min(chunksize * (thread_num + 1), nnz);
+
+      Buffer<double> partial_prod({R});
+
+      for(uint64_t i = lower_bound; i < upper_bound; i++) {
+        IDX_T* index = sort_idxs[i];
+
+        uint64_t offset = (index - idx_ptr) / N; 
+        bool recompute_partial_prod = false;
+        if(i == lower_bound) {
+          recompute_partial_prod = true;
+        }
+        else {
+          IDX_T* prev_index = sort_idxs[i-1];
+          for(uint64_t k = 0; k < (uint64_t) N; k++) {
+            if((k != j) && (index[k] != prev_index[k])) {
+              recompute_partial_prod = true;
+            }
+          }
+        }
+
+        if(recompute_partial_prod) {
+          std::fill(partial_prod(), partial_prod(R), 1.0); 
+
+          for(uint64_t k = 0; k < (uint64_t) N; k++) {
+            if(k != j) {
+              for(uint64_t u = 0; u < R; u++) {
+                partial_prod[u] *= U[k][index[k] * R + u];
+              }
+            }
+          }
+        }
+
+        double tensor_value = val_ptr[offset];
+
+        for(uint64_t u = 0; u < R; u++) {
+          #pragma omp atomic 
+          mttkrp_res[index[j] * R + u] += partial_prod[u] * tensor_value;
+        }
+      }
+}
+  }
+
 };
