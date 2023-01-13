@@ -30,8 +30,8 @@ def sparse_tensor_test():
     #R_values = [4, 8, 16, 32, 64, 128]
     R_values = [100]
 
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
@@ -220,9 +220,9 @@ def dsyrk_multithreading_test():
     print(f"Elapsed: {elapsed}s")
 
 if __name__=='__main__':
-    low_rank_test() 
+    #low_rank_test() 
     #numerical_integration_test() 
-    #sparse_tensor_test()
+    sparse_tensor_test()
     #image_test()
     #image_classification_test()
     #dsyrk_multithreading_test()
