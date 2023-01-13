@@ -65,33 +65,9 @@ public:
       // Sorting nonzeros would be good here... 
     }
 
-    void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) {
-      uint64_t R = U_L[0].shape[1];
+    void execute_exact_mttkrp(vector<Buffer<double>> &U_L, uint64_t j, Buffer<double> &mttkrp_res) { 
       std::fill(mttkrp_res(), mttkrp_res(mttkrp_res.shape[0] * mttkrp_res.shape[1]), 0.0);
-
-      #pragma omp parallel
-{
-      Buffer<double> had_product({R});
-      
-      #pragma omp for
-      for(uint64_t i = 0; i < nnz; i++) {
-        std::fill(had_product(), had_product(R), values[i]);
-        uint32_t* index = indices(i * N);
-
-        for(uint64_t k = 0; k < N; k++) {
-          if(k != j) {
-            for(uint64_t u = 0; u < R; u++) {
-              had_product[u] *= U_L[k][index[k] * R + u];
-            }
-          }
-        }
-
-        for(uint64_t u = 0; u < R; u++) {
-          #pragma omp atomic
-          mttkrp_res[index[j] * R + u] += had_product[u];
-        }
-      }
-} 
+      lookups[j]->execute_exact_mttkrp(U_L, mttkrp_res);
     }
 
     void execute_downsampled_mttkrp(

@@ -21,5 +21,12 @@ public:
       return -1.0;
   }
 
+
+  virtual void execute_exact_mttkrp(
+      vector<Buffer<double>> &U, 
+      Buffer<double> &mttkrp_res) {
+      // Pass, need to override this... 
+  }
+
   virtual ~IdxLookup() {};
 };
