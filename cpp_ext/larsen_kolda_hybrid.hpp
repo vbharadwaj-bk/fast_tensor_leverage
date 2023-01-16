@@ -102,7 +102,6 @@ public:
         leverage_sums[j] = total;
         alpha[j] = alpha_j / total;
 
-
         Buffer<uint64_t> &sort_idx = *(sort_idxs[j]);
         double* leverage_ptr = leverage();
 
@@ -116,11 +115,18 @@ public:
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
         double alpha_star = 1.0;
+        double krp_height = 1.0;
+        bool krp_height_too_small = false;
 
         for(uint64_t k = 0; k < N; k++) {
             if(k != j) {
+                uint64_t Ik = U[k].shape[0];
                 alpha_star *= alpha[k];
+                krp_height *= Ik;
             }
+        }
+        if(krp_height < J * 5) {
+            krp_height_too_small = true;
         }
 
         Buffer<uint64_t> start_ranges({N}); 
@@ -153,8 +159,8 @@ public:
         uint64_t num_deterministic = 0;
         double p_det = 0.0;
 
-        if(log_candidates >= 62 * log(2)) {
-            cout << "Warning: Hybrid sampler candidate list is too large. Switching to deterministic algorithm." << endl;
+        if(log_candidates >= 62 * log(2) || krp_height_too_small) {
+            cout << "Warning: Switching to random algorithm." << endl;
         }
         else {
             uint64_t sample_pos = 0;
@@ -194,11 +200,10 @@ public:
             }
 }
         }
-        cout << "Prob Deterministic: " << p_det << endl;
         std::fill(weights(num_deterministic), weights(J), 0.0-log((double) J));
 
         int total_random_failures = 0;
-        int max_failures = 500;
+        int max_failures = 1000;
         #pragma omp parallel reduction(+: total_random_failures)
 {
         int thread_id = omp_get_thread_num();
@@ -235,11 +240,6 @@ public:
             weights[i] = (1 - p_det) * exp(weights[i]); 
         }
 }
-        if(total_random_failures > 0) {
-            cout << "Random choice failures: " << total_random_failures << endl; 
-        }
-
-
         fill_h_by_samples(samples, j);
     }
 };
