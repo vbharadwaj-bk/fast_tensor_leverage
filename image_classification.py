@@ -37,6 +37,9 @@ class TensorClassifier:
             exit(1) 
 
     def train(self):
+        import torch
+        import torchvision
+        print("Started data loading...")
         dataset_class = self.param_map[self.dataset_name]
         dataset = dataset_class(f'{self.root}/', download=True, train=True, transform=torchvision.transforms.ToTensor())
         loader = torch.utils.data.DataLoader(dataset, batch_size=len(dataset), shuffle=True, num_workers=16)

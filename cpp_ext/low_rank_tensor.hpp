@@ -85,8 +85,13 @@ public:
             << other_normsq << " "
             << inner_prod << " Data" << endl;*/
 
-        cout << self_normsq + other_normsq << " "
-            << 2 * inner_prod << " Data" << endl;
+        //cout << self_normsq + other_normsq << " "
+        //    << 2 * inner_prod << " Data" << endl;
+
+        /*for(uint64_t i = 0; i < R; i++) {
+            cout << sigma[i] << " ";
+        }
+        cout << endl;*/
 
         return max(self_normsq + other_normsq - 2 * inner_prod, 0.0);
     } 
