@@ -21,14 +21,16 @@ if __name__=='__main__':
     rank = comm.Get_rank()
     num_ranks = comm.Get_size() 
 
-    max_iterations = 40   # For now, this needs to stay a multiple of 5! 
+    max_iterations = 80 # For now, this needs to stay a multiple of 5! 
     stop_tolerance = 1e-4
  
     #sample_counts = [2 ** 16 + 8192 * 2 * i for i in range(4)]
     sample_counts = [2 ** 16] 
-    R_values = [75, 100, 125]
-    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
-    trial_count = 4
+    R_values = [125]
+    #samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
+    #samplers = ["larsen_kolda_hybrid", "efficient"]
+    samplers = ["efficient"]
+    trial_count = 8
 
     # Test Configuration ==============================
     #sample_counts = [2 ** 16] 
@@ -41,10 +43,11 @@ if __name__=='__main__':
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "amazon-reviews" 
+    tensor_name = "reddit-2015"
+    preprocessing="log_count" 
     results = []
 
-    rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
     for R in R_values: 
         for sampler in samplers:
@@ -58,7 +61,7 @@ if __name__=='__main__':
                     lhs.ten.renormalize_columns(-1)
 
                     start = time.time()
-                    result["trace"] = als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance)
+                    result["trace"] = als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance, verbose=True)
                     elapsed = time.time() - start
                     result["elapsed"] = elapsed
 

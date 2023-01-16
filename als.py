@@ -21,7 +21,6 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
     if method != "exact":
         als.initialize_ds_als(J, method)
 
-    residual = lhs.compute_diff_resid(rhs)
     rhs_norm = np.sqrt(rhs.ten.get_normsq())
 
     for i in range(iter):
@@ -43,6 +42,7 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
             fit = lhs.compute_estimated_fit(rhs)
             #fit=-1
             print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, AResidual: {residual_approx}")
+            print(f"Fit {fit}")
 
             data_entry = {}
             data_entry["fit"] = fit 

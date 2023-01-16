@@ -28,10 +28,10 @@ def sparse_tensor_test():
 
     samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [100]
+    R_values = [25]
 
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
@@ -65,38 +65,37 @@ def sparse_tensor_test():
     #    json.dump(result, outfile, indent=4)
 
 def low_rank_test():
-    J = 20000
+    J = 30000
 
-    trial_count = 5
+    trial_count = 1
     iterations = 45
     result = {}
 
-    samplers = ["larsen_kolda_hybrid", "efficient"]
-    R_values = [100]
+    samplers = ["efficient"]
+    R_values = [2 ** 5]
 
     I = 2 ** 8
     N = 5
 
-    max_iterations = 20
+    max_iterations = 25
     stop_tolerance = 1e-4
 
     for R in R_values: 
-        rhs = PyLowRank([I] * N, 2 * R, allow_rhs_mttkrp=True, seed=479873)
-        rhs.ten.multiply_random_factor_entries(0.01, 5.0)
-        rhs.ten.renormalize_columns(-1)
+        rhs = PyLowRank([I] * N, R, allow_rhs_mttkrp=True, seed=479873)
+        rhs.ten.multiply_random_factor_entries(0.01, 1.5)
+        #rhs.ten.renormalize_columns(-1)
         result[R] = {}
         for sampler in samplers:
             result[R][sampler] = []
             for trial in range(trial_count):
                 # Specify a seed here to make everything deterministic
-                lhs = PyLowRank(rhs.dims, R, seed=5872343)
+                lhs = PyLowRank(rhs.dims, R)
                 lhs.ten.renormalize_columns(-1)
                 print("=" * 20)
                 print("Starting trial...")
                 result[R][sampler].append(als_exact_comparison(lhs, rhs, J, sampler, max_iterations))
                 print("Finished trial...")
                 print("=" * 20)
-
 
     with open('outputs/low_rank_comparison.json', 'w') as outfile:
         json.dump(result, outfile, indent=4)
@@ -220,9 +219,9 @@ def dsyrk_multithreading_test():
     print(f"Elapsed: {elapsed}s")
 
 if __name__=='__main__':
-    #low_rank_test() 
+    low_rank_test() 
     #numerical_integration_test() 
-    sparse_tensor_test()
+    #sparse_tensor_test()
     #image_test()
     #image_classification_test()
     #dsyrk_multithreading_test()
