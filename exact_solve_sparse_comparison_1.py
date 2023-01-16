@@ -11,14 +11,14 @@ from experiment import *
 # and 
 
 if __name__=='__main__':
-    tensor_name = "uber"
+    tensor_name = "amazon-reviews"
     experiment = Experiment(f"outputs/{tensor_name}_exact_solve_comp_1.json")
     data = experiment.data
     max_iterations = 10   # For now, this needs to stay a multiple of 5! 
 
     trial_count = 5
     J = 2 ** 16
-    R= 25
+    R= 50
     samplers = ["larsen_kolda_hybrid", "efficient"]
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort")
  

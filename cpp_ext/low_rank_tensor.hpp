@@ -81,6 +81,13 @@ public:
         double other_normsq = ATB_chain_prod_sum(U_other, U_other, sigma_other, sigma_other);
         double inner_prod = ATB_chain_prod_sum(U_other, U, sigma_other, sigma);
 
+        /*cout << self_normsq << " "
+            << other_normsq << " "
+            << inner_prod << " Data" << endl;*/
+
+        cout << self_normsq + other_normsq << " "
+            << 2 * inner_prod << " Data" << endl;
+
         return max(self_normsq + other_normsq - 2 * inner_prod, 0.0);
     } 
 
