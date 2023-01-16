@@ -194,19 +194,24 @@ public:
             }
 }
         }
+        cout << "Prob Deterministic: " << p_det << endl;
         std::fill(weights(num_deterministic), weights(J), 0.0-log((double) J));
 
-        #pragma omp parallel
+        int total_random_failures = 0;
+        int max_failures = 500;
+        #pragma omp parallel reduction(+: total_random_failures)
 {
         int thread_id = omp_get_thread_num();
         auto &local_gen = par_gen[thread_id];
 
         #pragma omp for
         for(uint64_t i = num_deterministic; i < J; i++) {
-            double weight;
+            double weight = 0.0;
+            int num_failures = 0;
             bool resample = true;
 
-            while(resample) {
+            while(resample && num_failures < max_failures) {
+                num_failures++;
                 weight = 0.0;
                 for(uint32_t k = 0; k < N; k++) {
                     if(k != j) {
@@ -222,10 +227,18 @@ public:
                     resample = false;
                 }
             } 
+
+            if(num_failures == max_failures) {
+                total_random_failures++; 
+            }
             weights[i] -= weight;
             weights[i] = (1 - p_det) * exp(weights[i]); 
         }
 }
+        if(total_random_failures > 0) {
+            cout << "Random choice failures: " << total_random_failures << endl; 
+        }
+
 
         fill_h_by_samples(samples, j);
     }

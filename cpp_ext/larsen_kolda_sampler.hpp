@@ -40,7 +40,7 @@ public:
     }
 
     void update_sampler(uint64_t j) {
-        /*uint64_t Ij = U[j].shape[0];
+        uint64_t Ij = U[j].shape[0];
         uint64_t rank = min(Ij, R);
 
         Buffer<double> Q({Ij, R});
@@ -81,8 +81,8 @@ public:
         distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
             leverage(Ij)));
  
-        leverage_sums[j] = total;*/
-        uint64_t Ij = U[j].shape[0];
+        leverage_sums[j] = total;
+        /*uint64_t Ij = U[j].shape[0];
         Buffer<double> pinv({R, R});
         compute_pinv(U[j], pinv);
 
@@ -98,7 +98,7 @@ public:
         for(uint64_t i = 0; i < U[j].shape[0]; i++) {
             total += leverage[i];
         }
-        leverage_sums[j] = total;
+        leverage_sums[j] = total;*/
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {

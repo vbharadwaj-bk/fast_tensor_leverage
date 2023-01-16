@@ -65,25 +65,24 @@ def sparse_tensor_test():
     #    json.dump(result, outfile, indent=4)
 
 def low_rank_test():
-    J = 30000
+    J = 60000 
 
     trial_count = 1
-    iterations = 45
     result = {}
 
-    samplers = ["efficient"]
-    R_values = [2 ** 5]
+    samplers = ["larsen_kolda"]
+    R_values = [128]
 
-    I = 2 ** 8
+    I = 2 ** 16
     N = 5
 
-    max_iterations = 25
+    max_iterations = 50
     stop_tolerance = 1e-4
 
     for R in R_values: 
         rhs = PyLowRank([I] * N, R, allow_rhs_mttkrp=True, seed=479873)
-        rhs.ten.multiply_random_factor_entries(0.01, 1.5)
-        #rhs.ten.renormalize_columns(-1)
+        rhs.ten.multiply_random_factor_entries(0.1, 5.0)
+        rhs.ten.renormalize_columns(-1)
         result[R] = {}
         for sampler in samplers:
             result[R][sampler] = []
@@ -157,7 +156,7 @@ def image_test():
     iterations = 70
     result = {}
 
-    samplers = ["efficient"]
+    samplers = ["larsen_kolda"]
 
     img = Image.open("data/mandrill.png")
     img.load()
@@ -205,8 +204,8 @@ def image_test():
     #image.save("data/lowrank_approximation.png")
 
 def image_classification_test():
-    J = 60000 
-    classifier = TensorClassifier("mnist", J, "efficient", R=25, max_iter=30)
+    J = 10000 
+    classifier = TensorClassifier("mnist", J, "larsen_kolda_hybrid", R=100, max_iter=30)
     classifier.train()
     print("Completed training...")
 
@@ -219,9 +218,9 @@ def dsyrk_multithreading_test():
     print(f"Elapsed: {elapsed}s")
 
 if __name__=='__main__':
-    low_rank_test() 
+    #low_rank_test() 
     #numerical_integration_test() 
     #sparse_tensor_test()
     #image_test()
-    #image_classification_test()
+    image_classification_test()
     #dsyrk_multithreading_test()
