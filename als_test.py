@@ -204,8 +204,8 @@ def image_test():
     #image.save("data/lowrank_approximation.png")
 
 def image_classification_test():
-    J = 10000 
-    classifier = TensorClassifier("mnist", J, "larsen_kolda_hybrid", R=100, max_iter=30)
+    J = 800 
+    classifier = TensorClassifier("cifar10", J, "efficient", R=50, max_iter=40)
     classifier.train()
     print("Completed training...")
 
@@ -220,7 +220,7 @@ def dsyrk_multithreading_test():
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
-    #sparse_tensor_test()
+    sparse_tensor_test()
     #image_test()
-    image_classification_test()
+    #image_classification_test()
     #dsyrk_multithreading_test()

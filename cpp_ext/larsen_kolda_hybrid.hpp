@@ -111,6 +111,35 @@ public:
             [leverage_ptr](uint64_t a, uint64_t b) {
                 return leverage_ptr[a] < leverage_ptr[b];
             });
+        /*uint64_t Ij = U[j].shape[0];
+        Buffer<double> pinv({R, R});
+        compute_pinv(U[j], pinv);
+        double alpha_j = 0.0;
+
+        Buffer<double> &leverage = *(factor_leverage[j]);
+        compute_DAGAT(U[j](), pinv(), leverage(), Ij, R);
+
+        distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
+            leverage(Ij)));
+
+        double total = 0.0;
+
+        #pragma omp parallel for reduction(+: total) reduction(max: alpha_j)
+        for(uint64_t i = 0; i < U[j].shape[0]; i++) {
+            total += leverage[i];
+            alpha_j = max(alpha_j, leverage[i]);
+        }
+        leverage_sums[j] = total;
+
+        Buffer<uint64_t> &sort_idx = *(sort_idxs[j]);
+        double* leverage_ptr = leverage();
+
+        std::sort(std::execution::par_unseq, 
+            sort_idx(), 
+            sort_idx(Ij),
+            [leverage_ptr](uint64_t a, uint64_t b) {
+                return leverage_ptr[a] < leverage_ptr[b];
+            });*/
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
@@ -125,8 +154,8 @@ public:
                 krp_height *= Ik;
             }
         }
-        if(krp_height < J * 5) {
-            krp_height_too_small = true;
+        if(krp_height < J) {
+            //krp_height_too_small = true;
         }
 
         Buffer<uint64_t> start_ranges({N}); 
@@ -160,7 +189,7 @@ public:
         double p_det = 0.0;
 
         if(log_candidates >= 62 * log(2) || krp_height_too_small) {
-            cout << "Warning: Switching to random algorithm." << endl;
+            //cout << "Warning: Switching to random algorithm." << endl;
         }
         else {
             uint64_t sample_pos = 0;
