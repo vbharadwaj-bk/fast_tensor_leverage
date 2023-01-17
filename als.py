@@ -67,6 +67,7 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
 
     iterations = []
     fits = []
+    update_times = []
 
     if method != "exact":
         als.initialize_ds_als(J, method)
@@ -78,10 +79,14 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
     for i in range(max_iter):
         verb_print(f"Starting Iteration {i+1}.")
         for j in range(lhs.N):
+            start = time.time()
             if method == "exact":
                 als.execute_exact_als_update(j, True, True)
             else:
                 als.execute_ds_als_update(j, True, True)
+            elapsed = time.time() - start
+            update_times.append(elapsed)
+            #print(f"Update time: {elapsed}")
 
         if (i + 1) % epoch_length == 0:
             iterations.append(i + 1)

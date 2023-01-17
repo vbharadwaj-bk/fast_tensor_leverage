@@ -5,6 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import time
 import os
 
+import time
 import pickle
 from common import *
 from tensors import *
@@ -77,17 +78,22 @@ class TensorClassifier:
 
             return approx
 
+        def print_fit():
+            approx = generate_approx()
+            diff_norm = la.norm(approx - images_np)
+            fit = 1 - diff_norm / rhs_norm
+            print(f"Fit: {fit}")
+
+        start = time.time()
         print("Starting ALS...")
         for i in range(self.max_iter):
             print(f"Starting iteration {i}")
             for j in range(lhs.N):
                 als.execute_ds_als_update(j, True, True) 
+        elapsed = time.time() - start
+        print(f"Elapsed Time: {elapsed}s")
 
-            if i % loss_frequency == 0:
-                approx = generate_approx()
-                diff_norm = la.norm(approx - images_np)
-                fit = 1 - diff_norm / rhs_norm
-                print(f"Fit: {fit}")
+        print_fit()
         print("Completed ALS...")
 
         #trained_vectors_labels={"features": lhs.U[0], "labels": labels_np} 
