@@ -28,14 +28,14 @@ if __name__=='__main__':
     sample_counts = [2 ** 16 + i * (2 ** 15) for i in range(4)] 
     R_values = [100]
     samplers = ["larsen_kolda"]
-    trial_count = 1
+    trial_count = 4
 
     trial_list = [trial_count // num_ranks] * num_ranks
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "uber"
-    preprocessing=None
+    tensor_name = "reddit-2015"
+    preprocessing="log_count"
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
