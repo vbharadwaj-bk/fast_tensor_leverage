@@ -7,13 +7,12 @@ import sys
 import matplotlib.gridspec as gridspec
 
 sys.path.append("..")
+plt.rcParams['font.family'] = 'Liberation Serif'
+plt.rcParams.update({'font.size': 11})
 
 # ==========================================================================
 # Runtime Benchmark
 # ==========================================================================
-plt.rcParams['font.family'] = 'Liberation Serif'
-plt.rcParams.update({'font.size': 11})
-
 data = None
 with open("../paper_data_archive/runtime_bench.json") as f:
     data = json.load(f)
@@ -78,19 +77,31 @@ fig.align_labels()
 fig.legend(bbox_to_anchor=(0.8085, 0.04), ncol=5)
 fig.savefig("paper_images/runtime_benchmark.pdf", bbox_inches='tight')
 plt.show()
-
 # ==========================================================================
 # Sparse Tensor Decomposition
 # ==========================================================================
-with open('../outputs/uber_sparse_traces.json', 'r') as in1:
-    uber_data = json.load(in1)
+def get_data(files):
+    data = []
+    for filepath in files:
+        with open(filepath) as infile:
+            data_file = json.load(infile)
+            data.extend(data_file)
+        
+    return data
 
-with open('../outputs/amazon-reviews_sparse_traces.json', 'r') as in1:
-    with open('../outputs/amazon-reviews_sparse_traces_extended.json', 'r') as in2:
-        data1 = json.load(in1)
-        data2 = json.load(in2)
-        data1.extend(data2)
-        amazon_data = data1
+uber_files = ['../paper_data_archive/uber_sparse_traces1.json']
+uber_data = get_data(uber_files)
+
+amazon_files = ['../paper_data_archive/amazon-reviews_sparse_traces1.json',
+               '../paper_data_archive/amazon-reviews_sparse_traces2.json',
+               '../paper_data_archive/amazon-reviews_sparse_traces3.json'
+               ]
+uber_data = get_data(amazon_files)
+    
+reddit_files = ['../paper_data_archive/reddit-2015_sparse_traces1.json',
+               '../paper_data_archive/reddit-2015_sparse_traces2.json',
+               '../paper_data_archive/reddit-2015_sparse_traces3.json']
+reddit_data = get_data(reddit_files)
 
 sample_counts = [2 ** 16] 
 R_values = [25, 50, 75, 100, 125]        
@@ -124,7 +135,6 @@ def process_data(data):
         data_points[key[1]][2].append(3 * std_fit)
         
     return data_points
-
 # ==========================================================================
 fig = plt.figure()
 fig.set_size_inches(15 * (1.1), 2.5 * (1.1))
@@ -148,7 +158,7 @@ points = process_data(uber_data)
 for key in points:
     entry = points[key]
     if key == "efficient":
-        label="STS-CP"
+        label="STS-CP (ours)"
     elif key == "larsen_kolda":
         label="CP-ARLS-LEV"
     elif key == "larsen_kolda_hybrid":
@@ -161,49 +171,90 @@ points = process_data(amazon_data)
 for key in points:
     entry = points[key]
     axs[1].errorbar(entry[0], entry[1], fmt='o', c=colormap[key], xerr=entry[2])
-    axs[1].set_title("Amazon Reviews (~1.8E9 nz)")
+axs[1].set_title("Amazon Reviews (~1.8E9 nz)")
     
+points = process_data(reddit_data)
+for key in points:
+    entry = points[key]
+    axs[2].errorbar(entry[0], entry[1], fmt='o', c=colormap[key], xerr=entry[2])
 axs[2].set_title("Reddit-2015 (~4.7E9 nz)")
 axs[2].set_xlabel("Fit")
+
+axs[3].set_title("Enron")
+
 fig.legend(bbox_to_anchor=(0.805, 0.04), ncol=5)
 fig.savefig("paper_images/spten_accuracies.pdf", bbox_inches='tight')
 plt.show()
-
 # =============================================================
 
-filename = '../paper_data_archive/uber_exact_solve_comp_1.json'
-title = "Uber Pickups"
+def generate_plot(ax, filename):
+    traces = {}
 
-fig, ax = plt.subplots(figsize=(5,5))
+    samplers = ["larsen_kolda_hybrid", "efficient"]
+    plot_map = {"larsen_kolda_hybrid": ("CP-ARLS-LEV hybrid", "orange"), "efficient": ("STS-CP (ours)", "green")}
 
-def make_comparison
+    with open(filename, 'r') as f:
+        data = json.load(f)
 
-traces = {}
+        for sampler in samplers:
+            traces[sampler] =  [[measurement["ratio"] for measurement in trace] for trace in data[sampler]]
 
-samplers = ["larsen_kolda_hybrid", "efficient"]
-plot_map = {"larsen_kolda_hybrid": ("CP-ARLS-LEV hybrid", "orange"), "efficient": ("STS-CP (ours)", "green")}
-
-with open(filename, 'r') as f:
-    data = json.load(f)
-
+    x_axis = [el + 1 for el in list(range(len(traces[samplers[0]][0])))]
+    
     for sampler in samplers:
-        traces[sampler] =  [[measurement["ratio"] for measurement in trace] for trace in data[sampler]]
-        
-x_axis = [el + 1 for el in list(range(len(traces[samplers[0]][0])))]
-for sampler in samplers:
-    first=True
-    for el in traces[sampler]:
-        label="_" + plot_map[sampler][0]
-        if first:
-            first = False
-            label = label[1:]
-        color = plot_map[sampler][1]
-        ax.plot(x_axis, np.array(el)-1,c=color,label=label)
+        trace_array = np.array(traces[sampler])
+        mean_trace = np.mean(trace_array, axis=0)
+        traces[sampler] = [mean_trace]
+    
+    for sampler in samplers:
+        first=True
+        for el in traces[sampler]:
+            label="_" + plot_map[sampler][0]
+            if first:
+                first = False
+                label = label[1:]
+            color = plot_map[sampler][1]
+            ax.plot(x_axis, np.array(el)-1, '-o', c=color,label=label)
 
-ax.set_yscale('log')
+filename = '../paper_data_archive/amazon-reviews_exact_solve_comp_1_extended.json'
+fig, ax = plt.subplots(figsize=(4,4))
+generate_plot(ax, filename)
+
+#ax.set_yscale('log')
 ax.legend()
 ax.grid(True)
 #ax.set_title(title)
-ax.set_xlabel("LSTSQ Solve Number")
+ax.set_ylim([-0.0005, 0.009])
+ax.set_xlabel("LSTSQ Problem Number")
 ax.set_ylabel(r"$\mathregular{\varepsilon}$", fontsize=15)
+fig.savefig("paper_images/amazon_epsilon_progression.pdf",bbox_inches='tight')
 plt.show()
+
+# ===============================================================
+# Time trace plots
+uber_time_trace_files = ['../outputs/uber_time_comparison.json']
+uber_time_traces = get_data(uber_time_trace_files)
+
+def get_time_update_pairs(result):
+    trace = result["trace"]
+    order = result["tensor_order"]
+    prefix_sum = np.cumsum(trace["update_times"])
+    iterations = trace["iterations"]
+    fits = np.maximum(trace["fits"], 0.0)
+    fit_computation_epoch = iterations[1] - iterations[0]
+    times = [0.0]
+    for i in range(order * fit_computation_epoch, len(prefix_sum)+1, order * fit_computation_epoch):
+        times.append(prefix_sum[i-1])
+    
+    return times, fits
+
+fig, ax = plt.subplots()
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Fit")
+ax.set_ylim(0.21, 0.23)
+
+for result in uber_time_traces:
+    times, fits = get_time_update_pairs(result)
+    ax.plot(times, fits, '--o', linewidth=0.4, markersize=1.9)
+
+# ===============================================================
