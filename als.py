@@ -68,6 +68,7 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
     iterations = []
     fits = []
     update_times = []
+    fit_computation_times = []
 
     if method != "exact":
         als.initialize_ds_als(J, method)
@@ -86,17 +87,21 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
                 als.execute_ds_als_update(j, True, True)
             elapsed = time.time() - start
             update_times.append(elapsed)
-            #print(f"Update time: {elapsed}")
 
         if (i + 1) % epoch_length == 0:
+            start = time.time()
             iterations.append(i + 1)
             fits.append(lhs.compute_estimated_fit(rhs))
             verb_print(f"Iteration: {i+1}\tFit: {fits[-1]}")
-            
+            elapsed = time.time() - start
+            fit_computation_times.append(elapsed)
+
             # Use the same stopping condition as L&K 
             if len(fits) > 4 and np.max(fits[-3:]) < np.max(fits[:-3]) + stop_tolerance:
                 break
 
-
-    data = {"iterations": iterations, "fits": fits}
+    data = {"iterations": iterations, 
+            "fits": fits, 
+            "update_times": update_times, 
+            "fit_computation_times": fit_computation_times}
     return data

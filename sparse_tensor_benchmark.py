@@ -21,14 +21,14 @@ if __name__=='__main__':
     rank = comm.Get_rank()
     num_ranks = comm.Get_size() 
 
-    max_iterations = 40 # For now, this needs to stay a multiple of 5! 
+    max_iterations = 80 # For now, this needs to stay a multiple of 5! 
     stop_tolerance = 1e-4
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
-    sample_counts = [2 ** 16] 
-    R_values = [25, 50, 75, 100, 125]
-    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
-    trial_count = 8
+    sample_counts = [2 ** 16 + i * (2 ** 15) for i in range(4)] 
+    R_values = [100]
+    samplers = ["larsen_kolda"]
+    trial_count = 1
 
     trial_list = [trial_count // num_ranks] * num_ranks
     for i in range(trial_count % num_ranks):
@@ -46,7 +46,7 @@ if __name__=='__main__':
                 local_result = [] 
                 for trial in range(trial_list[rank]):
                     print(f"Starting trial on rank {rank}")
-                    result = {"R": R, "J": J, "sampler": sampler}
+                    result = {"R": R, "J": J, "sampler": sampler, "tensor_order": rhs.N}
 
                     lhs = PyLowRank(rhs.dims, R)
                     lhs.ten.renormalize_columns(-1)
@@ -65,6 +65,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_sparse_traces_extended.json', 'w') as outfile:
+                    with open(f'outputs/{tensor_name}_time_comparison.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
 

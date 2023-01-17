@@ -57,8 +57,9 @@ public:
 
     void update_sampler(uint64_t j) {
         uint64_t Ij = U[j].shape[0];
+        double alpha_j = 0.0;
+        /*
         uint64_t rank = min(Ij, R);
-
         Buffer<double> Q({Ij, R});
         Buffer<double> tau({rank});
 
@@ -84,7 +85,6 @@ public:
 
         Buffer<double> &leverage = *(factor_leverage[j]);
         double total = 0.0;
-        double alpha_j = 0.0;
 
         #pragma omp parallel for reduction(+: total) reduction(max: alpha_j)
         for(uint64_t i = 0; i < Ij; i++) {
@@ -95,26 +95,9 @@ public:
             total += leverage[i];
             alpha_j = max(alpha_j, leverage[i]);
         }
-
-        distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
-            leverage(Ij)));
- 
-        leverage_sums[j] = total;
-        alpha[j] = alpha_j / total;
-
-        Buffer<uint64_t> &sort_idx = *(sort_idxs[j]);
-        double* leverage_ptr = leverage();
-
-        std::sort(std::execution::par_unseq, 
-            sort_idx(), 
-            sort_idx(Ij),
-            [leverage_ptr](uint64_t a, uint64_t b) {
-                return leverage_ptr[a] < leverage_ptr[b];
-            });
-        /*uint64_t Ij = U[j].shape[0];
+        */
         Buffer<double> pinv({R, R});
         compute_pinv(U[j], pinv);
-        double alpha_j = 0.0;
 
         Buffer<double> &leverage = *(factor_leverage[j]);
         compute_DAGAT(U[j](), pinv(), leverage(), Ij, R);
@@ -131,6 +114,12 @@ public:
         }
         leverage_sums[j] = total;
 
+        distributions[j].reset(new discrete_distribution<uint64_t>(leverage(), 
+            leverage(Ij)));
+ 
+        leverage_sums[j] = total;
+        alpha[j] = alpha_j / total;
+
         Buffer<uint64_t> &sort_idx = *(sort_idxs[j]);
         double* leverage_ptr = leverage();
 
@@ -139,23 +128,16 @@ public:
             sort_idx(Ij),
             [leverage_ptr](uint64_t a, uint64_t b) {
                 return leverage_ptr[a] < leverage_ptr[b];
-            });*/
+            });
     }
 
     void KRPDrawSamples(uint32_t j, Buffer<uint64_t> &samples, Buffer<double> *random_draws) {
         double alpha_star = 1.0;
-        double krp_height = 1.0;
-        bool krp_height_too_small = false;
 
         for(uint64_t k = 0; k < N; k++) {
             if(k != j) {
-                uint64_t Ik = U[k].shape[0];
                 alpha_star *= alpha[k];
-                krp_height *= Ik;
             }
-        }
-        if(krp_height < J) {
-            //krp_height_too_small = true;
         }
 
         Buffer<uint64_t> start_ranges({N}); 
@@ -188,8 +170,8 @@ public:
         uint64_t num_deterministic = 0;
         double p_det = 0.0;
 
-        if(log_candidates >= 62 * log(2) || krp_height_too_small) {
-            //cout << "Warning: Switching to random algorithm." << endl;
+        if(log_candidates >= 62 * log(2)) {
+            cout << "Warning: Hybrid sampler candidate list is too large. Switching to deterministic algorithm." << endl;
         }
         else {
             uint64_t sample_pos = 0;
@@ -231,21 +213,17 @@ public:
         }
         std::fill(weights(num_deterministic), weights(J), 0.0-log((double) J));
 
-        int total_random_failures = 0;
-        int max_failures = 1000;
-        #pragma omp parallel reduction(+: total_random_failures)
+        #pragma omp parallel
 {
         int thread_id = omp_get_thread_num();
         auto &local_gen = par_gen[thread_id];
 
         #pragma omp for
         for(uint64_t i = num_deterministic; i < J; i++) {
-            double weight = 0.0;
-            int num_failures = 0;
+            double weight;
             bool resample = true;
 
-            while(resample && num_failures < max_failures) {
-                num_failures++;
+            while(resample) {
                 weight = 0.0;
                 for(uint32_t k = 0; k < N; k++) {
                     if(k != j) {
@@ -261,14 +239,11 @@ public:
                     resample = false;
                 }
             } 
-
-            if(num_failures == max_failures) {
-                total_random_failures++; 
-            }
             weights[i] -= weight;
             weights[i] = (1 - p_det) * exp(weights[i]); 
         }
 }
+
         fill_h_by_samples(samples, j);
     }
 };
