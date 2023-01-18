@@ -235,26 +235,56 @@ plt.show()
 uber_time_trace_files = ['../outputs/uber_time_comparison.json']
 uber_time_traces = get_data(uber_time_trace_files)
 
+reddit_time_trace_files = ['../paper_data_archive/reddit-2015_time_comparison1.json',
+                           '../paper_data_archive/reddit-2015_time_comparison2.json']
+reddit_time_traces = get_data(reddit_time_trace_files)
+
 def get_time_update_pairs(result):
     trace = result["trace"]
     order = result["tensor_order"]
     prefix_sum = np.cumsum(trace["update_times"])
     iterations = trace["iterations"]
     fits = np.maximum(trace["fits"], 0.0)
+    max_fits = []
     fit_computation_epoch = iterations[1] - iterations[0]
     times = [0.0]
     for i in range(order * fit_computation_epoch, len(prefix_sum)+1, order * fit_computation_epoch):
         times.append(prefix_sum[i-1])
     
-    return times, fits
+    for fit in fits:
+        if len(max_fits) == 0 or max_fits[-1] < fit:
+            max_fits.append(fit)
+        else:
+            max_fits.append(max_fits[-1])
+    
+    return times, max_fits
 
-fig, ax = plt.subplots()
-ax.set_xlabel("Time (s)")
+def filter_data(results, J):
+    return [el for el in results if el["J"] == J]
+
+dataset = reddit_time_traces
+J_values = sorted(list(dict.fromkeys([el['J'] for el in dataset])))
+colors={J_values[0]: 'brown', J_values[1]: 'violet', J_values[2]:'indigo', J_values[3]:'orange'}
+
+fig, ax = plt.subplots(figsize=(8,4))
+ax.grid(True)
+ax.set_xlabel("Cumulative ALS Update Time (s)")
 ax.set_ylabel("Fit")
-ax.set_ylim(0.21, 0.23)
+ax.set_ylim(0.08, 0.102)
+#ax.set_ylim(0.20, 0.23)
 
-for result in uber_time_traces:
-    times, fits = get_time_update_pairs(result)
-    ax.plot(times, fits, '--o', linewidth=0.4, markersize=1.9)
-
+for J in J_values:
+    results = filter_data(dataset, J)
+    max_time = max([get_time_update_pairs(result)[0][-1] for result in results])
+    x = np.linspace(0.0, max_time, num=10000)
+    
+    interp_y = []
+    for result in results:
+        times, fits = get_time_update_pairs(result)
+        ax.plot(times, fits, '--o', linewidth=0.4, markersize=1.9, c=colors[J])
+        interp_y.append(np.interp(x, times, fits))
+    mean_y = np.mean(interp_y, axis=0)
+    ax.plot(x, mean_y, c=colors[J],label=f"L&K, J={J}")
+    
+ax.legend() 
 # ===============================================================

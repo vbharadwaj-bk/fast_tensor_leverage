@@ -25,9 +25,9 @@ if __name__=='__main__':
     stop_tolerance = 1e-4
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
-    sample_counts = [2 ** 16 + i * (2 ** 15) for i in range(4)] 
+    sample_counts = [2 ** 16] 
     R_values = [100]
-    samplers = ["larsen_kolda"]
+    samplers = ["efficient"]
     trial_count = 4
 
     trial_list = [trial_count // num_ranks] * num_ranks
@@ -65,6 +65,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_time_comparison.json', 'w') as outfile:
+                    with open(f'outputs/{tensor_name}_time_comparison_efficient.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
 
