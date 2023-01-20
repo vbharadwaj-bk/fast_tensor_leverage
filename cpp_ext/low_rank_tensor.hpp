@@ -117,22 +117,39 @@ public:
             }
         }
 
-        cblas_dgemm(
-            CblasRowMajor,
-            CblasNoTrans,
-            CblasTrans,
-            partial_eval.shape[0],
-            rhs_buf.shape[1],
-            R,
-            1.0,
-            partial_eval(),
-            R,
-            U_py_bufs->buffers[j](),
-            R,
-            0.0,
-            rhs_buf(),
-            rhs_buf.shape[1]
-        );
+        if(j >= N) {
+            if(rhs_buf.shape[0] != partial_eval.shape[0] || rhs_buf.shape[1] != partial_eval.shape[1]) {
+                cout << "Shape mismatch, terminating!" << endl;
+                exit(1);
+            }
+            else {
+                std::copy(partial_eval(), partial_eval(samples_transpose.shape[0] * R), rhs_buf());
+            }
+        }
+        else {
+            cblas_dgemm(
+                CblasRowMajor,
+                CblasNoTrans,
+                CblasTrans,
+                partial_eval.shape[0],
+                rhs_buf.shape[1],
+                R,
+                1.0,
+                partial_eval(),
+                R,
+                U_py_bufs->buffers[j](),
+                R,
+                0.0,
+                rhs_buf(),
+                rhs_buf.shape[1]
+            );
+        }
+    }
+
+    void materialize_rhs_py(py::array_t<uint64_t> &samples_py, uint64_t j, py::array_t<double> &rhs_buf_py) {
+        Buffer<uint64_t> samples(samples_py);
+        Buffer<double> rhs_buf(rhs_buf_py);
+        materialize_rhs(samples, j, rhs_buf);
     }
 
     void preprocess(Buffer<uint64_t> &samples_transpose, uint64_t j) {

@@ -41,9 +41,7 @@ public:
                 J, R, 
                 (*U_py_bufs).buffers
             ));
-        }
-        
-        /*
+        } 
         else if(type == "larsen_kolda_hybrid") {
             sampler.reset(new LarsenKoldaHybrid(
                 J, R, 
@@ -60,7 +58,7 @@ public:
             cout << "Unsupported argument " << type
                 << " passed for sampler construction" << endl;
             exit(1);
-        }*/
+        }
     }
 
     void KRPDrawSamples(uint32_t j, 
@@ -71,14 +69,17 @@ public:
 
     void KRPDrawSamples_materialize(uint32_t j, 
             py::array_t<uint64_t> samples_py, 
-            py::array_t<double> h_out_py) {
+            py::array_t<double> h_out_py,
+            py::array_t<double> weights_out_py 
+            ) {
         Buffer<uint64_t> samples(samples_py);
         Buffer<double> h_out(h_out_py);
+        Buffer<double> weights_out(weights_out_py);
         sampler->KRPDrawSamples(j, samples, nullptr);
         std::copy(sampler->h(), sampler->h(sampler->J * sampler->R), h_out()); 
+        std::copy(sampler->weights(), sampler->weights(sampler->J), weights_out());
     } 
 };
-
 
 PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
@@ -91,7 +92,8 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns)
-        .def("multiply_random_factor_entries", &LowRankTensor::multiply_random_factor_entries);
+        .def("multiply_random_factor_entries", &LowRankTensor::multiply_random_factor_entries)
+        .def("materialize_rhs", &LowRankTensor::materialize_rhs_py);
     py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")
         .def(py::init<py::array_t<double>, uint64_t>());
     py::class_<DenseTensor<float>, BlackBoxTensor>(m, "DenseTensor_float")
@@ -117,16 +119,21 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-openblas_include='-I/global/homes/v/vbharadw/OpenBLAS_install/include'
-openblas_link_location='-L/global/homes/v/vbharadw/OpenBLAS_install/lib'
+#openblas_include='-I/global/homes/v/vbharadw/OpenBLAS_install/include'
+#openblas_link_location='-L/global/homes/v/vbharadw/OpenBLAS_install/lib'
+#tbb_include='-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include'
+#tbb_link_location='-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
+
+openblas_include='-I/home/vbharadw/OpenBLAS_install/include'
+openblas_link_location='-L/home/vbharadw/OpenBLAS_install/lib'
+tbb_include='-I/home/vbharadw/intel/oneapi/tbb/2021.8.0/include'
+tbb_link_location='-L/home/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
 
 libflame_include=None
 liblame_link_loc=None
 blis_include=None
 blis_link_loc=None
 
-tbb_include='-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include'
-tbb_link_location='-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
 cfg['extra_compile_args'] = [openblas_include, tbb_include, '--std=c++2a', '-fopenmp', '-Ofast', '-march=native']
 cfg['extra_link_args'] = [openblas_link_location, tbb_link_location, '-lopenblas', '-fopenmp', '-Ofast', '-ltbb']
 cfg['dependencies'] = [ 'common.h', 

@@ -11,11 +11,11 @@ from PIL import Image
 from common import *
 from tensors import *
 from als import *
-from image_classification import * 
+#from image_classification import * 
 
 import cppimport.import_hook
 import cpp_ext.als_module as ALS_Module
-from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
+from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS, Sampler
 
 def sparse_tensor_test():
     J = 2 ** 16
@@ -217,10 +217,48 @@ def dsyrk_multithreading_test():
     elapsed = time.time() - start
     print(f"Elapsed: {elapsed}s")
 
+def krp(U):
+    running_krp = U[0]
+    cols = U[0].shape[1]
+    for i in range(1, len(U)):
+        height_init = running_krp.shape[0]
+        running_krp = np.einsum('ir,jr->ijr', running_krp, U[i]).reshape(height_init * U[i].shape[0], cols)
+    return running_krp
+
+def kronecker_product_test():
+    I = 8 
+    N = 3
+    J = 100
+    A_cols = 4
+    A = PyLowRank([I] * N, A_cols, init_method="gaussian") 
+    b = PyLowRank([I] * N, 1, allow_rhs_mttkrp=True, init_method="gaussian") 
+    sampler = Sampler(A.U, J, A_cols, "efficient") 
+
+    # Buffers required for sampling
+    A_downsampled = np.zeros((J, A_cols), dtype=np.double)
+    b_downsampled = np.zeros((J, 1), dtype=np.double)
+    samples = np.zeros((N, J), dtype=np.uint64)
+    weights = np.zeros((J), dtype=np.double)
+
+    sampler.KRPDrawSamples_materialize(N+1, samples, A_downsampled, weights) 
+    b.ten.materialize_rhs(samples.T.copy(), N, b_downsampled) 
+
+    A_ds_reweighted = np.einsum('i,ir->ir', weights, A_downsampled)
+    soln_approx, residual_approx, _, _ = la.lstsq(A_ds_reweighted, b_downsampled, rcond=None)
+    print(residual_approx)
+
+    soln_exact, residual_exact, _, _ = la.lstsq(krp(A.U), krp(b.U), rcond=None)
+    print(residual_exact)
+
+
 if __name__=='__main__':
     #low_rank_test() 
     #numerical_integration_test() 
-    sparse_tensor_test()
+    #sparse_tensor_test()
     #image_test()
     #image_classification_test()
     #dsyrk_multithreading_test()
+
+    kronecker_product_test()
+
+
