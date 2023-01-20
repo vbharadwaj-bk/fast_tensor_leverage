@@ -228,7 +228,7 @@ def krp(U):
 def kronecker_product_test():
     I = 8 
     N = 3
-    J = 100
+    J = 10000
     A_cols = 4
     A = PyLowRank([I] * N, A_cols, init_method="gaussian") 
     b = PyLowRank([I] * N, 1, allow_rhs_mttkrp=True, init_method="gaussian") 
@@ -241,14 +241,21 @@ def kronecker_product_test():
     weights = np.zeros((J), dtype=np.double)
 
     sampler.KRPDrawSamples_materialize(N+1, samples, A_downsampled, weights) 
-    b.ten.materialize_rhs(samples.T.copy(), N, b_downsampled) 
+    b.ten.materialize_rhs(samples.T.copy(), N+1, b_downsampled) 
 
-    A_ds_reweighted = np.einsum('i,ir->ir', weights, A_downsampled)
-    soln_approx, residual_approx, _, _ = la.lstsq(A_ds_reweighted, b_downsampled, rcond=None)
+    A_full = krp(A.U)
+    b_full = krp(b.U)
+
+    A_ds_reweighted = np.einsum('i,ir->ir', np.sqrt(weights), A_downsampled)
+    b_ds_reweighted = np.einsum('i,ir->ir', np.sqrt(weights), b_downsampled)
+    soln_approx, residual_approx, _, _ = la.lstsq(A_ds_reweighted, b_ds_reweighted, rcond=None)
     print(residual_approx)
 
-    soln_exact, residual_exact, _, _ = la.lstsq(krp(A.U), krp(b.U), rcond=None)
+    soln_exact, residual_exact, _, _ = la.lstsq(A_full, b_full, rcond=None)
     print(residual_exact)
+
+    #print(A_full.T @ A_full)
+    #print(A_ds_reweighted.T @ A_ds_reweighted)
 
 
 if __name__=='__main__':
