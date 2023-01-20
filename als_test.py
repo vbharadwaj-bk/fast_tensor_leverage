@@ -217,55 +217,12 @@ def dsyrk_multithreading_test():
     elapsed = time.time() - start
     print(f"Elapsed: {elapsed}s")
 
-def krp(U):
-    running_krp = U[0]
-    cols = U[0].shape[1]
-    for i in range(1, len(U)):
-        height_init = running_krp.shape[0]
-        running_krp = np.einsum('ir,jr->ijr', running_krp, U[i]).reshape(height_init * U[i].shape[0], cols)
-    return running_krp
-
-def kronecker_product_test():
-    I = 8 
-    N = 3
-    J = 10000
-    A_cols = 4
-    A = PyLowRank([I] * N, A_cols, init_method="gaussian") 
-    b = PyLowRank([I] * N, 1, allow_rhs_mttkrp=True, init_method="gaussian") 
-    sampler = Sampler(A.U, J, A_cols, "efficient") 
-
-    # Buffers required for sampling
-    A_downsampled = np.zeros((J, A_cols), dtype=np.double)
-    b_downsampled = np.zeros((J, 1), dtype=np.double)
-    samples = np.zeros((N, J), dtype=np.uint64)
-    weights = np.zeros((J), dtype=np.double)
-
-    sampler.KRPDrawSamples_materialize(N+1, samples, A_downsampled, weights) 
-    b.ten.materialize_rhs(samples.T.copy(), N+1, b_downsampled) 
-
-    A_full = krp(A.U)
-    b_full = krp(b.U)
-
-    A_ds_reweighted = np.einsum('i,ir->ir', np.sqrt(weights), A_downsampled)
-    b_ds_reweighted = np.einsum('i,ir->ir', np.sqrt(weights), b_downsampled)
-    soln_approx, residual_approx, _, _ = la.lstsq(A_ds_reweighted, b_ds_reweighted, rcond=None)
-    print(residual_approx)
-
-    soln_exact, residual_exact, _, _ = la.lstsq(A_full, b_full, rcond=None)
-    print(residual_exact)
-
-    #print(A_full.T @ A_full)
-    #print(A_ds_reweighted.T @ A_ds_reweighted)
-
-
 if __name__=='__main__':
-    #low_rank_test() 
+    low_rank_test() 
     #numerical_integration_test() 
     #sparse_tensor_test()
     #image_test()
     #image_classification_test()
     #dsyrk_multithreading_test()
-
-    kronecker_product_test()
 
 

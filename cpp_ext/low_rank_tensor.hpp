@@ -273,7 +273,6 @@ public:
 
     // This function is just for testing purposes
     void multiply_random_factor_entries(double rho, double A) {
-        cout << "Randomly spiking entries..." << endl;
         std::random_device rd;
         std::mt19937 gen(rd());
         std::bernoulli_distribution coin(rho);
