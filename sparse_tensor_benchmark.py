@@ -21,21 +21,21 @@ if __name__=='__main__':
     rank = comm.Get_rank()
     num_ranks = comm.Get_size() 
 
-    max_iterations = 80 # For now, this needs to stay a multiple of 5! 
+    max_iterations = 40 # For now, this needs to stay a multiple of 5! 
     stop_tolerance = 1e-4
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
     sample_counts = [2 ** 16] 
-    R_values = [100]
-    samplers = ["efficient"]
-    trial_count = 4
+    R_values = [25, 50]
+    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
+    trial_count = 8
 
     trial_list = [trial_count // num_ranks] * num_ranks
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "reddit-2015"
-    preprocessing="log_count"
+    tensor_name = "nell-2"
+    preprocessing = "log_count" 
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
@@ -56,7 +56,6 @@ if __name__=='__main__':
                     elapsed = time.time() - start
                     result["elapsed"] = elapsed
 
-                    #print(f"Elapsed: {elapsed}")
                     local_result.append(result)
 
                 nested_list = comm.allgather(local_result)
@@ -65,6 +64,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_time_comparison_efficient.json', 'w') as outfile:
+                    with open(f'outputs/{tensor_name}_sparse_traces.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
 
