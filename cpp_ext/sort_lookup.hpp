@@ -3,15 +3,17 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <random>
+#include <execution>
+#include <algorithm>
+#include <numeric>
+
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
 #include "tensor.hpp"
 #include "hashing.hpp"
-
-#include <execution>
-#include <algorithm>
-#include <numeric>
+#include "random_util.hpp"
 
 using namespace std;
 
@@ -26,10 +28,12 @@ public:
   VAL_T* val_ptr;
 
   Buffer<IDX_T*> sort_idxs;
+  Multistream_RNG ms_rng;
 
   SortIdxLookup(int N, int mode_to_leave, IDX_T* idx_ptr, VAL_T* val_ptr, uint64_t nnz) 
   :
-  sort_idxs({nnz})
+  sort_idxs({nnz}),
+  ms_rng()
   {
     this->N = N;
     this->mode_to_leave = mode_to_leave;
@@ -249,6 +253,12 @@ public:
 }
   }
 
+  /*
+  * Executes a full randomized range finder algorithm. This is very
+  * similar to the exact MTTKRP update algorithm and the algorithm to
+  * compute the exact norm^2 of residual with a low rank tensor. They should
+  * probably be combined.
+  */
   void execute_rrf(
       Buffer<double> &mttkrp_res) {
 
@@ -264,9 +274,47 @@ public:
       uint64_t lower_bound = min(chunksize * thread_num, nnz);
       uint64_t upper_bound = min(chunksize * (thread_num + 1), nnz);
 
-      Buffer<double> partial_prod({R});
+      // Update the bounds to fall along fiber boundaries
+      bool continue_loop = true; 
+      while(continue_loop) {
+        if(lower_bound == 0 || lower_bound >= nnz) {
+          continue_loop = false;
+        }
+        else {
+          IDX_T* index = sort_idxs[lower_bound];
+          IDX_T* prev_index = sort_idxs[lower_bound-1];
+          for(uint64_t k = 0; k < (uint64_t) N; k++) {
+            if((k != j) && (index[k] != prev_index[k])) {
+              continue_loop = false;
+            }
+          }
+        }
+        if(continue_loop) {
+          lower_bound++;
+        }
+      }
 
-      bool continue_loop = false;
+      bool continue_loop = true; 
+      while(continue_loop) {
+        if(upper_bound >= nnz - 1) {
+          continue_loop = false;
+        }
+        else {
+          IDX_T* index = sort_idxs[upper_bound];
+          IDX_T* next_index = sort_idxs[upper_bound + 1];
+          for(uint64_t k = 0; k < (uint64_t) N; k++) {
+            if((k != j) && (index[k] != next_index[k])) {
+              continue_loop = false;
+            }
+          }
+        }
+        if(continue_loop) {
+          upper_bound++;
+        }
+      }
+
+      Buffer<double> partial_prod({R});
+      std::normal_distribution<double> std_normal();
 
       for(uint64_t i = lower_bound; i < upper_bound; i++) {
         IDX_T* index = sort_idxs[i];
@@ -286,14 +334,8 @@ public:
         }
 
         if(recompute_partial_prod) {
-          std::fill(partial_prod(), partial_prod(R), 1.0); 
-
-          for(uint64_t k = 0; k < (uint64_t) N; k++) {
-            if(k != j) {
-              for(uint64_t u = 0; u < R; u++) {
-                partial_prod[u] *= U[k][index[k] * R + u];
-              }
-            }
+          for(uint64_t u = 0; u < R; u++) {
+            partial_prod[u] = std_normal(ms_rng.par_gen[thread_num]); 
           }
         }
 
