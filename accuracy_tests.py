@@ -60,7 +60,7 @@ if __name__=='__main__':
     J = 5000
     methods = ["efficient", "larsen_kolda"]
     results = {"N_trace": {}, "R_trace": {}}
-    trial_count=10
+    trial_count=50
 
     R = 64
     for N in range(3, 10):

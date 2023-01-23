@@ -119,15 +119,15 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-#openblas_include='-I/global/homes/v/vbharadw/OpenBLAS_install/include'
-#openblas_link_location='-L/global/homes/v/vbharadw/OpenBLAS_install/lib'
-#tbb_include='-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include'
-#tbb_link_location='-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
+openblas_include='-I/global/homes/v/vbharadw/OpenBLAS_install/include'
+openblas_link_location='-L/global/homes/v/vbharadw/OpenBLAS_install/lib'
+tbb_include='-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include'
+tbb_link_location='-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
 
-openblas_include='-I/home/vbharadw/OpenBLAS_install/include'
-openblas_link_location='-L/home/vbharadw/OpenBLAS_install/lib'
-tbb_include='-I/home/vbharadw/intel/oneapi/tbb/2021.8.0/include'
-tbb_link_location='-L/home/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
+#openblas_include='-I/home/vbharadw/OpenBLAS_install/include'
+#openblas_link_location='-L/home/vbharadw/OpenBLAS_install/lib'
+#tbb_include='-I/home/vbharadw/intel/oneapi/tbb/2021.8.0/include'
+#tbb_link_location='-L/home/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
 
 libflame_include=None
 liblame_link_loc=None
