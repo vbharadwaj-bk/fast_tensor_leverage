@@ -152,7 +152,9 @@ cfg['dependencies'] = [ 'common.h',
                         'sort_lookup.hpp',
                         'dense_tensor.hpp',
                         'tests.hpp',
-                        'als.hpp'] 
+                        'als.hpp',
+                        'random_util.hpp' 
+                        ] 
 %>
 */
 
