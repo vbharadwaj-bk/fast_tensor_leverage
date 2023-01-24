@@ -70,6 +70,15 @@ public:
       lookups[j]->execute_exact_mttkrp(U_L, mttkrp_res);
     }
 
+    void execute_rrf(vector<Buffer<double>> &U) {
+      for(uint64_t j = 0; j < U.size(); j++) {
+        uint64_t rows = U[j].shape[0];
+        uint64_t cols = U[j].shape[1];
+        std::fill(U[j](), U[j](rows * cols), 0.0);
+        lookups[j]->execute_rrf(U[j]);
+      }
+    }
+
     void execute_downsampled_mttkrp(
             Buffer<uint64_t> &samples_transpose, 
             Buffer<double> &lhs,

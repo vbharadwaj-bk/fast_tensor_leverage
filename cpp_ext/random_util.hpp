@@ -8,6 +8,7 @@
 #include "omp.h"
 
 class Multistream_RNG {
+public:
     // Related to independent random number generation on multiple
     // streams
     int thread_count;

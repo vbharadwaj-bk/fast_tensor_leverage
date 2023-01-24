@@ -262,10 +262,12 @@ public:
   void execute_rrf(
       Buffer<double> &mttkrp_res) {
 
-      uint64_t R = U[0].shape[1];
+      uint64_t R = mttkrp_res.shape[1];
       uint64_t j = mode_to_leave;
 
-      #pragma omp parallel 
+      uint64_t nz_processed = 0;
+
+      #pragma omp parallel reduction(+: nz_processed) 
 {
       int thread_num = omp_get_thread_num();
       int total_threads = omp_get_num_threads();      
@@ -294,14 +296,14 @@ public:
         }
       }
 
-      bool continue_loop = true; 
+      continue_loop = true; 
       while(continue_loop) {
-        if(upper_bound >= nnz - 1) {
+        if(upper_bound >= nnz) {
           continue_loop = false;
         }
         else {
-          IDX_T* index = sort_idxs[upper_bound];
-          IDX_T* next_index = sort_idxs[upper_bound + 1];
+          IDX_T* index = sort_idxs[upper_bound - 1];
+          IDX_T* next_index = sort_idxs[upper_bound];
           for(uint64_t k = 0; k < (uint64_t) N; k++) {
             if((k != j) && (index[k] != next_index[k])) {
               continue_loop = false;
@@ -314,7 +316,7 @@ public:
       }
 
       Buffer<double> partial_prod({R});
-      std::normal_distribution<double> std_normal();
+      std::normal_distribution<double> std_normal;
 
       for(uint64_t i = lower_bound; i < upper_bound; i++) {
         IDX_T* index = sort_idxs[i];
@@ -345,11 +347,9 @@ public:
           #pragma omp atomic 
           mttkrp_res[index[j] * R + u] += partial_prod[u] * tensor_value;
         }
+        nz_processed++;
       }
 }
+    //cout << "Nonzeros processed: " << nz_processed << endl;
   }
-
-
-
-
 };
