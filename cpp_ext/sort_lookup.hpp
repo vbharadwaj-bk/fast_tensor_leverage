@@ -350,6 +350,6 @@ public:
         nz_processed++;
       }
 }
-    //cout << "Nonzeros processed: " << nz_processed << endl;
+    cout << "Nonzeros processed: " << nz_processed << endl;
   }
 };

@@ -18,22 +18,22 @@ import cpp_ext.als_module as ALS_Module
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS, Sampler
 
 def sparse_tensor_test():
-    J = 2 ** 16
+    J = 2 ** 18
 
     trial_count = 1
-    max_iterations = 40
+    max_iterations = 20
     stop_tolerance = 1e-5
 
     result = {}
 
     samplers = ["larsen_kolda_hybrid"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [25]
+    R_values = [75]
 
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-1.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nips.tns_converted.hdf5", lookup="sort", preprocessing="log_count")

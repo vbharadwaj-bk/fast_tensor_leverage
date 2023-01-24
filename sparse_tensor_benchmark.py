@@ -26,7 +26,7 @@ if __name__=='__main__':
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
     sample_counts = [2 ** 16] 
-    R_values = [25, 50]
+    R_values = [25, 50, 75, 100, 125]
     samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
     trial_count = 8
 
@@ -34,8 +34,9 @@ if __name__=='__main__':
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "nell-2"
-    preprocessing = "log_count" 
+    tensor_name = "enron"
+    preprocessing = "log_count"
+    initialization = "rrf" # Or None
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
@@ -49,7 +50,10 @@ if __name__=='__main__':
                     result = {"R": R, "J": J, "sampler": sampler, "tensor_order": rhs.N}
 
                     lhs = PyLowRank(rhs.dims, R)
-                    lhs.ten.renormalize_columns(-1)
+                    if initialization is not None and initialization == "rrf":
+                        lhs.ten.initialize_rrf(rhs.ten)
+                    else:
+                        lhs.ten.renormalize_columns(-1)
 
                     start = time.time()
                     result["trace"] = als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance, verbose=True)
