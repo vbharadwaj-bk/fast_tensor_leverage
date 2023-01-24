@@ -7,6 +7,7 @@
 #include "cblas.h"
 #include "lapacke.h"
 #include "black_box_tensor.hpp"
+#include "sparse_tensor.hpp"
 
 using namespace std;
 
@@ -269,6 +270,11 @@ public:
         else {
             std::copy(col_norms(j * R), col_norms((j+1) * R), sigma());
         }
+    }
+
+    void initialize_rrf(SparseTensor &sp_ten) {
+        sp_ten.execute_rrf(U);
+        renormalize_columns(-1);
     }
 
     // This function is just for testing purposes

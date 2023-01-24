@@ -28,9 +28,9 @@ def sparse_tensor_test():
 
     samplers = ["larsen_kolda_hybrid"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [125]
+    R_values = [25]
 
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
@@ -39,7 +39,7 @@ def sparse_tensor_test():
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nips.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/flickr-4d.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/patents.tns_converted.hdf5", lookup="sort")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-2.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-2.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
     for R in R_values: 
         result[R] = {}
@@ -47,7 +47,8 @@ def sparse_tensor_test():
             result[R][sampler] = []
             for trial in range(trial_count):
                 lhs = PyLowRank(rhs.dims, R)
-                lhs.ten.renormalize_columns(-1)
+                lhs.ten.initialize_rrf(rhs.ten)
+                #lhs.ten.renormalize_columns(-1)
 
                 #print("Starting exact initialization")
                 #als = ALS(lhs.ten, rhs.ten)

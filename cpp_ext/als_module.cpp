@@ -92,6 +92,7 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns)
+        .def("initialize_rrf", &LowRankTensor::initialize_rrf)
         .def("multiply_random_factor_entries", &LowRankTensor::multiply_random_factor_entries)
         .def("materialize_rhs", &LowRankTensor::materialize_rhs_py);
     py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")

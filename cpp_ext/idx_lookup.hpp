@@ -28,5 +28,10 @@ public:
       // Pass, need to override this... 
   }
 
+
+  virtual void execute_rrf(Buffer<double> &mttkrp_res) {
+    // Pass, need to override this...
+  }
+
   virtual ~IdxLookup() {};
 };
