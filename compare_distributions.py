@@ -20,15 +20,29 @@ def krp(U):
 
 def run_distribution_comparison():
     N = 3
-    I = 16
-    R = 8 
-    result = {"N": N, "I": I, "R": R}
+    I = 8
+    R = 8
+    J = 50000
+    result = {"N": N, "I": I, "R": R, "J": J}
     A = PyLowRank([I] * N, R, init_method="gaussian")
     A.ten.renormalize_columns(-1)
     A.ten.multiply_random_factor_entries(0.01, 10.0)
 
     full_krp = krp(A.U)
-    q, r, _ = la.qr(full_krp)
-    
+    q, r = la.qr(full_krp)
+    leverage_scores = la.norm(q, axis=1) ** 2
+    result["true_distribution"] = list(leverage_scores)
+
+    sampler = Sampler(A.U, J, R, "efficient")
+    samples = np.zeros((N, J), dtype=np.uint64)
+    weights = np.zeros((J), dtype=np.double)
+    sampler.KRPDrawSamples(N+1, samples)
+    offset_arr = np.array([I ** (N - i - 1) for i in range(N)])
+    exact_distribution = samples.T @ offset_arr
+    result["sts_sampler_draws"] = list(exact_distribution)
+
+    with open('outputs/distribution_comparison.json', 'w') as outfile:
+        json.dump(result, outfile, indent=4)
+
 if __name__=='__main__':
     run_distribution_comparison()
