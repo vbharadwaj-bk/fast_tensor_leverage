@@ -26,17 +26,17 @@ if __name__=='__main__':
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
     sample_counts = [2 ** 16] 
-    R_values = [25, 50, 75, 100, 125]
-    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
-    trial_count = 8
+    R_values = [100]
+    samplers = ["efficient"]
+    trial_count = 4
 
     trial_list = [trial_count // num_ranks] * num_ranks
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "enron"
-    preprocessing = "log_count"
-    initialization = "rrf" # Or None
+    tensor_name = "nell-2"
+    preprocessing = "log_count" 
+    initialization = None
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
@@ -68,6 +68,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_sparse_traces.json', 'w') as outfile:
+                    with open(f'outputs/{tensor_name}_time_comparison_efficient.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
 
