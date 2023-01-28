@@ -120,23 +120,35 @@ PYBIND11_MODULE(als_module, m) {
 /*
 <%
 setup_pybind11(cfg)
-openblas_include='-I/global/homes/v/vbharadw/OpenBLAS_install/include'
-openblas_link_location='-L/global/homes/v/vbharadw/OpenBLAS_install/lib'
-tbb_include='-I/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/include'
-tbb_link_location='-L/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
 
-#openblas_include='-I/home/vbharadw/OpenBLAS_install/include'
-#openblas_link_location='-L/home/vbharadw/OpenBLAS_install/lib'
-#tbb_include='-I/home/vbharadw/intel/oneapi/tbb/2021.8.0/include'
-#tbb_link_location='-L/home/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8'
+import json
+config = None
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
 
-libflame_include=None
-liblame_link_loc=None
-blis_include=None
-blis_link_loc=None
+# Required compiler flags 
+compile_args=['--std=c++2a', '-fopenmp', '-Ofast', '-march=native']
+link_args=['-fopenmp', '-Ofast'] 
 
-cfg['extra_compile_args'] = [openblas_include, tbb_include, '--std=c++2a', '-fopenmp', '-Ofast', '-march=native']
-cfg['extra_link_args'] = [openblas_link_location, tbb_link_location, '-lopenblas', '-fopenmp', '-Ofast', '-ltbb']
+# Add flags specified in the configuration file 
+blas_include=config['blas_include_flags']
+blas_link=config['blas_link_flags']
+tbb_include=config['tbb_include_flags']
+tbb_link=config['tbb_link_flags']
+
+for el in [blas_include, tbb_include]:
+    if el is not None:
+        compile_args.append(el)
+
+for el in [blas_link, tbb_link]:
+    if el is not None:
+        link_args.append(el)
+
+print(f"Compiling C++ extensions with {compile_args}")
+print(f"Linking C++ extensions with {link_args}")
+
+cfg['extra_compile_args'] = compile_args 
+cfg['extra_link_args'] = link_args 
 cfg['dependencies'] = [ 'common.h', 
                         'partition_tree.hpp', 
                         'efficient_krp_sampler.hpp', 
@@ -154,7 +166,8 @@ cfg['dependencies'] = [ 'common.h',
                         'dense_tensor.hpp',
                         'tests.hpp',
                         'als.hpp',
-                        'random_util.hpp' 
+                        'random_util.hpp',
+                        '../config.json'
                         ] 
 %>
 */
