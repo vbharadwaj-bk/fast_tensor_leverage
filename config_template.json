@@ -1,0 +1,6 @@
+{
+	"blas_include_flags":null, 
+	"blas_link_flags": null, 
+	"tbb_include_flags": null,
+	"tbb_link_flags": null
+}

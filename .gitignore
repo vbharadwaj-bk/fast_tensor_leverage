@@ -8,8 +8,9 @@ data/*
 cpp_ext/sparsehash/*
 cpp_ext/build/*
 paper_data_archive/*
-
 visualization/*
+config.json
+env.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
