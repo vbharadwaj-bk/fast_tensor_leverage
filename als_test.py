@@ -18,7 +18,7 @@ import cpp_ext.als_module as ALS_Module
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS, Sampler
 
 def sparse_tensor_test():
-    J = 2 ** 18
+    J = 2 ** 16
 
     trial_count = 1
     max_iterations = 20
@@ -26,14 +26,14 @@ def sparse_tensor_test():
 
     result = {}
 
-    samplers = ["larsen_kolda_hybrid"]
+    samplers = ["efficient"]
     #R_values = [4, 8, 16, 32, 64, 128]
-    R_values = [75]
+    R_values = [25]
 
-    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
-    rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
+    #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
 
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-1.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nips.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
@@ -47,15 +47,13 @@ def sparse_tensor_test():
             result[R][sampler] = []
             for trial in range(trial_count):
                 lhs = PyLowRank(rhs.dims, R)
-                lhs.ten.initialize_rrf(rhs.ten)
-                #lhs.ten.renormalize_columns(-1)
+                #lhs.ten.initialize_rrf(rhs.ten)
+                lhs.ten.renormalize_columns(-1)
 
                 #print("Starting exact initialization")
                 #als = ALS(lhs.ten, rhs.ten)
                 #for j in range(lhs.N):
                 #    als.execute_exact_als_update(j, True, True)
-
-                # Initialize with a round of exact ALS
                 #fit = lhs.compute_estimated_fit(rhs)
                 #print(f"Fit after initialization: {fit}")
 
