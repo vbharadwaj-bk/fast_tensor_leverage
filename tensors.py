@@ -22,18 +22,11 @@ class PyLowRank:
         if init_method=="gaussian":
             self.dims = []
             for i in dims:
-                if i < R:
-                    self.dims.append(i)
-                else:
-                    self.dims.append(divide_and_roundup(i, R) * R)
+                self.dims.append(i)
 
             self.N = len(dims)
             self.R = R
             self.U = [rng.normal(size=(i, R)) for i in self.dims]
-
-            # If padding is applied, zero out values 
-            for i in range(self.N):
-                self.U[i][dims[i]:self.dims[i]] = 0.0
 
             if allow_rhs_mttkrp:
                 self.ten = LowRankTensor(R, 10000, self.U)

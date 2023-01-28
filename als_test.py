@@ -21,7 +21,7 @@ def sparse_tensor_test():
     J = 2 ** 16
 
     trial_count = 1
-    max_iterations = 20
+    max_iterations = 40
     stop_tolerance = 1e-5
 
     result = {}
