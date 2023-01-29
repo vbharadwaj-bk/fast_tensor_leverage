@@ -24,15 +24,15 @@ from Niels Lohmann's repository
 <https://github.com/nlohmann/json>. It is published
 under an MIT license.
 
-## Requirements 
+## Requirements
 You need GCC 11.2+, OpenMP, and an install of the BLAS
-and LAPACK. This code has been tested with OpenBLAS;
+and LAPACK. This code has been tested with OpenBLAS, and
 we make no guarantees for Intel MKL or other BLAS
 implementations. If you decide to use MKL, either a) 
-use the Intel C++ compiler instead of GCC or b) if you use GCC, 
+try using the Intel C++ compiler instead of GCC or b) if you use GCC, 
 link MKL in sequential mode. We have observed segfaults
 when OpenMP threading is enabled in conjunction with
-MKL (when compiled with GCC). 
+MKL (when compiled with GCC).
 
 We strongly recommended that you install Intel
 Thread Building Blocks (TBB), but this is not
@@ -40,7 +40,7 @@ required. We rely on Intel TBB for fast parallel
 sorting during sparse tensor decomposition.
 
 Our C++ code could stand alone, but right now, you
-need Python as well to run it.
+need Python as well to run it. 
 
 ## Building our code
 
@@ -92,4 +92,27 @@ OpenMP threads based on your system configuration.
 ### Step 3: Test the code 
 You're ready to test! The C++ extension
 compiles automatically the first time you run
-the code, and is not compiled subsequently.
+the code, and is not compiled subsequently. Run
+the following code:
+```
+python compare_distributions.py
+```
+If all goes well, you should see a new graph in
+the `plotting` folder called
+`distribution_comparison_test_generated.png`
+(ignore the file `distribution_comparison.png`, which
+is the control image for the README).
+The graph should look like this:
+![Distribution Comparison](plotting/distribution_comparison.png)
+
+This image compares the true probability
+distribution of leverage scores of the
+Khatri-Rao product 
+$U_1 \odot \odot U_2 \odot U_3$ (all
+chosen as $8 \times 8$ matrices to make
+the histogram readable) to a
+histogram of samples taken by our sampler.
+There is excellent agreement between the
+distribution that our sampler draws from
+and the true leverage score distribution.
+

@@ -66,8 +66,9 @@ def plot_result():
         ax.set_xlabel("Row Index from KRP")
         ax.set_ylabel("Density")
         ax.legend()
-        fig.show()
-        plt.show()
+        fig.savefig("plotting/distribution_comparison_test_generated.png")
+        #fig.show()
+        #plt.show()
 
 if __name__=='__main__':
     run_distribution_comparison()
