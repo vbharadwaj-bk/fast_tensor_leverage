@@ -1,0 +1,3029 @@
+{
+    "omp_threadcount": "128",
+    "date": "2023-01-12 23:06:39.682675",
+    "commit_hash": "784b8dc8b86e0eab451cd5d70e7bba8949644883",
+    "larsen_kolda_hybrid": [
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 121614.23838361267,
+                "approx_solve_residual": 121629.10843977865,
+                "exact_solve_residual_normalized": 0.9999999999914189,
+                "approx_solve_residual_normalized": 1.0001222723204117,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001222723289938,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 121613.8728796455,
+                "approx_solve_residual": 121873.86091388302,
+                "exact_solve_residual_normalized": 0.9999969945541277,
+                "approx_solve_residual_normalized": 1.002134803725906,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0021378155968672,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 111914.00542025756,
+                "approx_solve_residual": 112567.6426568148,
+                "exact_solve_residual_normalized": 0.9202376868593493,
+                "approx_solve_residual_normalized": 0.9256123637494831,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0058405311658958,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 109815.68951989297,
+                "approx_solve_residual": 109976.08764637889,
+                "exact_solve_residual_normalized": 0.9029838198102642,
+                "approx_solve_residual_normalized": 0.904302728916767,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0014606121146001,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 87672.44843806792,
+                "approx_solve_residual": 87775.50866276183,
+                "exact_solve_residual_normalized": 0.7209061175942809,
+                "approx_solve_residual_normalized": 0.721753553108928,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0011755143894117,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 83149.88522256241,
+                "approx_solve_residual": 83460.64472085824,
+                "exact_solve_residual_normalized": 0.6837183402782647,
+                "approx_solve_residual_normalized": 0.6862736290538514,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0037373412779107,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 82295.01968063854,
+                "approx_solve_residual": 82314.29360128638,
+                "exact_solve_residual_normalized": 0.6766890190961511,
+                "approx_solve_residual_normalized": 0.6768475031758432,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002342051891189,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 79822.00087769044,
+                "approx_solve_residual": 80011.99833038638,
+                "exact_solve_residual_normalized": 0.6563540744729227,
+                "approx_solve_residual_normalized": 0.657916370592354,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0023802642204755,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78836.61872013989,
+                "approx_solve_residual": 79284.6008195175,
+                "exact_solve_residual_normalized": 0.6482515515229875,
+                "approx_solve_residual_normalized": 0.6519351835164773,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0056824113800198,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 79107.93349948795,
+                "approx_solve_residual": 79141.06432442307,
+                "exact_solve_residual_normalized": 0.6504824973641309,
+                "approx_solve_residual_normalized": 0.6507549229071856,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0004188053393575,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78420.54593903244,
+                "approx_solve_residual": 78627.81866864268,
+                "exact_solve_residual_normalized": 0.6448303009635634,
+                "approx_solve_residual_normalized": 0.6465346468720964,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0026430921530614,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78054.28498558469,
+                "approx_solve_residual": 78452.18776912712,
+                "exact_solve_residual_normalized": 0.6418186391852008,
+                "approx_solve_residual_normalized": 0.6450904829168853,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0050977698868924,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78356.09033691791,
+                "approx_solve_residual": 78379.09018100298,
+                "exact_solve_residual_normalized": 0.6443003005049768,
+                "approx_solve_residual_normalized": 0.6444894218150352,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002935297560938,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77972.66663220584,
+                "approx_solve_residual": 78241.94562831015,
+                "exact_solve_residual_normalized": 0.6411475142045822,
+                "approx_solve_residual_normalized": 0.6433617203672899,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0034535050259918,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77775.40129319188,
+                "approx_solve_residual": 78156.06319982588,
+                "exact_solve_residual_normalized": 0.6395254562808215,
+                "approx_solve_residual_normalized": 0.6426555330850686,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.004894374060495,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78105.22065342554,
+                "approx_solve_residual": 78127.86140441519,
+                "exact_solve_residual_normalized": 0.6422374689909653,
+                "approx_solve_residual_normalized": 0.642423637578545,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002898750019555,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77749.10919818364,
+                "approx_solve_residual": 77984.68368054047,
+                "exact_solve_residual_normalized": 0.6393092637086566,
+                "approx_solve_residual_normalized": 0.6412463270450378,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003029931593896,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77581.2492586654,
+                "approx_solve_residual": 77951.27155786777,
+                "exact_solve_residual_normalized": 0.6379289981924815,
+                "approx_solve_residual_normalized": 0.6409715884690578,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0047694810632486,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77924.45379208554,
+                "approx_solve_residual": 77946.43586968453,
+                "exact_solve_residual_normalized": 0.6407510734525724,
+                "approx_solve_residual_normalized": 0.64093182595237,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002820947280253,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77681.22092213732,
+                "approx_solve_residual": 77925.11455226417,
+                "exact_solve_residual_normalized": 0.6387510373286862,
+                "approx_solve_residual_normalized": 0.6407565066994309,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0031396729767073,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77563.52204182858,
+                "approx_solve_residual": 77993.29197846452,
+                "exact_solve_residual_normalized": 0.6377832322273093,
+                "approx_solve_residual_normalized": 0.6413171106805593,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0055408770169587,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77967.66066409762,
+                "approx_solve_residual": 77992.46613686887,
+                "exact_solve_residual_normalized": 0.641106351523512,
+                "approx_solve_residual_normalized": 0.6413103200152012,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003181507891856,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77696.73215736932,
+                "approx_solve_residual": 78008.48294707324,
+                "exact_solve_residual_normalized": 0.6388785818945037,
+                "approx_solve_residual_normalized": 0.6414420217831612,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00401240542617,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77566.76826754941,
+                "approx_solve_residual": 77985.94707404576,
+                "exact_solve_residual_normalized": 0.6378099250369996,
+                "approx_solve_residual_normalized": 0.641256715577845,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0054041030180667,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77957.38954248243,
+                "approx_solve_residual": 77981.56865328655,
+                "exact_solve_residual_normalized": 0.6410218949520479,
+                "approx_solve_residual_normalized": 0.6412207130437885,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00031015803564,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77637.4460283105,
+                "approx_solve_residual": 79453.07246702148,
+                "exact_solve_residual_normalized": 0.6383910885726174,
+                "approx_solve_residual_normalized": 0.6533204789369949,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0233859629804014,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77660.62573763999,
+                "approx_solve_residual": 78047.15044579837,
+                "exact_solve_residual_normalized": 0.6385816888644695,
+                "approx_solve_residual_normalized": 0.6417599738522506,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0049771001004315,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78019.66021270504,
+                "approx_solve_residual": 78142.6610750096,
+                "exact_solve_residual_normalized": 0.6415339293244184,
+                "approx_solve_residual_normalized": 0.6425453311465925,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.001576536759699,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77774.41290093787,
+                "approx_solve_residual": 78066.52048467138,
+                "exact_solve_residual_normalized": 0.6395173290066869,
+                "approx_solve_residual_normalized": 0.6419192482853292,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003755831421133,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77616.25543385975,
+                "approx_solve_residual": 78026.39527015873,
+                "exact_solve_residual_normalized": 0.6382168442182374,
+                "approx_solve_residual_normalized": 0.6415893098254448,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005284200249115,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77924.79306816669,
+                "approx_solve_residual": 77953.7538453943,
+                "exact_solve_residual_normalized": 0.6407538632252641,
+                "approx_solve_residual_normalized": 0.6409919996278126,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00037165035783,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77620.9510717813,
+                "approx_solve_residual": 77866.3703272436,
+                "exact_solve_residual_normalized": 0.6382554551406419,
+                "approx_solve_residual_normalized": 0.6402734693034742,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0031617656325202,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77492.91564462156,
+                "approx_solve_residual": 77927.05060582349,
+                "exact_solve_residual_normalized": 0.6372026554943145,
+                "approx_solve_residual_normalized": 0.6407724263284564,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0056022535426703,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77901.43637060675,
+                "approx_solve_residual": 77936.0134194566,
+                "exact_solve_residual_normalized": 0.6405618076085026,
+                "approx_solve_residual_normalized": 0.6408461250478841,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000443856371086,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77617.63596515334,
+                "approx_solve_residual": 77983.19096941028,
+                "exact_solve_residual_normalized": 0.6382281959424428,
+                "approx_solve_residual_normalized": 0.6412340528972897,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0047096900042287,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77526.02529203547,
+                "approx_solve_residual": 77932.53767335118,
+                "exact_solve_residual_normalized": 0.6374749069005123,
+                "approx_solve_residual_normalized": 0.6408175449560166,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0052435602081289,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77907.45805313894,
+                "approx_solve_residual": 77932.07315779131,
+                "exact_solve_residual_normalized": 0.6406113222262987,
+                "approx_solve_residual_normalized": 0.6408137253739837,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003159531226855,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77603.08359669505,
+                "approx_solve_residual": 77878.76322311706,
+                "exact_solve_residual_normalized": 0.6381085358709612,
+                "approx_solve_residual_normalized": 0.6403753726335288,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0035524313422224,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77488.1544678691,
+                "approx_solve_residual": 77902.40062516545,
+                "exact_solve_residual_normalized": 0.6371635056643629,
+                "approx_solve_residual_normalized": 0.6405697364050934,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005345928808617,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77879.92536237864,
+                "approx_solve_residual": 77905.4517930627,
+                "exact_solve_residual_normalized": 0.6403849285808999,
+                "approx_solve_residual_normalized": 0.6405948253086443,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003277665016408,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77599.41566854421,
+                "approx_solve_residual": 77793.65248320169,
+                "exact_solve_residual_normalized": 0.638078375519677,
+                "approx_solve_residual_normalized": 0.6396755307314139,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0025030705835096,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77425.05165821036,
+                "approx_solve_residual": 77830.8868382763,
+                "exact_solve_residual_normalized": 0.6366446288412465,
+                "approx_solve_residual_normalized": 0.639981698459545,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0052416520412215,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77803.88703936913,
+                "approx_solve_residual": 77828.48010219423,
+                "exact_solve_residual_normalized": 0.6397596866353885,
+                "approx_solve_residual_normalized": 0.6399619085392688,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000316090413486,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77574.28256969385,
+                "approx_solve_residual": 77847.98221649574,
+                "exact_solve_residual_normalized": 0.6378717130500172,
+                "approx_solve_residual_normalized": 0.6401222689917994,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0035282265943741,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77452.65788031826,
+                "approx_solve_residual": 77872.93300536113,
+                "exact_solve_residual_normalized": 0.6368716271144306,
+                "approx_solve_residual_normalized": 0.640327432377245,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0054262195326116,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77849.99644408414,
+                "approx_solve_residual": 77871.70532309747,
+                "exact_solve_residual_normalized": 0.6401388314240865,
+                "approx_solve_residual_normalized": 0.6403173374880283,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002788552344883,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77563.63130805233,
+                "approx_solve_residual": 77803.90253687583,
+                "exact_solve_residual_normalized": 0.6377841306930252,
+                "approx_solve_residual_normalized": 0.6397598140670685,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0030977305313264,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77442.16599924571,
+                "approx_solve_residual": 77816.50418667171,
+                "exact_solve_residual_normalized": 0.636785355299453,
+                "approx_solve_residual_normalized": 0.6398634339224675,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0048337773433356,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77795.48734395589,
+                "approx_solve_residual": 77818.9722721714,
+                "exact_solve_residual_normalized": 0.6396906182801958,
+                "approx_solve_residual_normalized": 0.6398837283019125,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000301880340587,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77528.21069477628,
+                "approx_solve_residual": 77794.25334981165,
+                "exact_solve_residual_normalized": 0.6374928768583877,
+                "approx_solve_residual_normalized": 0.6396804714901437,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0034315593337084,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77446.88997482283,
+                "approx_solve_residual": 77867.4002699727,
+                "exact_solve_residual_normalized": 0.6368241992345042,
+                "approx_solve_residual_normalized": 0.6402819382355892,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0054296601876018,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77844.18095105387,
+                "approx_solve_residual": 77880.1629583546,
+                "exact_solve_residual_normalized": 0.6400910122451193,
+                "approx_solve_residual_normalized": 0.640386882266415,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0004622311759352,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77580.08508783535,
+                "approx_solve_residual": 77820.61094719688,
+                "exact_solve_residual_normalized": 0.637919425540089,
+                "approx_solve_residual_normalized": 0.6398972026701053,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0031003557045497,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77436.77763572686,
+                "approx_solve_residual": 77852.62485128641,
+                "exact_solve_residual_normalized": 0.6367410482874581,
+                "approx_solve_residual_normalized": 0.6401604440842255,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0053701513448268,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77827.94928379866,
+                "approx_solve_residual": 77856.35793239753,
+                "exact_solve_residual_normalized": 0.6399575437674904,
+                "approx_solve_residual_normalized": 0.6401911401701501,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003650185937094,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77551.30181101883,
+                "approx_solve_residual": 77829.8588290075,
+                "exact_solve_residual_normalized": 0.6376827486739683,
+                "approx_solve_residual_normalized": 0.6399732454257353,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0035919064088372,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77453.51154766972,
+                "approx_solve_residual": 77852.79881838876,
+                "exact_solve_residual_normalized": 0.6368786465832262,
+                "approx_solve_residual_normalized": 0.6401618745672402,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0051551861592911,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77828.51894614928,
+                "approx_solve_residual": 77847.26934133806,
+                "exact_solve_residual_normalized": 0.6399622279422892,
+                "approx_solve_residual_normalized": 0.6401164072179878,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000240919337059,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77542.60707639778,
+                "approx_solve_residual": 77831.22467493333,
+                "exact_solve_residual_normalized": 0.6376112542935689,
+                "approx_solve_residual_normalized": 0.639984476396253,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0037220517779495,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77452.48597631071,
+                "approx_solve_residual": 77876.39903103249,
+                "exact_solve_residual_normalized": 0.6368702135956695,
+                "approx_solve_residual_normalized": 0.6403559325406912,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005473201400552,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77855.16877179006,
+                "approx_solve_residual": 77879.33951169107,
+                "exact_solve_residual_normalized": 0.6401813620337801,
+                "approx_solve_residual_normalized": 0.6403801112939165,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003104577420139,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77560.87925352412,
+                "approx_solve_residual": 77791.57947539684,
+                "exact_solve_residual_normalized": 0.6377615013153737,
+                "approx_solve_residual_normalized": 0.6396584849657834,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0029744405181202,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77410.18022097094,
+                "approx_solve_residual": 77790.50921718245,
+                "exact_solve_residual_normalized": 0.6365223451560716,
+                "approx_solve_residual_normalized": 0.6396496845306648,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0049131651047167,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77771.20130854967,
+                "approx_solve_residual": 77793.31171622283,
+                "exact_solve_residual_normalized": 0.6394909209772419,
+                "approx_solve_residual_normalized": 0.6396727286994859,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002843007090174,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77535.04310034087,
+                "approx_solve_residual": 77801.5718103396,
+                "exact_solve_residual_normalized": 0.6375490578258085,
+                "approx_solve_residual_normalized": 0.6397406491521113,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0034375257862926,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77442.2402178421,
+                "approx_solve_residual": 77844.5133716712,
+                "exact_solve_residual_normalized": 0.6367859655782935,
+                "approx_solve_residual_normalized": 0.6400937456472419,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0051944927302918,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77823.78618250492,
+                "approx_solve_residual": 77852.92355995835,
+                "exact_solve_residual_normalized": 0.6399233117454094,
+                "approx_solve_residual_normalized": 0.6401629002824133,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003744019519314,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77545.56068400714,
+                "approx_solve_residual": 77736.20094705763,
+                "exact_solve_residual_normalized": 0.6376355409860532,
+                "approx_solve_residual_normalized": 0.6392031227559404,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0024584291011491,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77370.6327837975,
+                "approx_solve_residual": 77731.55118745359,
+                "exact_solve_residual_normalized": 0.6361971575982762,
+                "approx_solve_residual_normalized": 0.6391648890781588,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0046647983953374,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77706.53202047256,
+                "approx_solve_residual": 77736.62429720958,
+                "exact_solve_residual_normalized": 0.6389591634385188,
+                "approx_solve_residual_normalized": 0.6392066038462927,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003872554334183,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77479.4206873224,
+                "approx_solve_residual": 77730.55417720217,
+                "exact_solve_residual_normalized": 0.6370916902201953,
+                "approx_solve_residual_normalized": 0.6391566909406327,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003241292818815,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77406.45632528284,
+                "approx_solve_residual": 77789.94467732964,
+                "exact_solve_residual_normalized": 0.6364917245993212,
+                "approx_solve_residual_normalized": 0.6396450424767384,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0049542166151526,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77768.41523345425,
+                "approx_solve_residual": 77798.02536583308,
+                "exact_solve_residual_normalized": 0.6394680118579444,
+                "approx_solve_residual_normalized": 0.6397114877269884,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000380747534715,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77525.97629894331,
+                "approx_solve_residual": 77741.27845109247,
+                "exact_solve_residual_normalized": 0.6374745040439652,
+                "approx_solve_residual_normalized": 0.6392448736570049,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0027771614422365,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77379.11104664164,
+                "approx_solve_residual": 77775.92363205313,
+                "exact_solve_residual_normalized": 0.6362668719915641,
+                "approx_solve_residual_normalized": 0.6395297513277517,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005128161593538,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77747.93245322838,
+                "approx_solve_residual": 77771.25130241759,
+                "exact_solve_residual_normalized": 0.6392995876627356,
+                "approx_solve_residual_normalized": 0.6394913320628892,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002999288656742,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77529.06957493306,
+                "approx_solve_residual": 77737.38471269011,
+                "exact_solve_residual_normalized": 0.6374999391906293,
+                "approx_solve_residual_normalized": 0.6392128565309342,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0026869294175613,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77384.94544177901,
+                "approx_solve_residual": 77814.57632679114,
+                "exact_solve_residual_normalized": 0.6363148465972917,
+                "approx_solve_residual_normalized": 0.6398475816677794,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005551866484617,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77792.23738868254,
+                "approx_solve_residual": 77808.98956899774,
+                "exact_solve_residual_normalized": 0.6396638948034342,
+                "approx_solve_residual_normalized": 0.6398016433149385,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002153451408204,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77531.16948809203,
+                "approx_solve_residual": 77754.9610435303,
+                "exact_solve_residual_normalized": 0.6375172061914909,
+                "approx_solve_residual_normalized": 0.6393573818025936,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.002886472072018,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77381.30333210334,
+                "approx_solve_residual": 77802.27104217111,
+                "exact_solve_residual_normalized": 0.6362848985441357,
+                "approx_solve_residual_normalized": 0.6397463987406529,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005440173426145,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77784.69805651708,
+                "approx_solve_residual": 77804.5567919486,
+                "exact_solve_residual_normalized": 0.6396019009755273,
+                "approx_solve_residual_normalized": 0.6397651938242537,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000255303882739,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77548.83645844714,
+                "approx_solve_residual": 78703.07093634378,
+                "exact_solve_residual_normalized": 0.6376624767666289,
+                "approx_solve_residual_normalized": 0.647153425303805,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.014883969000813,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77582.38701844928,
+                "approx_solve_residual": 77979.61154546856,
+                "exact_solve_residual_normalized": 0.6379383536741997,
+                "approx_solve_residual_normalized": 0.6412046202914595,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00512003487241,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77953.40654354855,
+                "approx_solve_residual": 77973.3918267779,
+                "exact_solve_residual_normalized": 0.6409891438614947,
+                "approx_solve_residual_normalized": 0.6411534772775059,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00025637472582,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77592.31186262572,
+                "approx_solve_residual": 78219.25357293827,
+                "exact_solve_residual_normalized": 0.6380199629027594,
+                "approx_solve_residual_normalized": 0.6431751299180687,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.008079946263523,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77432.07158511122,
+                "approx_solve_residual": 77852.34359210116,
+                "exact_solve_residual_normalized": 0.6367023517443712,
+                "approx_solve_residual_normalized": 0.6401581313683051,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0054276218934421,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77828.76839931335,
+                "approx_solve_residual": 77861.2546671108,
+                "exact_solve_residual_normalized": 0.6399642791261586,
+                "approx_solve_residual_normalized": 0.6402314046554465,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000417406936607,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77560.56040398157,
+                "approx_solve_residual": 77818.62258265911,
+                "exact_solve_residual_normalized": 0.6377588795044181,
+                "approx_solve_residual_normalized": 0.6398808529024779,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003327234580738,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77415.42380077964,
+                "approx_solve_residual": 77799.00285846058,
+                "exact_solve_residual_normalized": 0.6365654616519552,
+                "approx_solve_residual_normalized": 0.6397195253765308,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0049548144135727,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77773.32965215482,
+                "approx_solve_residual": 77799.20397491593,
+                "exact_solve_residual_normalized": 0.6395084217537416,
+                "approx_solve_residual_normalized": 0.6397211791011113,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003326888906112,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77510.21854861683,
+                "approx_solve_residual": 77776.04912270459,
+                "exact_solve_residual_normalized": 0.637344932453206,
+                "approx_solve_residual_normalized": 0.6395307832024164,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0034296197206698,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77404.98770182575,
+                "approx_solve_residual": 77786.19417592521,
+                "exact_solve_residual_normalized": 0.6364796485177984,
+                "approx_solve_residual_normalized": 0.6396142031485952,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0049248308851608,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77766.44492949107,
+                "approx_solve_residual": 77791.29294000907,
+                "exact_solve_residual_normalized": 0.6394518105973902,
+                "approx_solve_residual_normalized": 0.6396561288651197,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000319520977724,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77506.22205738483,
+                "approx_solve_residual": 77727.38898598512,
+                "exact_solve_residual_normalized": 0.6373120704192444,
+                "approx_solve_residual_normalized": 0.6391306644550905,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0028535377254815,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77359.68271494815,
+                "approx_solve_residual": 77802.47360666159,
+                "exact_solve_residual_normalized": 0.6361071182328633,
+                "approx_solve_residual_normalized": 0.6397480643720227,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0057237940510306,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77781.71166707201,
+                "approx_solve_residual": 77806.03300907646,
+                "exact_solve_residual_normalized": 0.6395773447271411,
+                "approx_solve_residual_normalized": 0.6397773323464158,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003126871533574,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77550.97643951206,
+                "approx_solve_residual": 77781.40111854713,
+                "exact_solve_residual_normalized": 0.637680073234718,
+                "approx_solve_residual_normalized": 0.6395747911731411,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.002971267282686,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77385.21700434857,
+                "approx_solve_residual": 77775.9002578574,
+                "exact_solve_residual_normalized": 0.6363170795806427,
+                "approx_solve_residual_normalized": 0.6395295591282524,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0050485515015986,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77755.61446823107,
+                "approx_solve_residual": 77774.53031210808,
+                "exact_solve_residual_normalized": 0.6393627547318611,
+                "approx_solve_residual_normalized": 0.6395182944460283,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002432730293032,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77505.59839046732,
+                "approx_solve_residual": 77764.1624424123,
+                "exact_solve_residual_normalized": 0.637306942179938,
+                "approx_solve_residual_normalized": 0.6394330423420519,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0033360693590463,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77391.92121100388,
+                "approx_solve_residual": 77762.45279315666,
+                "exact_solve_residual_normalized": 0.6363722064041493,
+                "approx_solve_residual_normalized": 0.6394189843725382,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.004787729472984,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77743.85592521682,
+                "approx_solve_residual": 77767.88229862694,
+                "exact_solve_residual_normalized": 0.6392660675086344,
+                "approx_solve_residual_normalized": 0.6394636296833374,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000309045301705,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77505.60141987965,
+                "approx_solve_residual": 77857.59472024119,
+                "exact_solve_residual_normalized": 0.6373069670899515,
+                "approx_solve_residual_normalized": 0.6402013099320143,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0045415207922155,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77466.70036075969,
+                "approx_solve_residual": 77875.32921126438,
+                "exact_solve_residual_normalized": 0.6369870945188064,
+                "approx_solve_residual_normalized": 0.6403471357107944,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0052748968085865,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77853.75730088523,
+                "approx_solve_residual": 77880.4594627245,
+                "exact_solve_residual_normalized": 0.6401697559017714,
+                "approx_solve_residual_normalized": 0.6403893203392413,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003429784607063,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77533.25068657027,
+                "approx_solve_residual": 77812.96314298244,
+                "exact_solve_residual_normalized": 0.6375343193067469,
+                "approx_solve_residual_normalized": 0.6398343169067602,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003607645157855,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77435.95647515444,
+                "approx_solve_residual": 77828.97420104405,
+                "exact_solve_residual_normalized": 0.6367342961128499,
+                "approx_solve_residual_normalized": 0.639965971376453,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0050753906037917,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77805.89202509986,
+                "approx_solve_residual": 77825.93200252035,
+                "exact_solve_residual_normalized": 0.6397761730744549,
+                "approx_solve_residual_normalized": 0.6399409562255618,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002575637512647,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77508.1651205409,
+                "approx_solve_residual": 77737.14071885345,
+                "exact_solve_residual_normalized": 0.6373280476862313,
+                "approx_solve_residual_normalized": 0.639210850237593,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.002954212604007,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77381.41841625162,
+                "approx_solve_residual": 77855.86010787686,
+                "exact_solve_residual_normalized": 0.6362858448490241,
+                "approx_solve_residual_normalized": 0.6401870466978127,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0061312095505035,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77834.62252026297,
+                "approx_solve_residual": 77852.43153595962,
+                "exact_solve_residual_normalized": 0.6400124159317447,
+                "approx_solve_residual_normalized": 0.6401588545061517,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002288058337023,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77534.47930667861,
+                "approx_solve_residual": 77765.83494558267,
+                "exact_solve_residual_normalized": 0.637544421907599,
+                "approx_solve_residual_normalized": 0.6394467948696555,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0029839065274297,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77367.1033984953,
+                "approx_solve_residual": 77789.27317911685,
+                "exact_solve_residual_normalized": 0.6361681364462378,
+                "approx_solve_residual_normalized": 0.6396395209340168,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.005456709144804,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77770.23422874568,
+                "approx_solve_residual": 77796.25092915275,
+                "exact_solve_residual_normalized": 0.6394829689494462,
+                "approx_solve_residual_normalized": 0.6396968970285316,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003345328796431,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77521.16117524674,
+                "approx_solve_residual": 77765.97999253745,
+                "exact_solve_residual_normalized": 0.637434910623322,
+                "approx_solve_residual_normalized": 0.6394479875503539,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0031580901727886,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77372.96490397956,
+                "approx_solve_residual": 77787.13733144187,
+                "exact_solve_residual_normalized": 0.636216333972795,
+                "approx_solve_residual_normalized": 0.6396219584536417,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0053529346843086,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77764.65247162302,
+                "approx_solve_residual": 77786.36626977932,
+                "exact_solve_residual_normalized": 0.6394370717157275,
+                "approx_solve_residual_normalized": 0.6396156182284114,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002792245251044,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77506.94155429707,
+                "approx_solve_residual": 77739.73223786363,
+                "exact_solve_residual_normalized": 0.6373179866418989,
+                "approx_solve_residual_normalized": 0.6392321595764057,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003003481738516,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77360.69288061593,
+                "approx_solve_residual": 77797.38688083715,
+                "exact_solve_residual_normalized": 0.636115424543713,
+                "approx_solve_residual_normalized": 0.6397062376427515,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0056449080787724,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77775.84917611034,
+                "approx_solve_residual": 77800.93013827698,
+                "exact_solve_residual_normalized": 0.6395291390972778,
+                "approx_solve_residual_normalized": 0.6397353728615128,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003224775098225,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77535.24019271618,
+                "approx_solve_residual": 77798.51160907748,
+                "exact_solve_residual_normalized": 0.6375506784614999,
+                "approx_solve_residual_normalized": 0.6397154859697177,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0033955065555602,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77393.50680303766,
+                "approx_solve_residual": 77812.39307216035,
+                "exact_solve_residual_normalized": 0.6363852442856904,
+                "approx_solve_residual_normalized": 0.6398296293732144,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0054124213571138,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77789.28227875508,
+                "approx_solve_residual": 77815.8933237608,
+                "exact_solve_residual_normalized": 0.6396395957578068,
+                "approx_solve_residual_normalized": 0.6398584109669401,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003420914067616,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77504.88475818616,
+                "approx_solve_residual": 77753.70701396333,
+                "exact_solve_residual_normalized": 0.637301074180511,
+                "approx_solve_residual_normalized": 0.6393470702668422,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0032104074027526,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77371.31066552846,
+                "approx_solve_residual": 77753.58132864226,
+                "exact_solve_residual_normalized": 0.6362027316308894,
+                "approx_solve_residual_normalized": 0.6393460367914636,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0049407288027772,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77735.07080757279,
+                "approx_solve_residual": 77757.60164838268,
+                "exact_solve_residual_normalized": 0.6391938299338181,
+                "approx_solve_residual_normalized": 0.639379094760611,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000289841387881,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77498.46633981416,
+                "approx_solve_residual": 77734.72465781932,
+                "exact_solve_residual_normalized": 0.6372482973144362,
+                "approx_solve_residual_normalized": 0.639190983640834,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.003048554754222,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77371.65597676746,
+                "approx_solve_residual": 77778.11416330816,
+                "exact_solve_residual_normalized": 0.6362055710290024,
+                "approx_solve_residual_normalized": 0.6395477634559705,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0052533215349913,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77758.64452111117,
+                "approx_solve_residual": 77818.57346698936,
+                "exact_solve_residual_normalized": 0.6393876700125087,
+                "approx_solve_residual_normalized": 0.6398804490380093,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0007707046110084,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77498.96788824284,
+                "approx_solve_residual": 77719.83660950881,
+                "exact_solve_residual_normalized": 0.6372524214074319,
+                "approx_solve_residual_normalized": 0.6390685633674495,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0028499569385811,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77365.64108178875,
+                "approx_solve_residual": 77775.13573254271,
+                "exact_solve_residual_normalized": 0.6361561122233674,
+                "approx_solve_residual_normalized": 0.6395232726495896,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0052929781880957,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77754.10825660355,
+                "approx_solve_residual": 77784.79595271118,
+                "exact_solve_residual_normalized": 0.6393503695732848,
+                "approx_solve_residual_normalized": 0.6396027059486571,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003946762016274,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77512.55871903892,
+                "approx_solve_residual": 77750.75169251094,
+                "exact_solve_residual_normalized": 0.6373641750226055,
+                "approx_solve_residual_normalized": 0.6393227694819041,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0030729597552752,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77374.20635036676,
+                "approx_solve_residual": 77787.28997308729,
+                "exact_solve_residual_normalized": 0.6362265420405647,
+                "approx_solve_residual_normalized": 0.6396232135833653,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0053387768638298,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77763.09221842731,
+                "approx_solve_residual": 77786.67081147482,
+                "exact_solve_residual_normalized": 0.6394242421883922,
+                "approx_solve_residual_normalized": 0.639618122389927,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000303210589688,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77509.06806842526,
+                "approx_solve_residual": 77767.86499143287,
+                "exact_solve_residual_normalized": 0.6373354723751192,
+                "approx_solve_residual_normalized": 0.6394634873711024,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0033389244569313,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77382.53764412428,
+                "approx_solve_residual": 77851.36082458889,
+                "exact_solve_residual_normalized": 0.6362950479479994,
+                "approx_solve_residual_normalized": 0.640150050344855,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0060585139068543,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77825.62071701691,
+                "approx_solve_residual": 77850.62364312127,
+                "exact_solve_residual_normalized": 0.6399383966115925,
+                "approx_solve_residual_normalized": 0.6401439887070286,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00032126857292,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77535.14277294902,
+                "approx_solve_residual": 77788.72015782299,
+                "exact_solve_residual_normalized": 0.6375498774058961,
+                "approx_solve_residual_normalized": 0.6396349735939915,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0032704832390202,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77397.65000508633,
+                "approx_solve_residual": 77860.93871871999,
+                "exact_solve_residual_normalized": 0.6364193126818231,
+                "approx_solve_residual_normalized": 0.6402288066998535,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0059858240347506,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77834.85748031187,
+                "approx_solve_residual": 77861.0440663805,
+                "exact_solve_residual_normalized": 0.6400143479427659,
+                "approx_solve_residual_normalized": 0.6402296729443155,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000336437772437,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77522.24782112669,
+                "approx_solve_residual": 77783.26160212053,
+                "exact_solve_residual_normalized": 0.6374438458096487,
+                "approx_solve_residual_normalized": 0.6395900894112266,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0033669532080145,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77390.56358302994,
+                "approx_solve_residual": 77808.94817663652,
+                "exact_solve_residual_normalized": 0.6363610430075604,
+                "approx_solve_residual_normalized": 0.6398013029570843,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0054061448093436,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77788.31773921085,
+                "approx_solve_residual": 77812.07717248634,
+                "exact_solve_residual_normalized": 0.6396316646178594,
+                "approx_solve_residual_normalized": 0.639827031818206,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003054370368973,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77510.05019025665,
+                "approx_solve_residual": 77774.72172447704,
+                "exact_solve_residual_normalized": 0.6373435480893155,
+                "approx_solve_residual_normalized": 0.63951986837661,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0034146737561225,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77391.47426836677,
+                "approx_solve_residual": 77787.21995042352,
+                "exact_solve_residual_normalized": 0.6363685313193643,
+                "approx_solve_residual_normalized": 0.6396226378065096,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0051135565745193,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77763.9540517286,
+                "approx_solve_residual": 77786.2472488918,
+                "exact_solve_residual_normalized": 0.6394313288035183,
+                "approx_solve_residual_normalized": 0.6396146395528131,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002866777729484,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77494.13259930308,
+                "approx_solve_residual": 78843.87531332913,
+                "exact_solve_residual_normalized": 0.6372126621736119,
+                "approx_solve_residual_normalized": 0.6483112204670654,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0174173536596007,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77542.30586574954,
+                "approx_solve_residual": 78012.76669271593,
+                "exact_solve_residual_normalized": 0.637608777522327,
+                "approx_solve_residual_normalized": 0.6414772458301116,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.006067150334437,
+                "j": 2
+            }
+        ]
+    ],
+    "efficient": [
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 121614.23838361267,
+                "approx_solve_residual": 121621.96230901948,
+                "exact_solve_residual_normalized": 0.9999999999914189,
+                "approx_solve_residual_normalized": 1.0000635116781211,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0000635116867027,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 121614.10387913408,
+                "approx_solve_residual": 121621.0014294713,
+                "exact_solve_residual_normalized": 0.999998893998565,
+                "approx_solve_residual_normalized": 1.0000556106333014,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0000567166974652,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 113470.96689041561,
+                "approx_solve_residual": 113498.63810612555,
+                "exact_solve_residual_normalized": 0.9330401472524613,
+                "approx_solve_residual_normalized": 0.9332676799499274,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000243861636754,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 107268.4266006508,
+                "approx_solve_residual": 107296.17195316462,
+                "exact_solve_residual_normalized": 0.8820383865034719,
+                "approx_solve_residual_normalized": 0.8822665288072215,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000258653486334,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 87137.63576902579,
+                "approx_solve_residual": 87167.31202065299,
+                "exact_solve_residual_normalized": 0.7165085020178008,
+                "approx_solve_residual_normalized": 0.7167525215670031,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003405675557444,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 82726.69703005401,
+                "approx_solve_residual": 82745.05415116763,
+                "exact_solve_residual_normalized": 0.680238581673274,
+                "approx_solve_residual_normalized": 0.6803895271658204,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002219008104112,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 82010.83100990443,
+                "approx_solve_residual": 82035.06247991875,
+                "exact_solve_residual_normalized": 0.6743522148328606,
+                "approx_solve_residual_normalized": 0.6745514634597991,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002954667050183,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 79519.76445815458,
+                "approx_solve_residual": 79538.11534990818,
+                "exact_solve_residual_normalized": 0.6538688685994137,
+                "approx_solve_residual_normalized": 0.6540197628696682,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002307714551049,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78677.40986217094,
+                "approx_solve_residual": 78690.03873868154,
+                "exact_solve_residual_normalized": 0.6469424214401647,
+                "approx_solve_residual_normalized": 0.6470462651732534,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001605146449626,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 78458.41063516977,
+                "approx_solve_residual": 78482.67095507929,
+                "exact_solve_residual_normalized": 0.6451416518106374,
+                "approx_solve_residual_normalized": 0.6453411376622266,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003092124822963,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77955.43581101249,
+                "approx_solve_residual": 77971.4909456377,
+                "exact_solve_residual_normalized": 0.6410058299624883,
+                "approx_solve_residual_normalized": 0.6411378468614836,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000205952727455,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77756.98506447428,
+                "approx_solve_residual": 77769.31456832154,
+                "exact_solve_residual_normalized": 0.6393740247629152,
+                "approx_solve_residual_normalized": 0.6394754068379997,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001585645821662,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77707.64189656523,
+                "approx_solve_residual": 77754.86533586917,
+                "exact_solve_residual_normalized": 0.6389682896404126,
+                "approx_solve_residual_normalized": 0.6393565948251606,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0006077065028791,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77597.60844714273,
+                "approx_solve_residual": 77625.80419850048,
+                "exact_solve_residual_normalized": 0.6380635152415921,
+                "approx_solve_residual_normalized": 0.6382953610495522,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003633585096499,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77538.52963653159,
+                "approx_solve_residual": 77553.14746456099,
+                "exact_solve_residual_normalized": 0.6375777266415411,
+                "approx_solve_residual_normalized": 0.6376979249688387,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001885234102055,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77502.61850999869,
+                "approx_solve_residual": 77519.93919061407,
+                "exact_solve_residual_normalized": 0.6372824394530516,
+                "approx_solve_residual_normalized": 0.6374248625841376,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00022348510216,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77427.36462817757,
+                "approx_solve_residual": 77450.5668501902,
+                "exact_solve_residual_normalized": 0.6366636477488837,
+                "approx_solve_residual_normalized": 0.6368544331562572,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002996643644537,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77395.53886057794,
+                "approx_solve_residual": 77405.05510576289,
+                "exact_solve_residual_normalized": 0.6364019533287044,
+                "approx_solve_residual_normalized": 0.6364802027615943,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001229559910694,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77389.88237838128,
+                "approx_solve_residual": 77409.86260946207,
+                "exact_solve_residual_normalized": 0.6363554416515209,
+                "approx_solve_residual_normalized": 0.636519733525122,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002581762688707,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77348.18774352942,
+                "approx_solve_residual": 77370.30125831635,
+                "exact_solve_residual_normalized": 0.6360125982854342,
+                "approx_solve_residual_normalized": 0.6361944315566092,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002858957065712,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77336.27835568978,
+                "approx_solve_residual": 77347.51899707444,
+                "exact_solve_residual_normalized": 0.6359146707072343,
+                "approx_solve_residual_normalized": 0.6360070993696505,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001453475861997,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77331.67661318622,
+                "approx_solve_residual": 77352.8783910116,
+                "exact_solve_residual_normalized": 0.6358768318606923,
+                "approx_solve_residual_normalized": 0.6360511681728462,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002741667936599,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77310.25011609476,
+                "approx_solve_residual": 77329.407427241,
+                "exact_solve_residual_normalized": 0.6357006477446212,
+                "approx_solve_residual_normalized": 0.6358581729768695,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000247797816169,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77301.62346360658,
+                "approx_solve_residual": 77310.99696556517,
+                "exact_solve_residual_normalized": 0.6356297131846325,
+                "approx_solve_residual_normalized": 0.635706788879741,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001212587981803,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77293.14117963651,
+                "approx_solve_residual": 77310.97857158823,
+                "exact_solve_residual_normalized": 0.6355599657267466,
+                "approx_solve_residual_normalized": 0.6357066376311933,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002307758706592,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77274.3175536684,
+                "approx_solve_residual": 77287.96474932137,
+                "exact_solve_residual_normalized": 0.6354051842947519,
+                "approx_solve_residual_normalized": 0.6355174013824403,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00017660713268,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77267.36839122209,
+                "approx_solve_residual": 77279.00553045384,
+                "exact_solve_residual_normalized": 0.6353480432680216,
+                "approx_solve_residual_normalized": 0.6354437322217685,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001506087171603,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77265.48715710155,
+                "approx_solve_residual": 77287.03295466036,
+                "exact_solve_residual_normalized": 0.6353325744039683,
+                "approx_solve_residual_normalized": 0.6355097394945447,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002788540958139,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77256.2464302299,
+                "approx_solve_residual": 77273.21658584915,
+                "exact_solve_residual_normalized": 0.6352565904814079,
+                "approx_solve_residual_normalized": 0.6353961313431085,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002196606281484,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77255.08421599946,
+                "approx_solve_residual": 77265.87562101189,
+                "exact_solve_residual_normalized": 0.6352470339175889,
+                "approx_solve_residual_normalized": 0.6353357686344753,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001396853698619,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77252.09665230586,
+                "approx_solve_residual": 77267.67697737356,
+                "exact_solve_residual_normalized": 0.6352224680136841,
+                "approx_solve_residual_normalized": 0.6353505806859718,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002016815820265,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77238.9608741786,
+                "approx_solve_residual": 77254.25906490129,
+                "exact_solve_residual_normalized": 0.6351144561698265,
+                "approx_solve_residual_normalized": 0.6352402489299991,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000198063134842,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77238.0550419657,
+                "approx_solve_residual": 77247.78291407687,
+                "exact_solve_residual_normalized": 0.6351070077639084,
+                "approx_solve_residual_normalized": 0.6351869973460527,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001259466218548,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77237.47125661111,
+                "approx_solve_residual": 77255.67751617501,
+                "exact_solve_residual_normalized": 0.6351022074595828,
+                "approx_solve_residual_normalized": 0.6352519124596364,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002357179652273,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77231.24942466161,
+                "approx_solve_residual": 77245.54200575784,
+                "exact_solve_residual_normalized": 0.6350510470688905,
+                "approx_solve_residual_normalized": 0.6351685709812718,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001850621503952,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77230.96884581835,
+                "approx_solve_residual": 77240.81345040594,
+                "exact_solve_residual_normalized": 0.6350487399472328,
+                "approx_solve_residual_normalized": 0.6351296893880084,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001274696502545,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77227.78559861284,
+                "approx_solve_residual": 77314.4292276192,
+                "exact_solve_residual_normalized": 0.6350225649923279,
+                "approx_solve_residual_normalized": 0.6357350114143687,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0011219230013493,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77235.32039491273,
+                "approx_solve_residual": 77256.15310290591,
+                "exact_solve_residual_normalized": 0.635084521523076,
+                "approx_solve_residual_normalized": 0.6352558230768242,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002697303239847,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77241.39148124358,
+                "approx_solve_residual": 77594.20475795808,
+                "exact_solve_residual_normalized": 0.6351344423745445,
+                "approx_solve_residual_normalized": 0.6380355276537089,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0045676711663094,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77494.74468543337,
+                "approx_solve_residual": 77516.5853133376,
+                "exact_solve_residual_normalized": 0.6372176951873315,
+                "approx_solve_residual_normalized": 0.6373972845856974,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002818336648875,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77312.82754562135,
+                "approx_solve_residual": 77328.02917555286,
+                "exact_solve_residual_normalized": 0.6357218412295357,
+                "approx_solve_residual_normalized": 0.6358468399972246,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001966249381131,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77229.71934931244,
+                "approx_solve_residual": 77240.82495557381,
+                "exact_solve_residual_normalized": 0.6350384656855796,
+                "approx_solve_residual_normalized": 0.6351297839917984,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001437996454596,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77225.29817180774,
+                "approx_solve_residual": 77244.79345831802,
+                "exact_solve_residual_normalized": 0.6350021115747171,
+                "approx_solve_residual_normalized": 0.6351624158842225,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002524468920393,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77215.38436179723,
+                "approx_solve_residual": 77230.64698660362,
+                "exact_solve_residual_normalized": 0.6349205930770297,
+                "approx_solve_residual_normalized": 0.6350460933885814,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001976630037206,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77215.38150623544,
+                "approx_solve_residual": 77225.27277673928,
+                "exact_solve_residual_normalized": 0.6349205695965408,
+                "approx_solve_residual_normalized": 0.6350019027581444,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001280997427053,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77210.75710383772,
+                "approx_solve_residual": 77241.34499814114,
+                "exact_solve_residual_normalized": 0.6348825444240022,
+                "approx_solve_residual_normalized": 0.6351340601569435,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000396161046087,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77218.8858991583,
+                "approx_solve_residual": 77238.719789876,
+                "exact_solve_residual_normalized": 0.6349493852432068,
+                "approx_solve_residual_normalized": 0.6351124738007734,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000256852847419,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77225.31338989297,
+                "approx_solve_residual": 77244.34786206405,
+                "exact_solve_residual_normalized": 0.6350022367087921,
+                "approx_solve_residual_normalized": 0.6351587518703712,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002464797012216,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77219.5103201693,
+                "approx_solve_residual": 77236.566383659,
+                "exact_solve_residual_normalized": 0.6349545196832139,
+                "approx_solve_residual_normalized": 0.6350947669413989,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002208776437325,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77208.04385307732,
+                "approx_solve_residual": 77225.47619944798,
+                "exact_solve_residual_normalized": 0.6348602341189225,
+                "approx_solve_residual_normalized": 0.6350035754464035,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002257840699063,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77206.02620809388,
+                "approx_solve_residual": 77217.11031596898,
+                "exact_solve_residual_normalized": 0.634843643586348,
+                "approx_solve_residual_normalized": 0.634934785117326,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000143565320215,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77206.6706727996,
+                "approx_solve_residual": 77224.60439145446,
+                "exact_solve_residual_normalized": 0.6348489428400726,
+                "approx_solve_residual_normalized": 0.6349964068121622,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002322819841676,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77200.87192916237,
+                "approx_solve_residual": 77217.0023823076,
+                "exact_solve_residual_normalized": 0.6348012613866979,
+                "approx_solve_residual_normalized": 0.6349338976088993,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00020894133372,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77204.1567687561,
+                "approx_solve_residual": 77214.44165155645,
+                "exact_solve_residual_normalized": 0.6348282717075071,
+                "approx_solve_residual_normalized": 0.6349128414333629,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001332166975303,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77201.27294757568,
+                "approx_solve_residual": 77243.26580251768,
+                "exact_solve_residual_normalized": 0.6348045588493851,
+                "approx_solve_residual_normalized": 0.6351498543961877,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0005439399292098,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77203.7662474846,
+                "approx_solve_residual": 77219.10505558638,
+                "exact_solve_residual_normalized": 0.6348250605598924,
+                "approx_solve_residual_normalized": 0.634951187305457,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001986795314184,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77206.57291053834,
+                "approx_solve_residual": 77216.62878085354,
+                "exact_solve_residual_normalized": 0.6348481389682352,
+                "approx_solve_residual_normalized": 0.6349308255882294,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001302462981598,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77196.8784659753,
+                "approx_solve_residual": 77214.04279700328,
+                "exact_solve_residual_normalized": 0.6347684242515063,
+                "approx_solve_residual_normalized": 0.6349095617634947,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000222344884522,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77192.32866737116,
+                "approx_solve_residual": 77218.80495589656,
+                "exact_solve_residual_normalized": 0.6347310125251774,
+                "approx_solve_residual_normalized": 0.6349487196693167,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003429911881463,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77205.9083844914,
+                "approx_solve_residual": 77216.61053959679,
+                "exact_solve_residual_normalized": 0.6348426747556909,
+                "approx_solve_residual_normalized": 0.6349306755954572,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001386183431984,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77205.35088436687,
+                "approx_solve_residual": 77217.96291322165,
+                "exact_solve_residual_normalized": 0.6348380905874889,
+                "approx_solve_residual_normalized": 0.6349417957869975,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001633569268233,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77186.93051982352,
+                "approx_solve_residual": 77205.48816688592,
+                "exact_solve_residual_normalized": 0.6346866250618397,
+                "approx_solve_residual_normalized": 0.6348392194233955,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002404247317183,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77192.34082280596,
+                "approx_solve_residual": 77204.31466388602,
+                "exact_solve_residual_normalized": 0.6347311124759312,
+                "approx_solve_residual_normalized": 0.6348295700351702,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.00015511695788,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77195.22583953178,
+                "approx_solve_residual": 77211.94556308212,
+                "exact_solve_residual_normalized": 0.6347548351646898,
+                "approx_solve_residual_normalized": 0.6348923167932592,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002165901241755,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77188.08041199466,
+                "approx_solve_residual": 77210.08321488167,
+                "exact_solve_residual_normalized": 0.6346960803047982,
+                "approx_solve_residual_normalized": 0.6348770032228649,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002850544121524,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77196.67613888205,
+                "approx_solve_residual": 77210.68430373217,
+                "exact_solve_residual_normalized": 0.6347667605721876,
+                "approx_solve_residual_normalized": 0.6348819458090167,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001814607253934,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77198.45241710125,
+                "approx_solve_residual": 77215.9939276631,
+                "exact_solve_residual_normalized": 0.6347813664131056,
+                "approx_solve_residual_normalized": 0.6349256053673172,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000227226194472,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77187.93504221384,
+                "approx_solve_residual": 77203.16681859964,
+                "exact_solve_residual_normalized": 0.6346948849695911,
+                "approx_solve_residual_normalized": 0.6348201316231747,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000197333642589,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77188.49685114119,
+                "approx_solve_residual": 77205.49416093448,
+                "exact_solve_residual_normalized": 0.6346995045678784,
+                "approx_solve_residual_normalized": 0.6348392687107869,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002202052182214,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77192.5004971027,
+                "approx_solve_residual": 77214.36595102465,
+                "exact_solve_residual_normalized": 0.6347324254331873,
+                "approx_solve_residual_normalized": 0.6349122189689803,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002832587852595,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77188.26973174581,
+                "approx_solve_residual": 77204.22611402514,
+                "exact_solve_residual_normalized": 0.6346976370283666,
+                "approx_solve_residual_normalized": 0.6348288419143345,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002067203000504,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77186.13636806089,
+                "approx_solve_residual": 77196.03630732762,
+                "exact_solve_residual_normalized": 0.6346800949731496,
+                "approx_solve_residual_normalized": 0.6347614994155754,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001282605883979,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77183.16221052293,
+                "approx_solve_residual": 77200.02108926204,
+                "exact_solve_residual_normalized": 0.6346556393043278,
+                "approx_solve_residual_normalized": 0.634794265167245,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002184268985135,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77180.630411584,
+                "approx_solve_residual": 77200.99654790339,
+                "exact_solve_residual_normalized": 0.6346348210270227,
+                "approx_solve_residual_normalized": 0.6348022860918859,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002638762628755,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77188.06564555399,
+                "approx_solve_residual": 77199.63693268794,
+                "exact_solve_residual_normalized": 0.6346959588844705,
+                "approx_solve_residual_normalized": 0.6347911063547639,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001499103136886,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77186.219601578,
+                "approx_solve_residual": 77200.74889740968,
+                "exact_solve_residual_normalized": 0.6346807793791717,
+                "approx_solve_residual_normalized": 0.6348002497308727,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001882369146549,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77175.34160171873,
+                "approx_solve_residual": 77193.32911427788,
+                "exact_solve_residual_normalized": 0.6345913326169852,
+                "approx_solve_residual_normalized": 0.6347392389213626,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002330733131313,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77181.0834280901,
+                "approx_solve_residual": 77191.85974695755,
+                "exact_solve_residual_normalized": 0.63463854605554,
+                "approx_solve_residual_normalized": 0.6347271567232594,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001396238351263,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77181.14186382435,
+                "approx_solve_residual": 77196.40020746387,
+                "exact_solve_residual_normalized": 0.6346390265563023,
+                "approx_solve_residual_normalized": 0.6347644916650116,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001976952306102,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77173.03080552745,
+                "approx_solve_residual": 77190.74559261095,
+                "exact_solve_residual_normalized": 0.6345723315837019,
+                "approx_solve_residual_normalized": 0.6347179953424755,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002295463440867,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77177.18840991356,
+                "approx_solve_residual": 77187.92082877511,
+                "exact_solve_residual_normalized": 0.6346065184062428,
+                "approx_solve_residual_normalized": 0.6346947680964444,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000139062060729,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77176.68543488011,
+                "approx_solve_residual": 77193.20538110373,
+                "exact_solve_residual_normalized": 0.6346023825826738,
+                "approx_solve_residual_normalized": 0.6347382214979442,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000214053585361,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77170.5923952092,
+                "approx_solve_residual": 77186.08230822244,
+                "exact_solve_residual_normalized": 0.6345522812150062,
+                "approx_solve_residual_normalized": 0.6346796504541593,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002007230025385,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77173.69160971303,
+                "approx_solve_residual": 77183.94526005788,
+                "exact_solve_residual_normalized": 0.634577765192417,
+                "approx_solve_residual_normalized": 0.6346620781024928,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001328645828775,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77172.44702861346,
+                "approx_solve_residual": 77187.54737773418,
+                "exact_solve_residual_normalized": 0.6345675313487807,
+                "approx_solve_residual_normalized": 0.6346916973125799,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001956702126489,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77167.30914002737,
+                "approx_solve_residual": 77191.0219001551,
+                "exact_solve_residual_normalized": 0.6345252839223747,
+                "approx_solve_residual_normalized": 0.6347202673424306,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003072902293988,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77177.99231102588,
+                "approx_solve_residual": 77188.23484152439,
+                "exact_solve_residual_normalized": 0.6346131286611192,
+                "approx_solve_residual_normalized": 0.6346973501357964,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001327130985376,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77177.253061439,
+                "approx_solve_residual": 77196.86517296651,
+                "exact_solve_residual_normalized": 0.6346070500177243,
+                "approx_solve_residual_normalized": 0.6347683149467985,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000254117771099,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77168.49601440132,
+                "approx_solve_residual": 77235.45054345326,
+                "exact_solve_residual_normalized": 0.6345350432596835,
+                "approx_solve_residual_normalized": 0.635085591698265,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0008676407149293,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77207.32803274918,
+                "approx_solve_residual": 77218.76559285326,
+                "exact_solve_residual_normalized": 0.6348543481277947,
+                "approx_solve_residual_normalized": 0.6349483959979784,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001481408616968,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77203.74601275568,
+                "approx_solve_residual": 77220.607165584,
+                "exact_solve_residual_normalized": 0.634824894175354,
+                "approx_solve_residual_normalized": 0.6349635387374734,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002183981179558,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77165.02379230011,
+                "approx_solve_residual": 77180.35290837151,
+                "exact_solve_residual_normalized": 0.6345064921447209,
+                "approx_solve_residual_normalized": 0.63463253919542,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001986536816558,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77167.09257814601,
+                "approx_solve_residual": 77178.48283394477,
+                "exact_solve_residual_normalized": 0.6345235031943594,
+                "approx_solve_residual_normalized": 0.6346171620944194,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001476050919922,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77165.76233222708,
+                "approx_solve_residual": 77184.01443619348,
+                "exact_solve_residual_normalized": 0.6345125649527801,
+                "approx_solve_residual_normalized": 0.634662646918583,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000236531117101,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77161.13135957664,
+                "approx_solve_residual": 77176.87002988307,
+                "exact_solve_residual_normalized": 0.6344744857548839,
+                "approx_solve_residual_normalized": 0.634603900455954,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002039714818731,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77164.1452847726,
+                "approx_solve_residual": 77178.30723163385,
+                "exact_solve_residual_normalized": 0.634499268422078,
+                "approx_solve_residual_normalized": 0.6346157181655403,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001835301461448,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77167.02403775117,
+                "approx_solve_residual": 77184.8269582818,
+                "exact_solve_residual_normalized": 0.6345229396057881,
+                "approx_solve_residual_normalized": 0.6346693280613432,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000230706325048,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77163.3848675269,
+                "approx_solve_residual": 77177.02695661766,
+                "exact_solve_residual_normalized": 0.634493015722922,
+                "approx_solve_residual_normalized": 0.6346051908207722,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001767948504874,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77161.56394988231,
+                "approx_solve_residual": 77171.73247107696,
+                "exact_solve_residual_normalized": 0.634478042824446,
+                "approx_solve_residual_normalized": 0.6345616557412369,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001317822070228,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77158.95802621024,
+                "approx_solve_residual": 77201.71512307462,
+                "exact_solve_residual_normalized": 0.6344566150401117,
+                "approx_solve_residual_normalized": 0.634808194735321,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000554143005014,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77156.54806521322,
+                "approx_solve_residual": 77186.04596303219,
+                "exact_solve_residual_normalized": 0.6344367986022585,
+                "approx_solve_residual_normalized": 0.6346793515977858,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003823123060667,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77172.11128787245,
+                "approx_solve_residual": 77184.87475822667,
+                "exact_solve_residual_normalized": 0.6345647706462063,
+                "approx_solve_residual_normalized": 0.6346697211069726,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001653896743423,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77172.81388405402,
+                "approx_solve_residual": 77195.40077016772,
+                "exact_solve_residual_normalized": 0.634570547898861,
+                "approx_solve_residual_normalized": 0.6347562735705727,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002926793125313,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77163.16423056941,
+                "approx_solve_residual": 77181.32387864262,
+                "exact_solve_residual_normalized": 0.634491201486691,
+                "approx_solve_residual_normalized": 0.6346405232134429,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002353408942504,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77166.3719051195,
+                "approx_solve_residual": 77177.18105317089,
+                "exact_solve_residual_normalized": 0.6345175773008448,
+                "approx_solve_residual_normalized": 0.6346064579137974,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001400758877803,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77158.50626017434,
+                "approx_solve_residual": 77178.0566801439,
+                "exact_solve_residual_normalized": 0.6344529002938625,
+                "approx_solve_residual_normalized": 0.6346136579504431,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002533799695867,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77152.32595239737,
+                "approx_solve_residual": 77176.52877192339,
+                "exact_solve_residual_normalized": 0.6344020813448721,
+                "approx_solve_residual_normalized": 0.6346010943868275,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0003137017481618,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77162.45248213873,
+                "approx_solve_residual": 77173.14083167506,
+                "exact_solve_residual_normalized": 0.6344853489776416,
+                "approx_solve_residual_normalized": 0.6345732362980598,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001385174938393,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77162.29430189444,
+                "approx_solve_residual": 77332.97094717082,
+                "exact_solve_residual_normalized": 0.6344840483055625,
+                "approx_solve_residual_normalized": 0.6358874748084408,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0022119177095568,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77265.28469643553,
+                "approx_solve_residual": 77279.78724477488,
+                "exact_solve_residual_normalized": 0.6353309096263179,
+                "approx_solve_residual_normalized": 0.6354501600408416,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000187698115607,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77249.05665444896,
+                "approx_solve_residual": 77260.0092202461,
+                "exact_solve_residual_normalized": 0.635197470958263,
+                "approx_solve_residual_normalized": 0.635287530855382,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001417825184085,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77155.91200846688,
+                "approx_solve_residual": 77175.47643578314,
+                "exact_solve_residual_normalized": 0.6344315684848415,
+                "approx_solve_residual_normalized": 0.6345924413199315,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002535700351014,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77151.23007435144,
+                "approx_solve_residual": 77241.6914318073,
+                "exact_solve_residual_normalized": 0.6343930702450167,
+                "approx_solve_residual_normalized": 0.6351369087844625,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0011725199633068,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77206.47898924294,
+                "approx_solve_residual": 77218.36227964032,
+                "exact_solve_residual_normalized": 0.63484736667959,
+                "approx_solve_residual_normalized": 0.634945079665793,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001539157147554,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77204.76870270859,
+                "approx_solve_residual": 77221.35538471486,
+                "exact_solve_residual_normalized": 0.6348333034699111,
+                "approx_solve_residual_normalized": 0.6349696911349294,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002148401230258,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77151.17399301798,
+                "approx_solve_residual": 77173.24351745429,
+                "exact_solve_residual_normalized": 0.6343926091038361,
+                "approx_solve_residual_normalized": 0.6345740806546138,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002860555879334,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77158.59739911584,
+                "approx_solve_residual": 77172.02574009997,
+                "exact_solve_residual_normalized": 0.6344536497039868,
+                "approx_solve_residual_normalized": 0.6345640672107071,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001740355765498,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77158.29444286122,
+                "approx_solve_residual": 77175.78902113167,
+                "exact_solve_residual_normalized": 0.6344511585791099,
+                "approx_solve_residual_normalized": 0.6345950116221649,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000226736197278,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77147.81102931521,
+                "approx_solve_residual": 77166.8670851671,
+                "exact_solve_residual_normalized": 0.634364956390244,
+                "approx_solve_residual_normalized": 0.634521649028417,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002470070841627,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77152.20038671518,
+                "approx_solve_residual": 77162.35074186849,
+                "exact_solve_residual_normalized": 0.6344010488532505,
+                "approx_solve_residual_normalized": 0.6344845123957448,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001315627435436,
+                "j": 2
+            }
+        ],
+        [
+            {
+                "fit": -1,
+                "exact_solve_residual": 77151.45417292716,
+                "approx_solve_residual": 77166.54483216353,
+                "exact_solve_residual_normalized": 0.63439491294517,
+                "approx_solve_residual_normalized": 0.6345189992317497,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001955978587591,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77143.1914822777,
+                "approx_solve_residual": 77160.18390519415,
+                "exact_solve_residual_normalized": 0.6343269711419798,
+                "approx_solve_residual_normalized": 0.6344666951014615,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000220271194255,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77148.58006395496,
+                "approx_solve_residual": 77176.08857523302,
+                "exact_solve_residual_normalized": 0.6343712799478304,
+                "approx_solve_residual_normalized": 0.6345974747720833,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000356565360701,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77162.76527001795,
+                "approx_solve_residual": 77179.23048454654,
+                "exact_solve_residual_normalized": 0.6344879209452284,
+                "approx_solve_residual_normalized": 0.6346233098170192,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002133828987463,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77148.69419506518,
+                "approx_solve_residual": 77167.84894141436,
+                "exact_solve_residual_normalized": 0.6343722184161523,
+                "approx_solve_residual_normalized": 0.6345297225587889,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002482834809976,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77148.01529941703,
+                "approx_solve_residual": 77163.34480422582,
+                "exact_solve_residual_normalized": 0.6343666360463809,
+                "approx_solve_residual_normalized": 0.6344926862935591,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001987025168346,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77152.80437819236,
+                "approx_solve_residual": 77174.97149185467,
+                "exact_solve_residual_normalized": 0.6344060153068929,
+                "approx_solve_residual_normalized": 0.6345882893066872,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000287314425457,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77147.98025610266,
+                "approx_solve_residual": 77167.76552804306,
+                "exact_solve_residual_normalized": 0.6343663478949699,
+                "approx_solve_residual_normalized": 0.6345290366738761,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002564587157659,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77151.42971183237,
+                "approx_solve_residual": 77161.27597810431,
+                "exact_solve_residual_normalized": 0.6343947118084026,
+                "approx_solve_residual_normalized": 0.6344756749127456,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001276226028308,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77145.92700302215,
+                "approx_solve_residual": 77168.70535169389,
+                "exact_solve_residual_normalized": 0.6343494645669339,
+                "approx_solve_residual_normalized": 0.6345367645819181,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000295263140345,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77139.2343153802,
+                "approx_solve_residual": 77153.84894820084,
+                "exact_solve_residual_normalized": 0.634294432461065,
+                "approx_solve_residual_normalized": 0.634414604515051,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001894578414,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77142.49384525996,
+                "approx_solve_residual": 77410.1087055452,
+                "exact_solve_residual_normalized": 0.6343212346671475,
+                "approx_solve_residual_normalized": 0.6365217571046502,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0034690978596317,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77356.19130359488,
+                "approx_solve_residual": 77377.71618298501,
+                "exact_solve_residual_normalized": 0.6360784093300271,
+                "approx_solve_residual_normalized": 0.6362554024163305,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000278256711291,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77249.77088152214,
+                "approx_solve_residual": 77264.42217464787,
+                "exact_solve_residual_normalized": 0.6352033438484991,
+                "approx_solve_residual_normalized": 0.6353238173499602,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001896613149597,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77150.38173805313,
+                "approx_solve_residual": 77164.44081630556,
+                "exact_solve_residual_normalized": 0.6343860946119857,
+                "approx_solve_residual_normalized": 0.6345016984955373,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001822295358196,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77146.93283022162,
+                "approx_solve_residual": 77163.17114371422,
+                "exact_solve_residual_normalized": 0.6343577352037674,
+                "approx_solve_residual_normalized": 0.6344912583315548,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002104855358067,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77138.76138025043,
+                "approx_solve_residual": 77155.34779174722,
+                "exact_solve_residual_normalized": 0.6342905436472546,
+                "approx_solve_residual_normalized": 0.6344269290879488,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002150204540494,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77139.05451743031,
+                "approx_solve_residual": 77154.81778891136,
+                "exact_solve_residual_normalized": 0.6342929540326154,
+                "approx_solve_residual_normalized": 0.6344225710222905,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000204348777408,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77143.61223667598,
+                "approx_solve_residual": 77158.73790767556,
+                "exact_solve_residual_normalized": 0.6343304308881729,
+                "approx_solve_residual_normalized": 0.634454805066727,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000196071593759,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77136.37919016441,
+                "approx_solve_residual": 77153.61799058694,
+                "exact_solve_residual_normalized": 0.6342709555618654,
+                "approx_solve_residual_normalized": 0.6344127054149377,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002234846981866,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77138.12237204437,
+                "approx_solve_residual": 77148.31906132921,
+                "exact_solve_residual_normalized": 0.6342852892608064,
+                "approx_solve_residual_normalized": 0.6343691337959553,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001321874187663,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77136.90451390034,
+                "approx_solve_residual": 77151.96673044343,
+                "exact_solve_residual_normalized": 0.6342752751525885,
+                "approx_solve_residual_normalized": 0.6343991275628256,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001952660226385,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77128.98031918226,
+                "approx_solve_residual": 77163.01723688112,
+                "exact_solve_residual_normalized": 0.6342101167071356,
+                "approx_solve_residual_normalized": 0.6344899927985452,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0004412986864082,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77149.17690562391,
+                "approx_solve_residual": 77160.37397243729,
+                "exact_solve_residual_normalized": 0.6343761876105917,
+                "approx_solve_residual_normalized": 0.6344682579714482,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001451352725004,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77150.80708911581,
+                "approx_solve_residual": 77168.24750287896,
+                "exact_solve_residual_normalized": 0.6343895921552696,
+                "approx_solve_residual_normalized": 0.6345329998186715,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002260561414866,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77131.18222042057,
+                "approx_solve_residual": 77147.38586869685,
+                "exact_solve_residual_normalized": 0.6342282223275593,
+                "approx_solve_residual_normalized": 0.6343614604129307,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002100790861725,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77134.6748155072,
+                "approx_solve_residual": 77144.50155955741,
+                "exact_solve_residual_normalized": 0.6342569409639051,
+                "approx_solve_residual_normalized": 0.6343377435424578,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001273972318379,
+                "j": 2
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77132.38324578617,
+                "approx_solve_residual": 77154.930330509,
+                "exact_solve_residual_normalized": 0.63423809802453,
+                "approx_solve_residual_normalized": 0.6344234964204933,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0002923167128257,
+                "j": 0
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77131.37771202589,
+                "approx_solve_residual": 77147.39734954973,
+                "exact_solve_residual_normalized": 0.6342298298005651,
+                "approx_solve_residual_normalized": 0.6343615548167855,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.000207692874146,
+                "j": 1
+            },
+            {
+                "fit": -1,
+                "exact_solve_residual": 77136.55372475498,
+                "approx_solve_residual": 77150.89016392565,
+                "exact_solve_residual_normalized": 0.6342723907111776,
+                "approx_solve_residual_normalized": 0.6343902752562859,
+                "rhs_norm": 121614.23838465626,
+                "ratio": 1.0001858579166218,
+                "j": 2
+            }
+        ]
+    ]
+}
