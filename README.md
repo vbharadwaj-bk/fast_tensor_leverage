@@ -26,14 +26,21 @@ under an MIT license.
 
 ## Requirements 
 You need GCC 11.2+, OpenMP, and an install of the BLAS
-and LAPACK. This code has been tested with OpenBLAS.
+and LAPACK. This code has been tested with OpenBLAS;
+we make no guarantees for Intel MKL or other BLAS
+implementations. If you decide to use MKL, either a) 
+use the Intel C++ compiler instead of GCC or b) if you use GCC, 
+link MKL in sequential mode. We have observed segfaults
+when OpenMP threading is enabled in conjunction with
+MKL (when compiled with GCC). 
+
 We strongly recommended that you install Intel
 Thread Building Blocks (TBB), but this is not
 required. We rely on Intel TBB for fast parallel 
 sorting during sparse tensor decomposition.
 
 Our C++ code could stand alone, but right now, you
-need Python as well. 
+need Python as well to run it.
 
 ## Building our code
 
@@ -65,18 +72,17 @@ This will create two files in the repository root:
 `config.json` and `env.sh`. Edit the configuration
 JSON file with include / link flags for your LAPACK
 install. If you have TBB installed (strongly
-recommended for good performance). If you do not 
-have TBB installed, set these JSON entries to
-`null`.
+recommended for good performance), fill in the appropriate
+entries. If you do not have TBB installed (or if you
+are using a compiler that automatically links the BLAS),
+set those JSON entries to empty lists. 
 
 The file `env.sh` sets up the runtime environment,
 and must be called every time you start a new shell 
 to run our code. First, set the variables CC
 and CXX to your C and C++ compilers. The C++ extension
 module is compiled with
-these when it is 
-imported by Python
-at runtime. 
+these when it is imported by Python at runtime. 
 
 Next, update your LD_LIBRARY_PATH 
 to include the BLAS and TBB library folders using
