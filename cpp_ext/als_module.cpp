@@ -127,22 +127,20 @@ with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
 # Required compiler flags 
-compile_args=['--std=c++2a', '-fopenmp', '-Ofast', '-g', '-march=native']
-link_args=['-fopenmp', '-Ofast', '-g'] 
+compile_args=config['required_compile_args']
+link_args=config['required_link_args']
 
-# Add flags specified in the configuration file 
-blas_include=config['blas_include_flags']
-blas_link=config['blas_link_flags']
-tbb_include=config['tbb_include_flags']
-tbb_link=config['tbb_link_flags']
+# Add extra flags for the BLAS and LAPACK 
 
-for el in [blas_include, tbb_include]:
-    if el is not None:
-        compile_args.append(el)
+for lst in [config["blas_include_flags"], 
+            config["tbb_include_flags"], 
+            config["extra_compile_args"]]:
+    compile_args.extend(lst)
 
-for el in [blas_link, tbb_link]:
-    if el is not None:
-        link_args.append(el)
+for lst in [config["blas_link_flags"], 
+            config["tbb_link_flags"], 
+            config["extra_link_args"]]:
+    link_args.extend(lst)
 
 print(f"Compiling C++ extensions with {compile_args}")
 print(f"Linking C++ extensions with {link_args}")
