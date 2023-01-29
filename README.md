@@ -108,9 +108,9 @@ The graph should look like this:
 This image compares the true probability
 distribution of leverage scores of the
 Khatri-Rao product 
-$U_1 \odot \odot U_2 \odot U_3$ (all
+$U_1 \odot U_2 \odot U_3$ (all
 chosen as $8 \times 8$ matrices to make
-the histogram readable) to a
+the graph readable) to a
 histogram of samples taken by our sampler.
 There is excellent agreement between the
 distribution that our sampler draws from
