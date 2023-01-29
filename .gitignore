@@ -13,6 +13,9 @@ config.json
 env.sh
 .DS_Store
 !outputs/.empty
+plotting/*
+!plotting/distribution_comparison.png
+!plotting/chart_generator.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
