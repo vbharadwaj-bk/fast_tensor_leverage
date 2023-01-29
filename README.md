@@ -1,6 +1,6 @@
 # Fast Exact Leverage Score Sampling from Khatri-Rao Products with Applications to Tensor Decomposition
 This repository contains the code for
-the paper ``Fast Exact Leverage Score Sampling
+the paper "Fast Exact Leverage Score Sampling
 from Khatri-Rao Products". 
 
 This repository contains two implementations of the
