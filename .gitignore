@@ -11,6 +11,8 @@ paper_data_archive/*
 visualization/*
 config.json
 env.sh
+.DS_Store
+!outputs/.empty
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
