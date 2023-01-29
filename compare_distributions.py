@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.linalg as la
-
+import matplotlib.pyplot as plt
 import json
 
 from common import *
@@ -43,6 +43,31 @@ def run_distribution_comparison():
 
     with open('outputs/distribution_comparison.json', 'w') as outfile:
         json.dump(result, outfile, indent=4)
+
+    plot_result()
+
+def plot_result():
+    with open("outputs/distribution_comparison.json", "r") as infile:
+        result = json.load(infile)
+        N = result["N"]
+        I = result["I"]
+        J = result["J"]
+        krp_height = I ** N
+        
+        true_distribution = result['true_distribution']
+        sts_sampler_draws = np.array(result['sts_sampler_draws']).astype(np.int32)
+        bins = np.array(np.bincount(sts_sampler_draws, minlength=krp_height)) / len(sts_sampler_draws)
+        
+        scale=5
+        fig, ax = plt.subplots(figsize=(2 * scale,1 * scale))
+        ax.plot(true_distribution / np.sum(true_distribution), label="True Leverage Score Distribution")
+        ax.plot(bins, label=f"Histogram of Draws from Our Sampler")
+        ax.grid(True)
+        ax.set_xlabel("Row Index from KRP")
+        ax.set_ylabel("Density")
+        ax.legend()
+        fig.show()
+        plt.show()
 
 if __name__=='__main__':
     run_distribution_comparison()

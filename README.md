@@ -36,9 +36,6 @@ Our C++ code could stand alone, but right now, you
 need Python as well. 
 
 ## Building our code
-You can build our code in two easy steps (after
-cloning the repository): installing Python
-dependencies, then configuring the C++ extension.
 
 ### Step 0: Clone the Repository
 Clone the repoitory and `cd` into it. The exact
