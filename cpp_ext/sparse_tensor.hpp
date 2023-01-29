@@ -8,7 +8,7 @@
 #include "cblas.h"
 #include "lapacke.h"
 #include "tensor.hpp"
-#include "hash_lookup.hpp"
+#include "idx_lookup.hpp"
 #include "sort_lookup.hpp"
 
 using namespace std;
@@ -38,13 +38,7 @@ public:
       N = indices.shape[1];
 
       for(uint64_t j = 0; j < N; j++) {
-        if(method == "hash") {
-          lookups.emplace_back(new HashIdxLookup(N, j, 
-              indices(), 
-              values(), 
-              nnz));
-        }
-        else if(method == "sort") {
+        if(method == "sort") {
           lookups.emplace_back(new SortIdxLookup(N, j, 
               indices(), 
               values(), 

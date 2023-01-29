@@ -127,8 +127,8 @@ with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
 # Required compiler flags 
-compile_args=['--std=c++2a', '-fopenmp', '-Ofast', '-march=native']
-link_args=['-fopenmp', '-Ofast'] 
+compile_args=['--std=c++2a', '-fopenmp', '-Ofast', '-g', '-march=native']
+link_args=['-fopenmp', '-Ofast', '-g'] 
 
 # Add flags specified in the configuration file 
 blas_include=config['blas_include_flags']
@@ -161,7 +161,6 @@ cfg['dependencies'] = [ 'common.h',
                         'black_box_tensor.hpp', 
                         'tensor.hpp', 
                         'idx_lookup.hpp',
-                        'hash_lookup.hpp',
                         'sort_lookup.hpp',
                         'dense_tensor.hpp',
                         'tests.hpp',
