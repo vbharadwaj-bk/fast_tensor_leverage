@@ -3,6 +3,36 @@ This repository contains the code for
 the paper "Fast Exact Leverage Score Sampling
 from Khatri-Rao Products". 
 
+## What can I do with it?
+You can draw samples from the Khatri-Rao product of matrices
+with tens of millions of rows each, provided the rank is at most
+100-200 (and you have enough memory to store the inputs). These
+samples are drawn according ot the exact distribution of leverage
+scores on the rows of the Khatri-Rao product, which have attractive
+properties for randomized linear least-squares.
+
+On LBNL Perlmutter CPU nodes, our code can draw 50,000 samples from
+a Khatri-Rao product with $\approx 10^{22}$ total rows and 32 columns
+in under 0.33 seconds.  
+
+Here's a smaller test case that can run on a laptop:
+```python
+import numpy as np
+import cppimport.import_hook
+from cpp_ext.als_module import Sampler
+
+if __name__=='__main__':
+    # Take J=10,000 samples from the KRP of N=4 matrices,
+    # each with dimensions I x R, where I = 1000 and R = 8.
+    I, N, J, R = 1000, 4, 10000, 8
+    matrices = [np.random.normal(size=(I, R)) for i in range(N)]
+
+    sampler = Sampler(matrices, J, R, "efficient")
+    samples = np.zeros((N, J), dtype=np.uint64)
+    sampler.KRPDrawSamples(N+1, samples)
+```
+
+## Details
 This repository contains two implementations of the
 data structure in the paper. The first,
 available in the folder `reference_implementation`,
