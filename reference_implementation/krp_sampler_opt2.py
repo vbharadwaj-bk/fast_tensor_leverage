@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
-from partition_tree import *
+from reference_implementation.partition_tree import *
 
 def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)
@@ -90,7 +90,7 @@ class EfficientKRPSampler:
             vector_idxs.append(ik)
             scalar_idx = (scalar_idx * self.U[k].shape[0]) + ik
 
-        return h, scalar_idx, vector_idxs
+        return vector_idxs
 
     def KRPDrawSamples_scalar(self, j, J):
         '''
@@ -100,7 +100,7 @@ class EfficientKRPSampler:
         self.computeM(j)
         samples = []
         for _ in range(J):
-            samples.append(self.KRPDrawSample(j)[1])
+            samples.append(self.KRPDrawSample(j))
 
-        return samples
+        return np.array(samples, dtype=np.uint64)
 
