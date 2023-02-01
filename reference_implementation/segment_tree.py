@@ -15,21 +15,15 @@ def log2_round_down(m):
 
     return log2_res, lowest_power_2
 
-def chain_had_prod(matrices):
-    res = np.ones(matrices[0].shape)
-    for mat in matrices:
-        res *= mat
-    return res
-
-class PartitionTree:
-    def __init__(self, n, F):
+class SegmentTree:
+    def __init__(self, I, F):
         '''
         Full, complete binary tree represented through an array of length 2 * (# leaves) - 1.
         Each node is indexed by an integer in [0, nodecount). The root node is 0. 
         '''
-        self.n = n
+        self.I = I
         self.F = F
-        self.leaf_count = divide_and_roundup(n, F) 
+        self.leaf_count = divide_and_roundup(I, F) 
         self.node_count = 2 * self.leaf_count - 1
 
         # Lowest level of a complete binary tree that is completely filled 
@@ -65,10 +59,10 @@ class PartitionTree:
     def S(self, v):
         leaf_index = self.get_leaf_index(v)
         start_idx = leaf_index * self.F
-        end_idx = min((leaf_index + 1) * self.F, self.n)
+        end_idx = min((leaf_index + 1) * self.F, self.I)
         return (start_idx, end_idx)
 
-    def PTSampleUpgraded(self, m, q):
+    def STSample(self, m, q):
         c = 0
         mtotal = m(c)
         low, high = 0.0, 1.0
