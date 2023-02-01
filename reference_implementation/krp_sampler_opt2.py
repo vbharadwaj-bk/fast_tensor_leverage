@@ -2,6 +2,7 @@ import numpy as np
 import numpy.linalg as la
 
 from reference_implementation.partition_tree import *
+from reference_implementation.lemma_sampler import *
 
 def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)
@@ -13,9 +14,6 @@ the complexity even further.
 class EfficientKRPSampler:
     def __init__(self, U, F):
         '''
-        This is a close implementation of the pseudocode procedure
-        "ConstructSampler". 
-
         U = [U_1, ..., U_N] is a list of matrices. All must have
         the same column dimension R.
 
@@ -24,49 +22,23 @@ class EfficientKRPSampler:
         self.U = U
         self.N = len(U)
         self.R = U[0].shape[1]
-        self.trees = []
-        self.G = [] 
+        self.Z_samplers = {}
         for j in range(self.N):
-            tree = PartitionTree(U[j].shape[0], F[j])
-            self.trees.append(tree)
-            self.G.append({})
-
-            for v in reversed(range(tree.node_count)):
-                if tree.is_leaf(v):
-                    start, end = tree.S(v)
-                    self.G[j][v] = U[j][start:end].T @ U[j][start:end] 
-                else:
-                    self.G[j][v] = self.G[j][tree.L(v)] + self.G[j][tree.R(v)]
-                    self.G[j][tree.R(v)] = None
-
-    def m(self, h, k, v):
-        return h @ (self.G[k][v]) @ h.T
-
-    def q(self, h, k, v):
-        start, end = self.trees[k].S(v)
-        W = self.U[k][start:end]
-        return (W @ h) ** 2
+            self.Z_samplers[j] = LemmaSampler(U[j], np.ones((self.R, self.R)), F[j])
 
     def computeM(self, j):
-        '''
-        Compute M_k for the KRP of all matrices excluding
-        U_j. Also compute the eigendecomposition of each M_k,
-        which will be useful to us. 
-        '''
-        G = chain_had_prod([self.G[k][0] for k in range(self.N) if k != j])
+        gram_matrices = [self.Z_samplers[k].G[0] for k in range(self.N) if k != j]
+        G = chain_had_prod(gram_matrices)
         M_buffer = la.pinv(G) 
-
-        self.M = {}
-        self.eigvecs = {}
-        self.eigvals = {}
+        self.scaled_eigenvectors = {}
+        self.E_samplers = {}
 
         for k in reversed(range(self.N)):
             if k != j:
-                self.M[k] = M_buffer.copy()
                 W, V = la.eigh(M_buffer)
-                self.eigvecs[k] = V
-                self.eigvals[k] = W
-                M_buffer *= self.G[k][0] 
+                M_buffer *= gram_matrices[k]
+                self.scaled_eigenvectors[k] = np.diag(np.sqrt(W)) @ V.T
+                self.E_samplers[k] = LemmaSampler(self.scaled_eigenvectors[k], gram_matrices[k], F=1) 
 
     def KRPDrawSamples(self, j, J):
         '''
@@ -74,7 +46,9 @@ class EfficientKRPSampler:
         indices of each sampled row in the Khatri-Rao product. 
         '''
         self.computeM(j)
+        gram_matrices = [self.Z_samplers[k].G[0] for k in range(self.N) if k != j]
         samples = []
+
         for _ in range(J):
             h = np.ones(self.R)
             vector_idxs = []
@@ -82,15 +56,9 @@ class EfficientKRPSampler:
                 if k == j:
                     continue 
 
-                Y = self.eigvecs[k]
-                eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h, h) * self.G[k][0] @ Y)
-                Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
-                scaled_h = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h
-
-                m = lambda v : self.m(scaled_h, k, v)
-                q = lambda v : self.q(scaled_h, k, v)
-
-                ik = self.trees[k].PTSampleUpgraded(m, q)
+                Rc = self.E_samplers[k].RowSample(h)
+                scaled_h = self.scaled_eigenvectors[k][Rc] * h
+                ik = self.Z_samplers[k].RowSample(scaled_h)
                 h *= self.U[k][ik, :]
                 vector_idxs.append(ik)
 

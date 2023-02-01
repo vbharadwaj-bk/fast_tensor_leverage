@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.linalg as la
-import matplotlib.pyplot as plt
 
 def divide_and_roundup(n, m):
     return (n + m - 1) // m
@@ -69,29 +68,6 @@ class PartitionTree:
         end_idx = min((leaf_index + 1) * self.F, self.n)
         return (start_idx, end_idx)
 
-    def test_node_ranges(self):
-        for i in range(self.node_count):
-            if self.is_leaf(i):
-                print(f"{i} {self.S(i)}")
-
-    def PTSample(self, m, q):
-        c = 0
-        mc = m(c)
-        while not self.is_leaf(c):  
-            ml = m(self.L(c))
-            Rc = np.random.binomial(1, ml / mc)
-            if Rc == 1:
-                c = self.L(c)
-                mc = ml
-            else:
-                c = self.R(c)
-                mc -= ml
-
-        start, end = self.S(c)
-        qprobs = q(c)
-        Rc = np.random.multinomial(1, qprobs / np.sum(qprobs)) # Could also divide by mc 
-        return start + np.nonzero(Rc==1)[0][0]
-
     def PTSampleUpgraded(self, m, q):
         c = 0
         mtotal = m(c)
@@ -114,32 +90,5 @@ class PartitionTree:
         normalized = qprobs / np.sum(qprobs)
         prefix_sums = np.cumsum(normalized) 
         Rc = np.searchsorted(prefix_sums, draw_fraction) 
-        start, _ = self.S(c)
 
-        return start + Rc
-
-
-    def PTSampleUpgraded_draw_provided(self, m, q, draw):
-        c = 0
-        mtotal = m(c)
-        low, high = 0.0, 1.0
-        while not self.is_leaf(c):  
-            ml = m(self.L(c))
-            cutoff = low + ml / mtotal
-            if draw <= cutoff:
-                c = self.L(c)
-                high = cutoff
-            else:
-                c = self.R(c)
-                low = cutoff
-
-        assert(low <= draw and draw <= high)
-
-        draw_fraction = min(max((draw - low) / (high - low), 0), 1.0)
-        qprobs = q(c)
-        normalized = qprobs / np.sum(qprobs)
-        prefix_sums = np.cumsum(normalized) 
-        Rc = np.searchsorted(prefix_sums, draw_fraction) 
-        start, _ = self.S(c)
-
-        return start + Rc
+        return self.S(c)[0] + Rc
