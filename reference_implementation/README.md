@@ -6,7 +6,7 @@ run the reference.
 
 `segment_tree.py` contains the code
 to generate a segment tree and the STSample procedure.
-`lemma_sampler` implements the construction and sampling procedure
+`lemma_sampler.py` implements the construction and sampling procedure
 of the lemma presented in the section "A Simpler Row Sampling
 Problem". Finally, `krp_sampler.py` implements the procedures
 "ConstructKRPSampler" and "KRPSample".
