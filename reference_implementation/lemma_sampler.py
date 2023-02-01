@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
-from reference_implementation.segment_tree import * 
+from segment_tree import * 
 
 def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)

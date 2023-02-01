@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
-from reference_implementation.lemma_sampler import *
+from lemma_sampler import *
 
 def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)
@@ -12,7 +12,7 @@ def chain_had_prod(matrices):
         res *= mat
     return res
 
-class EfficientKRPSampler:
+class ReferenceKRPSampler:
     def __init__(self, U):
         '''
         U = [U_1, ..., U_N] is a list of matrices. All must have
