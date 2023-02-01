@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
-from reference_implementation.partition_tree import * 
+from reference_implementation.segment_tree import * 
 
 def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)
@@ -15,7 +15,7 @@ class LemmaSampler:
         self.G = {}
         self.Y_all_ones = np.sum(np.abs(Y - 1.0)) == 0
 
-        tree = PartitionTree(self.I, self.F)
+        tree = SegmentTree(self.I, self.F)
         self.tree = tree 
         for v in reversed(range(tree.node_count)):
             if tree.is_leaf(v):
@@ -39,5 +39,5 @@ class LemmaSampler:
     def RowSample(self, h):
         m = lambda v : self.m(h, v)
         q = lambda v : self.q(h, v)
-        return self.tree.PTSampleUpgraded(m, q)
+        return self.tree.STSample(m, q)
 
