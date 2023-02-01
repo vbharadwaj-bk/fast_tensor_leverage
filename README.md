@@ -1,18 +1,18 @@
 # Fast Exact Leverage Score Sampling from Khatri-Rao Products with Applications to Tensor Decomposition
 This repository contains the code for
-the paper "Fast Exact Leverage Score Sampling
-from Khatri-Rao Products". 
+the paper [Fast Exact Leverage Score Sampling
+from Khatri-Rao Products](https://arxiv.org/pdf/2301.12584).
 
 ## What can I do with it?
 You can draw samples from the Khatri-Rao product of matrices
 with tens of millions of rows each, provided the rank is at most
 100-200 (and you have enough memory to store the inputs). These
-samples are drawn according ot the exact distribution of leverage
+samples are drawn according to the exact distribution of leverage
 scores on the rows of the Khatri-Rao product, which have attractive
 properties for randomized linear least-squares.
 
 On LBNL Perlmutter CPU nodes, our code can draw 50,000 samples from
-a Khatri-Rao product with $\approx 10^{22}$ total rows and 32 columns
+a Khatri-Rao product with $\approx 10^{21}$ total rows and 32 columns
 in under 0.33 seconds.  
 
 Here's a smaller test case that can run on a laptop:
@@ -40,7 +40,10 @@ is written entirely in Python with Numpy. It is
 slow, but the structure of the code matches
 the pseudocode in our paper almost line-for-line. You
 can use it to verify the correctness of our algorithm
-or pick apart how the data structure works.
+or pick apart how the data structure works. You only need
+Python, Numpy, and Matplotlib to test the reference
+implementation - see the README inside the folder for
+more instructions.
 
 The second implementation is a fast version written
 in C++, with Pybind11 Python bindings 
