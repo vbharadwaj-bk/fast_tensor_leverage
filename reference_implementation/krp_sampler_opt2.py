@@ -68,31 +68,7 @@ class EfficientKRPSampler:
                 self.eigvals[k] = W
                 M_buffer *= self.G[k][0] 
 
-    def KRPDrawSample(self, j):
-        h = np.ones(self.R)
-        vector_idxs = []
-        scalar_idx = 0
-        for k in range(self.N):
-            if k == j:
-                continue 
-
-            Y = self.eigvecs[k]
-            eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h, h) * self.G[k][0] @ Y)
-
-            Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
-            scaled_h = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h
-
-            m = lambda v : self.m(scaled_h, k, v)
-            q = lambda v : self.q(scaled_h, k, v)
-
-            ik = self.trees[k].PTSampleUpgraded(m, q)
-            h *= self.U[k][ik, :]
-            vector_idxs.append(ik)
-            scalar_idx = (scalar_idx * self.U[k].shape[0]) + ik
-
-        return vector_idxs
-
-    def KRPDrawSamples_scalar(self, j, J):
+    def KRPDrawSamples(self, j, J):
         '''
         Draws J samples from the KRP excluding J. Returns the scalar
         indices of each sampled row in the Khatri-Rao product. 
@@ -100,7 +76,25 @@ class EfficientKRPSampler:
         self.computeM(j)
         samples = []
         for _ in range(J):
-            samples.append(self.KRPDrawSample(j))
+            h = np.ones(self.R)
+            vector_idxs = []
+            for k in range(self.N):
+                if k == j:
+                    continue 
+
+                Y = self.eigvecs[k]
+                eig_weights = self.eigvals[k] * batch_dot_product(Y, np.outer(h, h) * self.G[k][0] @ Y)
+                Rc = np.random.multinomial(1, eig_weights / np.sum(eig_weights))
+                scaled_h = self.eigvecs[k][:, np.nonzero(Rc==1)[0][0]] * h
+
+                m = lambda v : self.m(scaled_h, k, v)
+                q = lambda v : self.q(scaled_h, k, v)
+
+                ik = self.trees[k].PTSampleUpgraded(m, q)
+                h *= self.U[k][ik, :]
+                vector_idxs.append(ik)
+
+            samples.append(vector_idxs)
 
         return np.array(samples, dtype=np.uint64)
 
