@@ -16,6 +16,7 @@ env.sh
 plotting/*
 !plotting/distribution_comparison.png
 !plotting/chart_generator.py
+splatt/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
