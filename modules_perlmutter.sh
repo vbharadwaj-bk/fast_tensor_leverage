@@ -1,7 +1,6 @@
 export CC=gcc
 export CXX=g++
 
-conda deactivate
 module load python
 module load pytorch
 
