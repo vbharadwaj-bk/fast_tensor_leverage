@@ -133,3 +133,32 @@ class FunctionTensor:
         #self.subdivisions = subdivisions
         self.dims = np.array(dims, dtype=np.uint64)
         self.ten = PyFunctionTensor(self.dims, J, 10000, dx)
+
+class TensorTrain:
+    def __init__(self, dims, ranks):
+        if seed is None:
+            rng = np.random.default_rng()
+        else:
+            rng = np.random.default_rng(seed)
+        if init_method=="gaussian":
+            self.dims = []
+            for i in dims:
+                self.dims.append(i)
+
+            self.N = len(dims)
+            self.ranks = [1] + ranks + [1]
+
+            # This stores the cores three times over... but it's okay
+            self.U = [rng.normal(size=(self.ranks[i], i, self.ranks[i+1])) for i in range(self.N)]
+
+        else:
+            assert(False)
+
+
+    def orthogonalize_push_right(self, idx):
+        assert(idx < self.N - 1)
+        Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx] * i, self.ranks[idx+1]))
+        self.U[idx] = Q.reshape(self.ranks[idx], i, self.ranks[idx+1])
+        self.U[idx+1] = np.einsum('ij,jkl->ikl', R, self.U[idx + 1]) 
+
+
