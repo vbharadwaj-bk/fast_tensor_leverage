@@ -135,7 +135,7 @@ class FunctionTensor:
         self.ten = PyFunctionTensor(self.dims, J, 10000, dx)
 
 class TensorTrain:
-    def __init__(self, dims, ranks):
+    def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
         if seed is None:
             rng = np.random.default_rng()
         else:
@@ -150,9 +150,15 @@ class TensorTrain:
 
             # This stores the cores three times over... but it's okay
             self.U = [rng.normal(size=(self.ranks[i], i, self.ranks[i+1])) for i in range(self.N)]
-
         else:
             assert(False)
+
+    def evaluate(idxs):
+        '''
+        Evaluates the tensor train at a single set of indices.
+        Not very efficient, but good for testing. 
+        '''        
+        slices = [core[:, idx, :] for idx in idxs]
 
 
     def orthogonalize_push_right(self, idx):
