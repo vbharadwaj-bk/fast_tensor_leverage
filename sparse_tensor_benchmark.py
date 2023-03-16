@@ -9,7 +9,6 @@ from mpi4py import MPI
 from common import *
 from tensors import *
 from als import *
-from image_classification import * 
 
 import cppimport.import_hook
 from cpp_ext.als_module import Tensor, LowRankTensor, SparseTensor, ALS 
@@ -26,16 +25,16 @@ if __name__=='__main__':
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
     sample_counts = [2 ** 16] 
-    R_values = [100]
-    samplers = ["efficient"]
-    trial_count = 4
+    R_values = [25, 50, 75, 100, 125]
+    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
+    trial_count = 8
 
     trial_list = [trial_count // num_ranks] * num_ranks
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "nell-2"
-    preprocessing = "log_count" 
+    tensor_name = "uber"
+    preprocessing = None 
     initialization = None
     results = []
 
@@ -68,6 +67,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_time_comparison_efficient.json', 'w') as outfile:
+                    with open(f'outputs/{tensor_name}_times_revision.json', 'w') as outfile:
                         json.dump(results, outfile, indent=4)
 
