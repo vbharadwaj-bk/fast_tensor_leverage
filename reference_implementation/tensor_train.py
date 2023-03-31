@@ -46,8 +46,7 @@ class TensorTrain:
         # TODO: Need to implement this!
         pass
 
-
-def test_tt_functions():
+def test_tt_functions_small():
     I = 2
     R = 2
     N = 3
@@ -60,8 +59,18 @@ def test_tt_functions():
 
     # Test evaluation 
     print(tt.evaluate_left([1, 1, 1], upto=-1))
-    print(tt.evaluate_right([1, 1, 1], upto=0))
+    print(tt.evaluate_right([1, 1, 1], upto=-1))
+
+    # Test evaluations after a right-sweep orthogonalization 
+    for i in range(self.N - 1):
+        tt.orthogonalize_push_right(i)
+
+    print(tt.evaluate_left([1, 1, 1], upto=-1))
+    print(tt.evaluate_right([1, 1, 1], upto=-1))
+
+    # Test evaluations after a left-sweep orthogonalization 
+
 
 if __name__=='__main__':
-    test_tt_functions()
+    test_tt_functions_small()
 
