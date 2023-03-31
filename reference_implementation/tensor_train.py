@@ -38,13 +38,17 @@ class TensorTrain:
 
     def orthogonalize_push_right(self, idx):
         assert(idx < self.N - 1)
-        Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx] * i, self.ranks[idx+1]))
-        self.U[idx] = Q.reshape(self.ranks[idx], i, self.ranks[idx+1])
+        dim = self.dims[idx]
+        Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx] * dim, self.ranks[idx+1]))
+        self.U[idx] = Q.reshape(self.ranks[idx], dim, self.ranks[idx+1])
         self.U[idx+1] = np.einsum('ij,jkl->ikl', R, self.U[idx + 1]) 
 
     def orthogonalize_push_left(self, idx):
-        # TODO: Need to implement this!
-        pass
+        assert(idx > 0) 
+        dim = self.dims[idx]
+        Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx], dim * self.ranks[idx+1]).T)
+        self.U[idx] = Q.T.reshape(self.ranks[idx], dim, self.ranks[idx+1])
+        self.U[idx-1] = np.einsum('jkl,lm->jkm', self.U[idx - 1], R.T) 
 
 def test_tt_functions_small():
     I = 2
@@ -62,13 +66,18 @@ def test_tt_functions_small():
     print(tt.evaluate_right([1, 1, 1], upto=-1))
 
     # Test evaluations after a right-sweep orthogonalization 
-    for i in range(self.N - 1):
+    for i in range(N - 1):
         tt.orthogonalize_push_right(i)
 
     print(tt.evaluate_left([1, 1, 1], upto=-1))
     print(tt.evaluate_right([1, 1, 1], upto=-1))
 
     # Test evaluations after a left-sweep orthogonalization 
+    for i in reversed(range(1, N)):
+        tt.orthogonalize_push_left(i)
+
+    print(tt.evaluate_left([1, 1, 1], upto=-1))
+    print(tt.evaluate_right([1, 1, 1], upto=-1))
 
 
 if __name__=='__main__':
