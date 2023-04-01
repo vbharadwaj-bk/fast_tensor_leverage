@@ -1,6 +1,8 @@
 import numpy as np
 import numpy.linalg as la
 
+from lemma_sampler import *
+
 class TensorTrain:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
         if seed is None:
@@ -50,6 +52,38 @@ class TensorTrain:
         self.U[idx] = Q.T.reshape(self.ranks[idx], dim, self.ranks[idx+1])
         self.U[idx-1] = np.einsum('jkl,lm->jkm', self.U[idx - 1], R.T) 
 
+    def place_into_canonical_form(self, idx_nonorthogonal):
+        idx = idx_nonorthogonal
+        for i in range(idx):
+            self.orthogonalize_push_left(i)
+
+        for i in reversed(range(idx+1, self.N)):
+            self.orthogonalize_push_right(i)
+
+    def build_fast_sampler(self, idx_nonorthogonal):
+        '''
+        Warning: before calling this function, the TT
+        must be in canonical form with the specified core
+        non-orthogonal.
+        '''
+        self.samplers = {}
+        for i in range(self.N):
+            if i < idx_nonorthogonal:
+                cols = self.ranks[i+1]
+                self.samplers[i] = LemmaSampler(
+                    self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
+                    np.ones((cols, cols)),
+                    cols
+                ) 
+            if i > idx_nonorthogonal:
+                cols = self.ranks[i]
+                self.samplers[i] = LemmaSampler(
+                    self.U[i].view().reshape(self.ranks[i], self.dims[i] * self.ranks[i+1]).T.copy(),
+                    np.ones((cols, cols)),
+                    cols 
+                ) 
+
+
 def test_tt_functions_small():
     I = 2
     R = 2
@@ -61,7 +95,7 @@ def test_tt_functions_small():
     seed = 20
     tt = TensorTrain(dims, ranks, seed)
 
-    # Test evaluation 
+    # Test evaluation at a particular index 
     print(tt.evaluate_left([1, 1, 1], upto=-1))
     print(tt.evaluate_right([1, 1, 1], upto=-1))
 
@@ -79,6 +113,9 @@ def test_tt_functions_small():
     print(tt.evaluate_left([1, 1, 1], upto=-1))
     print(tt.evaluate_right([1, 1, 1], upto=-1))
 
+    # Place into canonical form and build a sampler 
+    tt.place_into_canonical_form(1)
+    tt.build_fast_sampler(1)
 
 if __name__=='__main__':
     test_tt_functions_small()
