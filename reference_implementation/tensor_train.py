@@ -82,7 +82,6 @@ class TensorTrain:
 
         return np.squeeze(contraction)
 
-
     def right_chain_matricize(self, j):
         if j == self.N-1:
             contraction = np.ones(1, 1)
@@ -116,23 +115,31 @@ class TensorTrain:
                     np.ones((cols, cols)),
                     cols)
 
-    def leverage_sample(self, j):
+    def leverage_sample(self, j, J):
         '''
         TODO: Should allow drawing more than one sample! Also -
         this only draws a sample from the left contraction for now.
         '''
-        h_left = np.ones(1)
-        idx_left = []
-        
-        for i in range(j):
-            idx = self.samplers[i].RowSample(h_left)
-            idx_mod = idx % self.ranks[i+1]
-            idx_left.append(idx_mod)
-            h_left = h_left @ self.U[i][:, idx_mod, :]
 
-        return idx_left
+        sample_idxs = []
+        sample_rows = []
+        for _ in range(J): 
+            h_left = np.ones(1)
+            idx_left = []
+            
+            for i in range(j):
+                idx = self.samplers[i].RowSample(h_left)
+                idx_mod = idx % self.ranks[i+1]
+                idx_left.append(idx_mod)
+                h_left = h_left @ self.U[i][:, idx_mod, :]
 
+            sample_idxs.append(idx_left)
+            sample_rows.append(h_left)
 
+        return np.array(sample_idxs, dtype=np.uint64), np.array(sample_rows) 
+
+    def linearize_idxs(self):
+        pass
 
 def test_tt_functions_small():
     I = 2
@@ -176,7 +183,7 @@ def test_tt_functions_small():
     tt.build_fast_sampler(2)
 
     # Draw a tensor-train sample
-    print(tt.leverage_sample(2))
+    print(tt.leverage_sample(j=2, J=10))
 
 
 if __name__=='__main__':
