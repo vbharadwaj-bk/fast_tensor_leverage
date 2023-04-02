@@ -55,10 +55,44 @@ class TensorTrain:
     def place_into_canonical_form(self, idx_nonorthogonal):
         idx = idx_nonorthogonal
         for i in range(idx):
-            self.orthogonalize_push_left(i)
+            self.orthogonalize_push_right(i)
 
         for i in reversed(range(idx+1, self.N)):
-            self.orthogonalize_push_right(i)
+            self.orthogonalize_push_left(i)
+
+    def contract_cores(self, core1, core2):
+        '''
+        Returns a (3, 1) contraction of two provided TT-cores, reshaped 
+        so the physical dimensions are combined and the output has
+        dimension 3.
+        '''
+        ph_dim1, ph_dim2 = core1.shape[1], core2.shape[1]
+        rank_left, rank_right = core1.shape[0], core2.shape[2]
+
+        return np.einsum('abc,cde->abde', core1, core2).reshape(rank_left, ph_dim1 * ph_dim2, rank_right)
+
+    def left_chain_matricize(self, j):
+        if j == 0:
+            contraction = np.ones(1, 1)
+        else:
+            contraction = self.U[0]
+
+            for i in range(1, j):
+                contraction = self.contract_cores(contraction, self.U[i])
+
+        return np.squeeze(contraction)
+
+
+    def right_chain_matricize(self, j):
+        if j == self.N-1:
+            contraction = np.ones(1, 1)
+        else:
+            contraction = self.U[j+1]
+
+            for i in range(j+2, self.N):
+                contraction = self.contract_cores(contraction, self.U[i])
+
+        return np.squeeze(contraction).T
 
     def build_fast_sampler(self, idx_nonorthogonal):
         '''
@@ -69,19 +103,35 @@ class TensorTrain:
         self.samplers = {}
         for i in range(self.N):
             if i < idx_nonorthogonal:
-                cols = self.ranks[i+1]
-                self.samplers[i] = LemmaSampler(
-                    self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
-                    np.ones((cols, cols)),
-                    cols
-                ) 
-            if i > idx_nonorthogonal:
                 cols = self.ranks[i]
                 self.samplers[i] = LemmaSampler(
                     self.U[i].view().reshape(self.ranks[i], self.dims[i] * self.ranks[i+1]).T.copy(),
                     np.ones((cols, cols)),
-                    cols 
+                    cols
                 ) 
+            if i > idx_nonorthogonal:
+                cols = self.ranks[i+1]
+                self.samplers[i] = LemmaSampler(
+                    self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
+                    np.ones((cols, cols)),
+                    cols)
+
+    def leverage_sample(self, j):
+        '''
+        TODO: Should allow drawing more than one sample! Also -
+        this only draws a sample from the left contraction for now.
+        '''
+        h_left = np.ones(1)
+        idx_left = []
+        
+        for i in range(j):
+            idx = self.samplers[i].RowSample(h_left)
+            idx_mod = idx % self.ranks[i+1]
+            idx_left.append(idx_mod)
+            h_left = h_left @ self.U[i][:, idx_mod, :]
+
+        return idx_left
+
 
 
 def test_tt_functions_small():
@@ -106,16 +156,28 @@ def test_tt_functions_small():
     print(tt.evaluate_left([1, 1, 1], upto=-1))
     print(tt.evaluate_right([1, 1, 1], upto=-1))
 
+    # Test orthogonality of matricization
+    left_chain = tt.left_chain_matricize(2)
+    print(left_chain.T @ left_chain)
+
     # Test evaluations after a left-sweep orthogonalization 
     for i in reversed(range(1, N)):
         tt.orthogonalize_push_left(i)
+
+    # Test orthogonality of matricization
+    right_chain = tt.right_chain_matricize(0)
+    print(right_chain.T @ right_chain)
 
     print(tt.evaluate_left([1, 1, 1], upto=-1))
     print(tt.evaluate_right([1, 1, 1], upto=-1))
 
     # Place into canonical form and build a sampler 
-    tt.place_into_canonical_form(1)
-    tt.build_fast_sampler(1)
+    tt.place_into_canonical_form(2)
+    tt.build_fast_sampler(2)
+
+    # Draw a tensor-train sample
+    print(tt.leverage_sample(2))
+
 
 if __name__=='__main__':
     test_tt_functions_small()
