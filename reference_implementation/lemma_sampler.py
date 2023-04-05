@@ -9,8 +9,8 @@ def batch_dot_product(A, B):
 class LemmaSampler:
     def __init__(self, U, Y, F):
         self.I = U.shape[0]
-        self.U = U 
-        self.F = 1
+        self.U = U
+        self.F = F
         self.Y = Y
         self.G = {}
         self.Y_all_ones = np.sum(np.abs(Y - 1.0)) == 0

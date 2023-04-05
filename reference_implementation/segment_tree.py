@@ -82,6 +82,7 @@ class SegmentTree:
         draw_fraction = min(max((draw - low) / (high - low), 0), 1.0)
         qprobs = q(c)
         normalized = qprobs / np.sum(qprobs)
+
         prefix_sums = np.cumsum(normalized) 
         Rc = np.searchsorted(prefix_sums, draw_fraction) 
 

@@ -109,7 +109,7 @@ class TensorTrain:
                 self.samplers[i] = LemmaSampler(
                     self.U[i].view().reshape(self.ranks[i], self.dims[i] * self.ranks[i+1]).T.copy(),
                     np.ones((cols, cols)),
-                    cols
+                    cols 
                 ) 
             if i > idx_nonorthogonal:
                 cols = self.ranks[i+1]
@@ -127,9 +127,32 @@ class TensorTrain:
         print("----------------------")
         print(self.U[i-1])
 
-        test_scores = np.einsum('ij,kj->ik', self.U[i-1].squeeze(), reshaped_core) ** 2
-        print(np.sum(test_scores))
-        exit(1)
+        sampler = LemmaSampler(
+            reshaped_core, 
+            np.ones((cols, cols)),
+            12
+        ) 
+
+        total = 0.0
+        for k in range(4):
+            test_scores = np.einsum('j,kj->k', self.U[i-1][:, k, :].squeeze(), reshaped_core) ** 2
+            total += np.sum(test_scores)
+            print(test_scores / np.sum(test_scores))
+
+            h = self.U[i-1][:, k, :].view().squeeze()
+
+            hist = np.zeros(12)
+            J = 30000
+            for _ in range(J):
+                idx = sampler.RowSample(h)
+                hist[idx] += 1/J
+
+            print(hist)
+            print('=' * 20)
+
+        print(total)
+
+        #exit(1)
 
 
     def leverage_sample(self, j, J):
@@ -236,6 +259,7 @@ def test_tt_sampling():
     normsq_rows = la.norm(left_chain, axis=1) ** 2
     normsq_rows_normalized = normsq_rows / np.sum(normsq_rows)
 
+    print(np.sum(normsq_rows_normalized))
 
     J = 100000
     samples, rows = tt.leverage_sample(j=N-1, J=J)
@@ -243,7 +267,8 @@ def test_tt_sampling():
 
     fig, ax = plt.subplots()
     ax.plot(normsq_rows_normalized, label="True leverage distribution")
-    bins = np.array(np.bincount(linear_idxs, minlength=len(normsq_rows_normalized))) / len(linear_idxs)
+    bins = np.array(np.bincount(linear_idxs, minlength=len(normsq_rows_normalized))) / J
+
     ax.plot(bins, label="Our sampler")
     ax.set_xlabel("Row Index")
     ax.set_ylabel("Probability Density")
