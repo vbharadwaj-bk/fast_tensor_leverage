@@ -137,6 +137,7 @@ class TensorTrain:
         for k in range(4):
             test_scores = np.einsum('j,kj->k', self.U[i-1][:, k, :].squeeze(), reshaped_core) ** 2
             total += np.sum(test_scores)
+            print(np.sum(test_scores) / 3)
             print(test_scores / np.sum(test_scores))
 
             h = self.U[i-1][:, k, :].view().squeeze()
@@ -152,6 +153,15 @@ class TensorTrain:
 
         print(total)
 
+        hist = np.zeros(4)
+        for _ in range(J):
+            idx = self.samplers[0].RowSample(np.ones(1)) // self.ranks[1] 
+            hist[idx] += 1/J
+
+        print(hist)
+
+        first_mat = self.U[0].squeeze()
+        print(first_mat.T @ first_mat)
         #exit(1)
 
 
@@ -259,10 +269,14 @@ def test_tt_sampling():
     normsq_rows = la.norm(left_chain, axis=1) ** 2
     normsq_rows_normalized = normsq_rows / np.sum(normsq_rows)
 
+    print(np.sum(normsq_rows_normalized.view().reshape(4, 4), axis=1))
+    exit(1)
+
     print(np.sum(normsq_rows_normalized))
 
-    J = 100000
+    J = 10000
     samples, rows = tt.leverage_sample(j=N-1, J=J)
+
     linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
 
     fig, ax = plt.subplots()
