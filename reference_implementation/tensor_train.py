@@ -105,65 +105,20 @@ class TensorTrain:
         self.samplers = {}
         for i in range(self.N):
             if i < idx_nonorthogonal:
-                cols = self.ranks[i]
+                cols = self.ranks[i+1]
                 self.samplers[i] = LemmaSampler(
-                    self.U[i].view().reshape(self.ranks[i], self.dims[i] * self.ranks[i+1]).T.copy(),
+                    self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
                     np.ones((cols, cols)),
                     cols 
-                ) 
+                )
+
+            # TODO: This is broken, need to fix it... 
             if i > idx_nonorthogonal:
                 cols = self.ranks[i+1]
                 self.samplers[i] = LemmaSampler(
                     self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
                     np.ones((cols, cols)),
                     cols)
-
-        # Conduct a test on the second matrix in the list 
-        i = 1
-        #reshaped_core = self.U[i].view().reshape(self.ranks[i], self.dims[i] * self.ranks[i+1]).T.copy()
-        #print(reshaped_core)
-        #print("----------------------")
-        #print(self.U[i][:, 1, :])
-        #print("----------------------")
-        #print(self.U[i-1])
-
-        #sampler = LemmaSampler(
-        #    reshaped_core, 
-        #    np.ones((cols, cols)),
-        #    12
-        #) 
-
-        #total = 0.0
-        #for k in range(4):
-        #    test_scores = np.einsum('j,kj->k', self.U[i-1][:, k, :].squeeze(), reshaped_core) ** 2
-        #    total += np.sum(test_scores)
-        #    print(np.sum(test_scores) / 3)
-        #    print(test_scores / np.sum(test_scores))
-
-        #    h = self.U[i-1][:, k, :].view().squeeze()
-
-        #    hist = np.zeros(12)
-        #    J = 30000
-        #    for _ in range(J):
-        #        idx = sampler.RowSample(h)
-        #        hist[idx] += 1/J
-
-        #    print(hist)
-        #    print('=' * 20)
-
-        #print(total)
-
-        #hist = np.zeros(4)
-        #for _ in range(J):
-        #    idx = self.samplers[0].RowSample(np.ones(1)) // self.ranks[1] 
-        #    hist[idx] += 1/J
-
-        #print(hist)
-
-        #first_mat = self.U[0].squeeze()
-        #print(first_mat.T @ first_mat)
-        #exit(1)
-
 
     def leverage_sample(self, j, J):
         '''
@@ -172,18 +127,32 @@ class TensorTrain:
         '''
         sample_idxs = []
         sample_rows = []
-        for _ in range(J): 
-            h_left = np.ones(1)
-            idx_left = []
+
+        rng = np.random.default_rng()
+        for _ in range(J):
+            I = self.U[j-1].shape[1]
+            R = self.U[j-1].shape[2] 
+            first_col_idx = rng.choice(R)
+
+            leverage_scores = la.norm(self.U[j-1][:, :, first_col_idx], axis=0) ** 2
+            leverage_scores /= np.sum(leverage_scores)
+            row_idx = rng.choice(range(I), p=leverage_scores)
+
+            h_left = self.U[j-1][:, row_idx, first_col_idx]
+            #h_left = np.ones(1)
+            idx_left = [row_idx]
             
-            for i in range(j):
+            for i in reversed(range(j-1)):
                 idx = self.samplers[i].RowSample(h_left)
-                idx_mod = idx // self.ranks[i+1] # This is either div or mod, must figure out which 
+                idx_mod = idx // self.ranks[i] # This is either div or mod, must figure out which 
                 idx_left.append(idx_mod)
-                h_left = h_left @ self.U[i][:, idx_mod, :]
+                h_left = h_left @ self.U[i][:, idx_mod, :].T
+
+            idx_left.reverse()
 
             sample_idxs.append(idx_left)
             sample_rows.append(h_left)
+
 
         return np.array(sample_idxs, dtype=np.uint64), np.array(sample_rows) 
 
@@ -231,11 +200,10 @@ class TensorTrain:
             true_scores = (self.U[0].squeeze() @ self.U[1][:, row_idx1, col_idx1]) ** 2
             true_scores /= np.sum(true_scores)
 
-            row_idx0 = rng.choice(range(I), p=true_scores)
+            #row_idx0 = rng.choice(range(I), p=true_scores)
 
-            U0 = self.U[0].squeeze()
-            print(U0.T @ U0)
-            exit(1)
+            row1 = self.U[1][:, row_idx1, col_idx1]
+            row_idx0 = self.samplers[0].RowSample(row1) 
 
             #row_idx0 = rng.choice(range(I), p=leverage_scores)
             sample_idxs.append([row_idx0, row_idx1])
@@ -259,7 +227,7 @@ def test_tt_sampling():
     N = 3 
 
     dims = [I] * N 
-    ranks = [R, 1] 
+    ranks = [R, R] 
 
     seed = 20
     tt = TensorTrain(dims, ranks, seed)
@@ -277,17 +245,20 @@ def test_tt_sampling():
     U0 = tt.U[0]
     U1 = tt.U[1]
 
-    print(la.norm(U1.reshape(2, 2), axis=0) ** 2)
-    print(np.sum(la.norm(U1.reshape(2, 2), axis=0) ** 2))
-    print("Done!")
+    #print(la.norm(U1.reshape(2, 2), axis=0) ** 2)
+    #print(np.sum(la.norm(U1.reshape(2, 2), axis=0) ** 2))
+    #print("Done!")
 
-    normsq_rows = left_chain ** 2
+    normsq_rows = la.norm(left_chain, axis=1) ** 2
+
+    #normsq_rows = left_chain ** 2
     normsq_rows_normalized = normsq_rows / np.sum(normsq_rows)
 
     print(f"True Leverage Scores: {normsq_rows}")
 
     J = 10000
-    samples, rows = tt.leverage_sample_alternate(j=N-1, J=J)
+    #samples, rows = tt.leverage_sample_alternate(j=N-1, J=J)
+    samples, rows = tt.leverage_sample(j=N-1, J=J)
     print("Drew samples!")
 
     linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
