@@ -217,7 +217,7 @@ class TensorTrain:
             #column_normsq = np.ones(R)
             # End debugging session!
 
-            column_normsq = column_normsq / np.sum(column_normsq) 
+            column_normsq /= np.sum(column_normsq) 
             col_idx0 = rng.choice(range(R), p=column_normsq)
             leverage_scores = self.U[0][:, :, col_idx0].squeeze() ** 2 
 
@@ -232,6 +232,10 @@ class TensorTrain:
             true_scores /= np.sum(true_scores)
 
             row_idx0 = rng.choice(range(I), p=true_scores)
+
+            U0 = self.U[0].squeeze()
+            print(U0.T @ U0)
+            exit(1)
 
             #row_idx0 = rng.choice(range(I), p=leverage_scores)
             sample_idxs.append([row_idx0, row_idx1])
