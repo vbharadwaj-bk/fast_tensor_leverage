@@ -54,7 +54,12 @@ class SparseTensorALSExperiment:
             self.als.initialize_ds_als(self.sample_count, self.method)
 
     def change_sample_count(self, new_sample_count):
-        print("Error! This function has not been properly implemented yet!")
+        self.sample_count = new_sample_count
+        self.als = None
+        self.als = ALS(self.approx.ten, self.ground_truth.ten)
+
+        if self.method != "exact":
+            self.als.initialize_ds_als(self.sample_count, self.method)
 
     def run_als_round(self):
         print(f"Starting Iteration {self.iteration_count + 1}.")
