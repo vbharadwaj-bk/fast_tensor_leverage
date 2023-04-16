@@ -144,7 +144,8 @@ class TensorTrain:
             
             for i in reversed(range(j-1)):
                 idx = self.samplers[i].RowSample(h_left)
-                idx_mod = idx // self.ranks[i] # This is either div or mod, must figure out which 
+                idx_mod = idx % self.dims[i] 
+                #idx_mod = idx // self.ranks[i] # This is either div or mod, must figure out which 
                 idx_left.append(idx_mod)
                 h_left = h_left @ self.U[i][:, idx_mod, :].T
 
@@ -222,12 +223,12 @@ class TensorTrain:
         return idxs @ np.flip(vec)
 
 def test_tt_sampling():
-    I = 2
+    I = 6
     R = 2
-    N = 3 
+    N = 4
 
     dims = [I] * N 
-    ranks = [R, R] 
+    ranks = [R] * (N-1) 
 
     seed = 20
     tt = TensorTrain(dims, ranks, seed)
