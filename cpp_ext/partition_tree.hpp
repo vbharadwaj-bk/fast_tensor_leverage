@@ -248,11 +248,31 @@ public:
         Buffer<double*> &x_array = scratch.x_array;
         Buffer<double*> &y_array = scratch.y_array;
 
+        Buffer<uint64_t> sort_idxs({(uint64_t) J});
+        Buffer<double> random_permuted({(uint64_t) J});
+        Buffer<double> scaled_h_permuted({(uint64_t) J, (uint64_t) R});
+
+        std::iota(sort_idxs(), sort_idxs(J), 0);
+        std::sort(std::execution::par_unseq, 
+            sort_idxs(), 
+            sort_idxs(J),
+            [&](uint64_t i, uint64_t j) {
+                return random_draws[i] < random_draws[j];
+            });
+
         #pragma omp parallel
 {
         #pragma omp for
         for(int64_t i = 0; i < J; i++) {
-            x_array[i] = scaled_h(i, 0);
+            random_permuted[i] = random_draws[sort_idxs[i]];
+            for(int64_t j = 0; j < R; j++) {
+                scaled_h_permuted[i * R + j] = scaled_h[sort_idxs[i] * R + j];
+            }
+        }
+
+        #pragma omp for
+        for(int64_t i = 0; i < J; i++) {
+            x_array[i] = scaled_h_permuted(i, 0);
             y_array[i] = temp1(i, 0); 
 
             c[i] = 0;
@@ -264,7 +284,7 @@ public:
         execute_mkl_dsymv_batch();
 
         batch_dot_product(
-            scaled_h(), 
+            scaled_h_permuted(), 
             temp1(), 
             m(),
             J, R 
@@ -281,7 +301,7 @@ public:
             execute_mkl_dsymv_batch();
 
             batch_dot_product(
-                scaled_h(), 
+                scaled_h_permuted(), 
                 temp1(), 
                 mL(),
                 J, R 
@@ -290,7 +310,7 @@ public:
             #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
-                if(random_draws[i] <= cutoff) {
+                if(random_permuted[i] <= cutoff) {
                     c[i] = 2 * c[i] + 1;
                     high[i] = cutoff;
                 }
@@ -311,7 +331,7 @@ public:
             execute_mkl_dsymv_batch();
 
             batch_dot_product(
-                scaled_h(), 
+                scaled_h_permuted(), 
                 temp1(), 
                 mL(),
                 J, R 
@@ -320,11 +340,11 @@ public:
             #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 double cutoff = low[i] + mL[i] / m[i];
-                if((! is_leaf(c[i])) && random_draws[i] <= cutoff) {
+                if((! is_leaf(c[i])) && random_permuted[i] <= cutoff) {
                     c[i] = 2 * c[i] + 1;
                     high[i] = cutoff;
                 }
-                else if((! is_leaf(c[i])) && random_draws[i] > cutoff) {
+                else if((! is_leaf(c[i])) && random_permuted[i] > cutoff) {
                     c[i] = 2 * c[i] + 2;
                     low[i] = cutoff;
                 }
@@ -336,7 +356,7 @@ public:
         if(F > 1) {
             #pragma omp for
             for(int i = 0; i < J; i++) {
-                m[i] = (random_draws[i] - low[i]) / (high[i] - low[i]);
+                m[i] = (random_permuted[i] - low[i]) / (high[i] - low[i]);
 
                 int64_t leaf_idx;
                 if(c[i] >= nodes_upto_lfill) {
@@ -394,11 +414,11 @@ public:
                 res = 0;
             }
 
-            int64_t idx = leaf_idx(c[i]);
-            samples[i] = res + idx * F;
+            int64_t idx = res + leaf_idx(c[i]) * F;
+            samples[sort_idxs[i]] = idx;
             
             for(int64_t j = 0; j < R; j++) {
-                h[i * R + j] *= U[(res + idx * F) * R + j];
+                h[sort_idxs[i] * R + j] *= U[idx * R + j];
             }  
         }
 }

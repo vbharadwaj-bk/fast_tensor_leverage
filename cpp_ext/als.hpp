@@ -101,7 +101,6 @@ public:
                 return false;  
             });
 
-
         uint64_t** end_range = 
             std::unique_copy(std::execution::par_unseq,
                 sort_idxs(),
