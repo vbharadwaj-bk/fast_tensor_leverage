@@ -252,7 +252,15 @@ public:
         Buffer<double> random_permuted({(uint64_t) J});
         Buffer<double> scaled_h_permuted({(uint64_t) J, (uint64_t) R});
 
+        Buffer<uint64_t> c_blocked({(uint64_t) J});
+        Buffer<uint64_t> c_idxs({(uint64_t) J});
+        Buffer<uint64_t> unique_c_idxs({(uint64_t) J});
+        uint64_t num_unique;
+
         std::iota(sort_idxs(), sort_idxs(J), 0);
+        std::iota(c_idxs(), c_idxs(J), 0);
+        std::iota(unique_c_idxs(), unique_c_idxs(J+1), 0);
+
         std::sort(std::execution::par_unseq, 
             sort_idxs(), 
             sort_idxs(J),
@@ -281,7 +289,42 @@ public:
             a_array[i] = G(0);
         }
 
-        execute_mkl_dsymv_batch();
+        #pragma omp single
+        {
+            uint64_t* end_range = 
+                std::unique_copy(std::execution::par_unseq,
+                    c_idxs(),
+                    c_idxs(J),
+                    unique_c_idxs(),
+                    [&](uint64_t a, uint64_t b) {
+                        return c[a] == c[b];
+                    }
+                    );
+
+            num_unique = end_range - unique_c_idxs();
+            unique_c_idxs[num_unique] = J;
+        }
+
+        #pragma omp for 
+        for(uint64_t i = 0; i < num_unique; i++) {
+            uint64_t start_bound = unique_c_idxs[i];
+            uint64_t end_bound = unique_c_idxs[i+1];
+
+            cblas_dsymm(
+                CblasRowMajor,
+                CblasRight,
+                CblasUpper,
+                end_bound - start_bound,
+                R,
+                1.0,
+                G(0), R,
+                scaled_h_permuted(start_bound, 0), R,
+                0.0,
+                temp1(start_bound, 0), R
+                );
+        }
+
+        //execute_mkl_dsymv_batch();
 
         batch_dot_product(
             scaled_h_permuted(), 
