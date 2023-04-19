@@ -132,14 +132,27 @@ link_args=config['required_link_args']
 
 # Add extra flags for the BLAS and LAPACK 
 
-for lst in [config["blas_include_flags"], 
-            config["tbb_include_flags"], 
-            config["extra_compile_args"]]:
+blas_include_path=[f'-I{config["blas_include_path"]}']
+blas_link_path=[f'-L{config["blas_link_path"]}']
+
+tbb_include_path=[f'-I{config["tbb_include_path"]}']
+tbb_link_path=[f'-L{config["tbb_link_path"]}']
+
+rpath_options=[f'-Wl,-rpath,{config["blas_link_path"]}:{config["tbb_link_path"]}']
+
+for lst in [blas_include_path,
+            tbb_include_path,
+            config["extra_compile_args"]
+            ]:
     compile_args.extend(lst)
 
-for lst in [config["blas_link_flags"], 
+for lst in [blas_link_path,
+            tbb_link_path,
+            config["blas_link_flags"], 
             config["tbb_link_flags"], 
-            config["extra_link_args"]]:
+            config["extra_link_args"],
+            rpath_options 
+            ]:
     link_args.extend(lst)
 
 print(f"Compiling C++ extensions with {compile_args}")

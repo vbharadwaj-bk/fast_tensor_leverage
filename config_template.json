@@ -1,10 +1,12 @@
 {
 	"required_compile_args": ["--std=c++2a", "-fopenmp", "-Ofast", "-march=native"],
 	"required_link_args": ["-fopenmp", "-Ofast"],
-	"blas_include_flags": ["-I/YOUR/PATH/TO/OpenBLAS_install/include"], 
-	"blas_link_flags": ["-L/YOUR_PATH/TO/OpenBLAS_install/lib", "-lopenblas"],
-	"tbb_include_flags": [], 
-	"tbb_link_flags": [],
+	"blas_include_path":"/home/vbharadw/OpenBLAS_install/include",
+	"blas_link_path": "/home/vbharadw/OpenBLAS_install/lib",
+	"blas_link_flags": ["-lopenblas"],
+	"tbb_include_path": "/home/vbharadw/intel/oneapi/tbb/2021.8.0/include", 
+	"tbb_link_path": "/home/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8",
+	"tbb_link_flags": ["-ltbb"],
 	"extra_compile_args": [],
 	"extra_link_args": []
 }
