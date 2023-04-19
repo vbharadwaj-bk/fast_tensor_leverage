@@ -23,7 +23,7 @@ add_executable(sampler_test
 target_include_directories(sampler_test
     PRIVATE
     ${Python_INCLUDE_DIRS}
-    /global/homes/v/vbharadw/OpenBLAS_install/include
+    /opt/OpenBLAS/include/
 )
 
 target_link_directories(sampler_test
@@ -33,7 +33,7 @@ target_link_directories(sampler_test
     #${Python_LIBRARIES}
     #${Python_LIBRARY_DIRS}
     #${Python_RUNTIME_LIBRARY_DIRS}
-    /global/homes/v/vbharadw/OpenBLAS_install/lib
+    /opt/OpenBLAS/lib/
 )
 
 target_link_libraries(sampler_test 
