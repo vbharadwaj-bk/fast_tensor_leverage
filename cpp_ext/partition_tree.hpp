@@ -336,6 +336,49 @@ public:
         for(uint32_t c_level = 0; c_level < lfill_level; c_level++) {
             // Prepare to compute m(L(v)) for all v
 
+            #pragma omp single
+            {
+                uint64_t* end_range = 
+                    std::unique_copy(std::execution::par_unseq,
+                        c_idxs(),
+                        c_idxs(J),
+                        unique_c_idxs(),
+                        [&](uint64_t a, uint64_t b) {
+                            return c[a] == c[b];
+                        }
+                        );
+
+                num_unique = end_range - unique_c_idxs();
+                unique_c_idxs[num_unique] = J;
+
+                cout << num_unique << " " << node_count << endl;
+
+                for(uint64_t i = 0; i < J-1; i++) {
+                    if(c[i] > c[i+1]) {
+                        throw std::runtime_error("c not sorted");
+                    }
+                }
+            }
+
+            #pragma omp for 
+            for(uint64_t i = 0; i < num_unique; i++) {
+                uint64_t start_bound = unique_c_idxs[i];
+                uint64_t end_bound = unique_c_idxs[i+1];
+
+                cblas_dsymm(
+                    CblasRowMajor,
+                    CblasRight,
+                    CblasUpper,
+                    end_bound - start_bound,
+                    R,
+                    1.0,
+                    G((2 * c[i] + 1) * R2), R,
+                    scaled_h_permuted(start_bound, 0), R,
+                    0.0,
+                    temp1(start_bound, 0), R
+                    );
+            }
+
             #pragma omp for
             for(int64_t i = 0; i < J; i++) {
                 a_array[i] = G((2 * c[i] + 1) * R2); 
