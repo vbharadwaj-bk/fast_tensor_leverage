@@ -7,4 +7,4 @@
 #SBATCH -q regular 
 
 . modules_perlmutter.sh
-srun -N 8 -n 8 -u python sparse_tensor_benchmark.py 
+srun -N 4 -n 4 -u python sparse_tensor_benchmark.py 

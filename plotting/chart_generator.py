@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[132]:
+# In[1]:
 
 
 import matplotlib
@@ -86,7 +86,7 @@ fig.savefig("paper_images/runtime_benchmark.pdf", bbox_inches='tight')
 plt.show()
 
 
-# In[13]:
+# In[2]:
 
 
 def get_data(files):
@@ -153,7 +153,7 @@ def process_data(data):
     return data_points
 
 
-# In[118]:
+# In[46]:
 
 
 fig = plt.figure()
@@ -354,7 +354,7 @@ fig.savefig("paper_images/reddit_time_plot.pdf",bbox_inches='tight')
     
 
 
-# In[74]:
+# In[165]:
 
 
 fig = plt.figure(tight_layout=True, figsize=(4.5,2.5))
@@ -377,7 +377,7 @@ with open("../outputs/accuracy_bench.json", "r") as infile:
     R_values = [int(key) for key in data['R_trace'].keys()]
     R_eps_lk = [np.mean(data['R_trace'][key]["larsen_kolda"])-1 for key in data['R_trace'].keys()]
     R_eps_efficient = [np.mean(data['R_trace'][key]["efficient"])-1 for key in data['R_trace'].keys()]
-    ax2.plot(R_values, R_eps_lk, '-o', c='blue', label="CP-ARLS-LEV")
+    ax2.plot(R_values, R_eps_lk, '-o', c='blue', label="Product Approx.")
     ax2.plot(R_values, R_eps_efficient, '-o', c='green', label="Our Sampler")
     ax2.set_yscale('log')
     ax2.grid(True)
@@ -397,7 +397,7 @@ with open("../outputs/accuracy_bench.json", "r") as infile:
     ax1.set_ylim(1e-3,1)
     
 fig.show()
-fig.legend(bbox_to_anchor=(0.965, 0.07), ncol=5)
+fig.legend(bbox_to_anchor=(0.985, 0.07), ncol=5)
 fig.savefig("paper_images/accuracy_bench.pdf",bbox_inches='tight')
 
 
@@ -652,8 +652,70 @@ ax.legend(handles[::-1], labels[::-1])
 fig.savefig("paper_images/nell2_plot.pdf",bbox_inches='tight')
 
 
+# In[5]:
+
+
+# Version of the figure for presentations
+
+fig = plt.figure()
+scale=2.0
+fig.set_size_inches(5 * scale, 3.0 * scale)
+spec = fig.add_gridspec(2, 3, hspace=0.4, wspace=0, left=0.0, right=0.8)
+axs = [fig.add_subplot(spec[i, j]) for i in range(2) for j in range(3)]
+axs[4].set_xlabel("Fit")
+
+for i in range(1, 5):
+    axs[i].sharey(axs[0])
+    if i != 1 and i != 2:
+        axs[i].label_outer()
+    else:
+        plt.setp(axs[i].get_yticklabels(), visible=False)
+    
+for i in range(5):
+    axs[i].grid(True)
+    
+axs[0].set_yticks(R_values)
+axs[0].set_ylim([15,135])
+fig.text(-0.075, 0.5, 'Target Rank', va='center', rotation='vertical')
+#axs[0].set_ylabel("Target Rank $\mathregular{R}$")
+
+colormap = {"larsen_kolda": "blue", "larsen_kolda_hybrid": "orange", "efficient": "green"}
+
+points = process_data(uber_data)
+for key in points:
+    entry = points[key]
+    if key == "efficient":
+        label="STS-CP (ours)"
+    elif key == "larsen_kolda":
+        label="CP-ARLS-LEV"
+    elif key == "larsen_kolda_hybrid":
+        label="CP-ARLS-LEV (hybrid)"
+        
+    axs[0].errorbar(entry[0], entry[1], fmt='o', c=colormap[key], xerr=entry[2], label=label)
+    axs[0].set_title("Uber (~3.3e6 nz)")
+
+def plot_data(data, ax):
+    points = process_data(data)
+    for key in points:
+        entry = points[key]
+        ax.errorbar(entry[0], entry[1], fmt='o', c=colormap[key], xerr=entry[2])
+   
+plot_data(enron_data, axs[1])
+axs[1].set_title("Enron* (~5.4e7 nz)")
+
+plot_data(nell2_data, axs[2])
+axs[2].set_title("NELL-2* (~7.7e7 nz)")        
+
+plot_data(amazon_data, axs[3]) 
+axs[3].set_title("Amazon (~1.8e9 nz)")
+    
+plot_data(reddit_data, axs[4])
+axs[4].set_title("Reddit* (~4.7e9 nz)")
+axs[5].set_visible(False)
+
+fig.legend(bbox_to_anchor=(0.805, 0.455), ncol=1)
+fig.savefig("paper_images/spten_accuracies_presentation.pdf", bbox_inches='tight')
+plt.show()
+
+
 # In[ ]:
-
-
-
-
