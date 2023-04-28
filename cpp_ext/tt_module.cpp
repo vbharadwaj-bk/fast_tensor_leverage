@@ -1,12 +1,14 @@
 //cppimport
 #include <iostream>
 #include <string>
-#include "common.h"
-#include "cblas.h"
-#include "lapacke.h"
-#include "tt_sampler.hpp"
 #include <execution>
 #include <algorithm>
+
+#include "cblas.h"
+#include "lapacke.h"
+
+#include "common.h"
+#include "tt_sampler.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
