@@ -19,7 +19,8 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(tt_module, m) {
     py::class_<TTSampler>(m, "TTSampler")
-        .def(py::init<uint64_t>());
+        .def(py::init<uint64_t, uint64_t, uint64_t>())
+        .def("update_matricization", &TTSampler::update_matricization);
 }
 
 /*

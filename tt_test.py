@@ -140,14 +140,13 @@ class TensorTrain:
 
         return np.squeeze(contraction).T
 
-    def build_fast_sampler(self, idx_nonorthogonal):
+    def build_fast_sampler(self, idx_nonorthogonal, J):
         '''
         Warning: before calling this function, the TT
         must be in canonical form with the specified core
         non-orthogonal.
         '''
-        #self.efficient_tt_sampler = TTSampler(self.N)
-        #print("Constructed Tensor-Train Sampler!")
+        self.internal_sampler = TTSampler(self.N, J, max(self.ranks))
 
         self.samplers = {}
         for i in range(self.N):
@@ -159,6 +158,7 @@ class TensorTrain:
                     cols 
                 )
                 self.left_matricizations[i] = self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
+                self.internal_sampler.update_matricization(self.left_matricizations[i], i)
 
             # TODO: This is broken, need to fix it... 
             if i > idx_nonorthogonal:
@@ -219,6 +219,7 @@ def test_tt_sampling():
     I = 6
     R = 2
     N = 4
+    J = 10000
 
     dims = [I] * N 
     ranks = [R] * (N-1) 
@@ -231,7 +232,7 @@ def test_tt_sampling():
     #    tt.orthogonalize_push_right(i) 
 
     tt.place_into_canonical_form(N-1)
-    tt.build_fast_sampler(N-1)
+    tt.build_fast_sampler(N-1, J)
     left_chain = tt.left_chain_matricize(N-1)
 
     U0 = tt.U[0]
@@ -242,7 +243,6 @@ def test_tt_sampling():
     #normsq_rows = left_chain ** 2
     normsq_rows_normalized = normsq_rows / np.sum(normsq_rows)
 
-    J = 10000
     #samples, rows = tt.leverage_sample_alternate(j=N-1, J=J)
     samples, rows = tt.leverage_sample(j=N-1, J=J)
 
