@@ -38,13 +38,15 @@ public:
 
     void update_matricization(py::array_t<double> &matricization, uint64_t i) {
         matricizations[i].reset(new Buffer<double>(matricization));
-        /*tree_samplers[i].reset(
+        tree_samplers[i].reset(
             new PartitionTree(
                 matricizations[i]->shape[0],
-                matricizations[i]->shape[1],
-                J,
-                matricizations[i]->shape[1],
-        ));*/
+                (uint32_t) matricizations[i]->shape[1],
+                (uint32_t) J,
+                (uint32_t) matricizations[i]->shape[1],
+                scratch
+        ));
+        tree_samplers[i]->build_tree(*(matricizations[i]));
     }
 };
 
