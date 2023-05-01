@@ -173,35 +173,63 @@ class TensorTrain:
         TODO: Should allow drawing more than one sample! Also -
         this only draws a sample from the left contraction for now.
         '''
-        sample_idxs = []
-        sample_rows = []
-
         rng = np.random.default_rng()
-        for _ in range(J):
-            I = self.U[j-1].shape[1]
-            R = self.U[j-1].shape[2] 
-            first_col_idx = rng.choice(R)
+        sample_idxs = np.zeros((j, J), dtype=np.uint64)
 
-            leverage_scores = la.norm(self.U[j-1][:, :, first_col_idx], axis=0) ** 2
-            leverage_scores /= np.sum(leverage_scores)
-            row_idx = rng.choice(range(I), p=leverage_scores)
+        H_old = None
 
-            h_left = self.U[j-1][:, row_idx, first_col_idx]
-            #h_left = np.ones(1)
-            idx_left = [row_idx]
+        for i in reversed(range(j)):
+            H_new = np.zeros((J, self.ranks[i]))
+
+            if i == j-1:
+                I = self.U[i].shape[1]
+                R = self.U[i].shape[2] 
+
+                for k in range(J):
+                    first_col_idx = rng.choice(R)
+                    leverage_scores = la.norm(self.U[i][:, :, first_col_idx], axis=0) ** 2
+                    leverage_scores /= np.sum(leverage_scores)
+                    row_idx = rng.choice(range(I), p=leverage_scores)
+                    sample_idxs[i, k] = row_idx
+                    H_new[k, :] = self.U[i][:, row_idx, first_col_idx].T
+            else:
+                for k in range(J):
+                    idx = self.samplers[i].RowSample(H_old[k, :])
+                    idx_mod = idx % self.dims[i] 
+                    sample_idxs[i, k] = idx_mod 
+                    H_new[k, :] = H_old[k, :] @ self.U[i][:, idx_mod, :].T
+
+            H_old = H_new
+
+        sample_idxs = sample_idxs.T
+        sample_rows = H_new
+
+        #sample_idxs = []
+        #sample_rows = []
+
+        #for _ in range(J):
+        #    I = self.U[j-1].shape[1]
+        #    R = self.U[j-1].shape[2] 
+        #    first_col_idx = rng.choice(R)
+
+        #    leverage_scores = la.norm(self.U[j-1][:, :, first_col_idx], axis=0) ** 2
+        #    leverage_scores /= np.sum(leverage_scores)
+        #    row_idx = rng.choice(range(I), p=leverage_scores)
+
+        #    h_left = self.U[j-1][:, row_idx, first_col_idx]
+        #    idx_left = [row_idx]
             
-            for i in reversed(range(j-1)):
-                idx = self.samplers[i].RowSample(h_left)
-                idx_mod = idx % self.dims[i] 
-                #idx_mod = idx // self.ranks[i] # This is either div or mod, must figure out which 
-                idx_left.append(idx_mod)
-                h_left = h_left @ self.U[i][:, idx_mod, :].T
+        #    for i in reversed(range(j-1)):
+        #        idx = self.samplers[i].RowSample(h_left)
+        #        idx_mod = idx % self.dims[i] 
+        #        #idx_mod = idx // self.ranks[i] # This is either div or mod, must figure out which 
+        #        idx_left.append(idx_mod)
+        #        h_left = h_left @ self.U[i][:, idx_mod, :].T
 
-            idx_left.reverse()
+        #    idx_left.reverse()
 
-            sample_idxs.append(idx_left)
-            sample_rows.append(h_left)
-
+        #    sample_idxs.append(idx_left)
+        #    sample_rows.append(h_left)
 
         return np.array(sample_idxs, dtype=np.uint64), np.array(sample_rows) 
 
