@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void log_values_print(string in_file, hsize_t num_lines) {
+void log_values_print(string in_file) {
     string out_file = "log_" + in_file;
     std::string line, token;
     std::ifstream firstline_stream(in_file, std::ifstream::in);
@@ -27,6 +27,8 @@ void log_values_print(string in_file, hsize_t num_lines) {
     
     uint64_t buffer_size = 10000;
 
+    vector<uint64_t>
+
     std::string buf = "";
     uint64_t count = 0;
 
@@ -34,7 +36,9 @@ void log_values_print(string in_file, hsize_t num_lines) {
 
     FILE *out_file_ptr = fopen(out_file.c_str(), "w");
 
-    for(uint64_t i = 0; i < num_lines; i++) {
+
+
+    while(std::getline(iffstream, line)) {
         if(count == buffer_size) {
             count = 0;
             fprintf(out_file_ptr, buf.c_str());
@@ -46,13 +50,23 @@ void log_values_print(string in_file, hsize_t num_lines) {
         }
         double val;
         iffstream >> val;
-        buf << 
+
+        // Append string version of tuple separated by spaces to buf
+        for(int j = 0; j < dim; j++) {
+            buf += to_string(tuple[j]) + " ";
+        }
+        buf += to_string(log(val)) + "\n";
     }
-
     fclose(out_file_ptr);
-
 }
 
 int main(int argc, char** argv) {
+    if(argc != 2) {
+        cout << "Usage: ./log_values <input_file>" << endl;
+        exit(1);
+    }
+
+    string in_file(argv[1]);
+    log_values_print(in_file);
 }
 
