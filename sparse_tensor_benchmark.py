@@ -25,16 +25,16 @@ if __name__=='__main__':
 
     # Try 2^17 Larsen and Kolda samples for Reddit 
     sample_counts = [2 ** 16] 
-    R_values = [25, 50, 75, 100, 125]
-    samplers = ["larsen_kolda", "larsen_kolda_hybrid", "efficient"]
-    trial_count = 8
+    R_values = [25]
+    samplers = ["efficient"]
+    trial_count = 1
 
     trial_list = [trial_count // num_ranks] * num_ranks
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
     tensor_name = "uber"
-    preprocessing = None 
+    preprocessing = "log_count"
     initialization = None
     results = []
 

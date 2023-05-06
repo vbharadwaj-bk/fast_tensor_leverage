@@ -4,13 +4,14 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <cmath>
 #include <cassert>
 #include <cstdio>
 
 using namespace std;
 
 void log_values_print(string in_file) {
-    string out_file = "log_" + in_file;
+    string out_file = in_file + "_log";
     std::string line, token;
     std::ifstream firstline_stream(in_file, std::ifstream::in);
     std::ifstream iffstream(in_file, std::ifstream::in);
@@ -24,38 +25,38 @@ void log_values_print(string in_file) {
         ++count;
     }
     int dim = count - 1;
-    
-    uint64_t buffer_size = 10000;
 
-    vector<uint64_t>
+    uint64_t buffer_size = 100;
 
     std::string buf = "";
-    uint64_t count = 0;
-
-    vector<uint64_t> tuple(dim, 0); 
+    count = 0;
 
     FILE *out_file_ptr = fopen(out_file.c_str(), "w");
-
-
 
     while(std::getline(iffstream, line)) {
         if(count == buffer_size) {
             count = 0;
-            fprintf(out_file_ptr, buf.c_str());
+            fprintf(out_file_ptr, "%s", buf.c_str());    
             buf = "";
         }
 
-        for(int j = 0; j < dim; j++) {
-            iffstream >> tuple[j];
+        // Split line into tokens separated by spaces
+        std::istringstream is( line );
+        int i = 0;
+        while ( std::getline( is, token, ' ')) {
+            if(i < dim) {
+                buf += token + " "; 
+            }
+            else {
+                buf += to_string(log(stod(token) + 1)) + "\n";
+            }
+            i++;
         }
-        double val;
-        iffstream >> val;
+        count++;
+    }
 
-        // Append string version of tuple separated by spaces to buf
-        for(int j = 0; j < dim; j++) {
-            buf += to_string(tuple[j]) + " ";
-        }
-        buf += to_string(log(val)) + "\n";
+    if(count > 0) {
+        fprintf(out_file_ptr, "%s", buf.c_str());
     }
     fclose(out_file_ptr);
 }
