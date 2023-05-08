@@ -53,9 +53,9 @@ class TensorTrain:
             rng = np.random.default_rng(seed)
 
         if init_method=="gaussian":
-            self.dims = dims
+            self.dims = np.array(dims, dtype=np.uint64)
             self.N = len(dims)
-            self.ranks = [1] + ranks + [1]
+            self.ranks = np.array([1] + ranks + [1], np.uint64)
 
             self.U = [rng.normal(size=(self.ranks[i], self.dims[i], self.ranks[i+1])) for i in range(self.N)]
         else:
@@ -146,27 +146,21 @@ class TensorTrain:
         must be in canonical form with the specified core
         non-orthogonal.
         '''
-        self.internal_sampler = TTSampler(self.N, J, max(self.ranks))
+        self.internal_sampler = TTSampler(self.N, 
+                                          J, 
+                                          max(self.ranks),
+                                          self.dims)
 
         self.samplers = {}
         for i in range(self.N):
             if i < idx_nonorthogonal:
                 cols = self.ranks[i+1]
-                self.samplers[i] = LemmaSampler(
-                    self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
-                    np.ones((cols, cols)),
-                    cols 
-                )
                 self.left_matricizations[i] = self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
                 self.internal_sampler.update_matricization(self.left_matricizations[i], i)
 
             # TODO: This is broken, need to fix it... 
             if i > idx_nonorthogonal:
                 cols = self.ranks[i+1]
-                self.samplers[i] = LemmaSampler(
-                    self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy(),
-                    np.ones((cols, cols)),
-                    cols)
 
     def leverage_sample(self, j, J):
         '''
@@ -193,9 +187,8 @@ class TensorTrain:
                     sample_idxs[i, k] = row_idx
                     H_new[k, :] = self.U[i][:, row_idx, first_col_idx].T
             else:
-                for k in range(J):
-                    sample_idxs[i, k] = self.samplers[i].RowSample(H_old[k, :])
-
+                self.internal_sampler.draw_samples(i, H_old, sample_idxs, H_new)
+                
                 for k in range(J):
                     idx = sample_idxs[i, k]
                     idx_mod = np.fmod(idx, np.array(self.dims[i], dtype=np.uint64))

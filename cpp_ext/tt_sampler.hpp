@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
-
+#include <random>
 #include "common.h"
 #include "partition_tree.hpp"
 
@@ -19,23 +19,32 @@ class __attribute__((visibility("hidden"))) TTSampler {
     */
 public:
     vector<unique_ptr<Buffer<double>>> matricizations;
+    vector<int64_t> dimensions;
     vector<unique_ptr<PartitionTree>> tree_samplers;
     uint64_t N, J, R_max;
     ScratchBuffer scratch;
- 
-    int thread_count;
-    vector<std::mt19937> par_gen; 
 
-    TTSampler(uint64_t N, uint64_t J, uint64_t R_max) 
+    // Related to random number generation 
+    int thread_count;
+    std::random_device rd; 
+    std::mt19937 gen;
+    vector<std::mt19937> par_gen; 
+    std::uniform_real_distribution<> dis;
+
+    TTSampler(uint64_t N, uint64_t J, uint64_t R_max, 
+            py::array_t<uint64_t> dimensions_py) 
     :
     N(N),
     J(J),
     R_max(R_max),
-    scratch(J, R_max, R_max)
-     {
+    scratch(R_max, J, R_max),
+    rd(),
+    gen(rd()) {
+        Buffer<uint64_t> dim_wrapper(dimensions_py);
         for(uint64_t i = 0; i < N; i++) {
             matricizations.emplace_back();
             tree_samplers.emplace_back();
+            dimensions.push_back(dim_wrapper[i]);
         }
 
         // Set up independent random streams for different threads.
@@ -88,11 +97,17 @@ public:
         tree_samplers[i]->build_tree(*(matricizations[i]));
     }
 
-    void draw_samples(uint64_t i, py::array_t<double> h_old_py, py::array_t<uint64_t> samples_py) {
+    void draw_samples(uint64_t i, 
+            py::array_t<double> h_old_py, 
+            py::array_t<uint64_t> samples_py, 
+            py::array_t<double> h_new_py) {
+
         Buffer<double> h_old(h_old_py);
+        Buffer<double> h_new(h_new_py);
         Buffer<uint64_t> samples(samples_py);
         Buffer<uint64_t> row_buffer({J}, samples(i, 0));
-        Buffer<double> dummy({J, h_old.shape[1]});
+        Buffer<double> dummy({h_old.shape[0], h_old.shape[1]}); 
+
         fill_buffer_random_draws(scratch.random_draws(), J); 
 
         tree_samplers[i]->PTSample_internal(
@@ -100,8 +115,18 @@ public:
                 dummy,
                 h_old,
                 row_buffer,
-                scratch.random_draws
-                );
+                scratch.random_draws);
+
+/*        
+        #pragma omp parallel
+{
+        #pragma omp for
+        for(uint64_t i = 0; i < J; i++) {
+            row_buffer[i] %= previous_dim;
+        }
+
+}
+*/
     }
 };
 
