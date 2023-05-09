@@ -1,7 +1,7 @@
 # Fast Exact Leverage Score Sampling from Khatri-Rao Products with Applications to Tensor Decomposition
 This repository contains the code for
-the Arxiv preprint [Fast Exact Leverage Score Sampling
-from Khatri-Rao Products](https://arxiv.org/pdf/2301.12584).
+the preprint Fast Exact Leverage Score Sampling
+from Khatri-Rao Products.
 
 ## What can I do with it?
 You can draw samples from the Khatri-Rao product of matrices
