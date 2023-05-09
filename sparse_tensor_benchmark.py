@@ -33,9 +33,9 @@ if __name__=='__main__':
     for i in range(trial_count % num_ranks):
         trial_list[i] += 1
 
-    tensor_name = "uber"
+    tensor_name = "enron"
     preprocessing = "log_count"
-    initialization = None
+    initialization = "rrf" 
     results = []
 
     rhs = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
@@ -46,7 +46,13 @@ if __name__=='__main__':
                 local_result = [] 
                 for trial in range(trial_list[rank]):
                     print(f"Starting trial on rank {rank}")
-                    result = {"R": R, "J": J, "sampler": sampler, "tensor_order": rhs.N}
+                    result = {"R": R, 
+                        "J": J, 
+                        "sampler": sampler, 
+                        "tensor_order": rhs.N, 
+                        "tensor_name": tensor_name, 
+                        "preprocessing": preprocessing, 
+                        "initialization": initialization}
 
                     lhs = PyLowRank(rhs.dims, R)
                     if initialization is not None and initialization == "rrf":
@@ -67,6 +73,6 @@ if __name__=='__main__':
 
                 if rank == 0:
                     print(f"Length of Result List: {len(results)}")
-                    with open(f'outputs/{tensor_name}_times_revision.json', 'w') as outfile:
-                        json.dump(results, outfile, indent=4)
+                    #with open(f'outputs/{tensor_name}_times_revision.json', 'w') as outfile:
+                        #json.dump(results, outfile, indent=4)
 
