@@ -17,6 +17,7 @@ plotting/*
 !plotting/distribution_comparison.png
 !plotting/chart_generator.py
 splatt/*
+slurm*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

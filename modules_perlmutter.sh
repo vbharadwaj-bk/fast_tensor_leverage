@@ -11,6 +11,7 @@ export LD_LIBRARY_PATH=$OPENBLAS_LIB:$TBB_LIB:$LD_LIBRARY_PATH
 
 export OMP_MAX_ACTIVE_LEVELS=2 
 export OMP_NUM_THREADS=128
+#export OPENBLAS_NUM_THREADS=1
 #export KMP_BLOCKTIME=0
 
 export TORCH_DATASET_FOLDER=/pscratch/sd/v/vbharadw/torch_datasets

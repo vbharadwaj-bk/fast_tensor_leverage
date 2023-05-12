@@ -1,10 +1,17 @@
 #!/bin/bash
-#SBATCH -N 8
+#SBATCH -N 24
 #SBATCH -C cpu
 #SBATCH -q regular
-#SBATCH -t 11:00:00
+#SBATCH -t 12:00:00
 #SBATCH -A m1266 
 #SBATCH -q regular 
 
 . modules_perlmutter.sh
-srun -N 1 -n 1 -u python sparse_tensor_benchmark.py uber may_10
+FOLDER=may_10
+
+#TENSOR=uber
+#TENSOR=enron
+#TENSOR=nell-2
+#TENSOR=amazon-reviews
+TENSOR=reddit-2015
+srun -N 24 -n 24 -u python sparse_tensor_benchmark.py --tensor $TENSOR --folder $FOLDER 
