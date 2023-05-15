@@ -22,16 +22,22 @@ def create_tasks(tensor_name):
 
     b = 2 ** 16
     diff = 2 ** 15
-    J_values = [b - diff, b, b + diff, b + 2 * diff, b + 3 * diff]
+    J_values = [b - diff, b, b + diff, b + 2 * diff, b + 3 * diff,
+        b + 4 * diff, b + 5 * diff,
+        b + 6 * diff, b + 7 * diff,
+        b + 8 * diff, b + 9 * diff,
+        b + 10 * diff
+    ]
 
     if tensor_name == 'enron':
         J_values.extend([b + 6 * diff, b + 8 * diff, b + 10 * diff, b + 12 * diff, b + 14 * diff, b + 16 * diff, b + 18 * diff, b + 20 * diff])
         J_values.extend([b + 24 * diff, b + 28 * diff, b + 32 * diff, b + 36 * diff, b + 40 * diff, b + 44 * diff, b + 48 * diff, b + 52 * diff])
+        J_values.extend([b + 24 * diff, b + 28 * diff])
 
     parameter_dict = {
         "tensor_name": [tensor_name],
-        "sampler": ["efficient"],
-        "R": [25, 50, 75, 100, 125],
+        "sampler": ["larsen_kolda_hybrid"],
+        "R": [125],
         "J": J_values,
         "trial": 4
     }
