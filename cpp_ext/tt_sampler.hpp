@@ -117,16 +117,28 @@ public:
                 row_buffer,
                 scratch.random_draws);
 
-/*        
+        uint64_t left_rank = matricizations[i]->shape[0] / dimensions[i];
+        uint64_t right_rank = matricizations[i]->shape[1];
+        uint64_t mat_size = left_rank * right_rank;
+
         #pragma omp parallel
 {
         #pragma omp for
-        for(uint64_t i = 0; i < J; i++) {
-            row_buffer[i] %= previous_dim;
-        }
+        for(uint64_t j = 0; j < J; j++) {
+            row_buffer[j] /= left_rank;
+            double* mat_ptr = (*(matricizations[i]))(row_buffer[j] * mat_size);
 
+            // Matrix-vector multiply via cblas_dgemv
+            cblas_dgemv(CblasRowMajor, CblasNoTrans, 
+                    left_rank, right_rank, 1.0, 
+                    mat_ptr, right_rank, 
+                    h_old(j * right_rank), 1, 
+                    0.0, 
+                    h_new(j * left_rank), 1);
+        }
 }
-*/
+
+
     }
 };
 

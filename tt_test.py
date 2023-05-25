@@ -155,7 +155,7 @@ class TensorTrain:
         for i in range(self.N):
             if i < idx_nonorthogonal:
                 cols = self.ranks[i+1]
-                self.left_matricizations[i] = self.U[i].view().reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
+                self.left_matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
                 self.internal_sampler.update_matricization(self.left_matricizations[i], i)
 
             # TODO: This is broken, need to fix it... 
@@ -191,9 +191,9 @@ class TensorTrain:
                 
                 for k in range(J):
                     idx = sample_idxs[i, k]
-                    idx_mod = np.fmod(idx, np.array(self.dims[i], dtype=np.uint64))
-                    sample_idxs[i, k] = idx_mod 
-                    H_new[k, :] = H_old[k, :] @ self.U[i][:, idx_mod, :].T
+                    #idx_mod = np.fmod(idx, np.array(self.dims[i], dtype=np.uint64))
+                    #sample_idxs[i, k] = idx_mod 
+                    #H_new[k, :] = H_old[k, :] @ self.U[i][:, idx, :].T
 
             H_old = H_new
 
