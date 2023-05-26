@@ -127,6 +127,15 @@ public:
         return ptr[offset];
     }
 
+    void steal_resources(Buffer& other) {
+            info = std::move(other.info); 
+            managed_ptr = std::move(other.managed_ptr);
+            ptr = other.ptr;
+            dim0 = other.dim0;
+            dim1 = other.dim1;
+            shape = other.shape;
+        }
+
     ~Buffer() {}
 };
 

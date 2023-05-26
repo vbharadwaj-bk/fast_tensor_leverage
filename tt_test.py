@@ -188,12 +188,6 @@ class TensorTrain:
                     H_new[k, :] = self.U[i][:, row_idx, first_col_idx].T
             else:
                 self.internal_sampler.draw_samples(i, H_old, sample_idxs, H_new)
-                
-                for k in range(J):
-                    idx = sample_idxs[i, k]
-                    #idx_mod = np.fmod(idx, np.array(self.dims[i], dtype=np.uint64))
-                    #sample_idxs[i, k] = idx_mod 
-                    #H_new[k, :] = H_old[k, :] @ self.U[i][:, idx, :].T
 
             H_old = H_new
 

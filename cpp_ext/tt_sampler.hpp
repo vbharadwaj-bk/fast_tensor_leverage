@@ -19,8 +19,8 @@ class __attribute__((visibility("hidden"))) TTSampler {
     */
 public:
     vector<unique_ptr<Buffer<double>>> matricizations;
-    vector<int64_t> dimensions;
     vector<unique_ptr<PartitionTree>> tree_samplers;
+    vector<int64_t> dimensions;
     uint64_t N, J, R_max;
     ScratchBuffer scratch;
 
@@ -86,6 +86,8 @@ public:
 
     void update_matricization(py::array_t<double> &matricization, uint64_t i) {
         matricizations[i].reset(new Buffer<double>(matricization));
+        squared_matricizations[i].reset(new Buffer<double>(
+                    {matricizations[i]->shape[1], matricizations[i]->shape[0]}));
         tree_samplers[i].reset(
             new PartitionTree(
                 matricizations[i]->shape[0],
@@ -97,6 +99,67 @@ public:
         tree_samplers[i]->build_tree(*(matricizations[i]));
     }
 
+    void sample(int64_t exclude,
+            uint64_t J,
+            py::array_t<double> samples_py) {
+        Buffer<double> samples(samples_py);
+
+        unique_ptr<Buffer<double>> h_old;
+        unique_ptr<Buffer<double>> h_new;
+
+        for(int64_t i = (int64_t) exclude-1; i >= 0; i--) { 
+            Buffer<double> &mat = *(matricizations[i]); 
+            uint64_t left_rank = mat.shape[0] / dimensions[i];
+            uint64_t right_rank = mat.shape[1];
+
+            h_new.reset({J, left_rank});
+
+            if(i == exclude - 1) {
+                Buffer<uint64_t> row_buffer({J}, samples(i, 0));
+
+                Buffer<double> squared_mat({mat.shape[1], mat.shape[0]});
+                vector<std::discrete_distribution<int>>> distributions;
+
+                std::uniform_int_distribution col_selector(0, right_rank-1);
+
+                #pragma omp parallel for collapse(2)
+                for(uint64_t j = 0; j < mat.shape[0]; j++) {
+                    for(uint64_t k = 0; k < mat.shape[1]; k++) {
+                        squared_mat[k * mat.shape[0] + j] = mat[j * mat.shape[1] + k] * mat[j * mat.shape[1] + k]; 
+                    }
+                }
+
+                for(uint64_t k = 0; k < squared_mat.shape[0] * squared_mat.shape[1]; k+= squared_mat.shape[1]) {
+                    distributions.emplace_back(squared_mat(k), squared_mat(k + squared_mat.shape[1]));
+                }
+
+                #pragma omp parallel
+{
+                int thread_id = omp_get_thread_num();
+
+                #pragma omp for 
+                for(uint64_t j = 0; j < J; j++) {
+                    int random_col = col_selector(par_gen[thread_id]);
+                    uint64_t row_idx = distributions[random_col](par_gen[thread_id]);
+                    row_idx /= right_rank;
+                    row_buffer[j] = row_idx;
+
+                    uint64_t offset = row_idx * left_rank * right_rank;
+                    for(uint64_t k = 0; k < left_rank; k++) {
+                        h_new[j * left_rank + k] = mat[offset + k * right_rank + random_col];
+                    } 
+                }
+}
+
+            }
+            else {
+                draw_samples_internal(i, *h_old, samples, *h_new);
+            }
+
+            h_old = h_new;
+        }
+    }
+
     void draw_samples(uint64_t i, 
             py::array_t<double> h_old_py, 
             py::array_t<uint64_t> samples_py, 
@@ -105,6 +168,14 @@ public:
         Buffer<double> h_old(h_old_py);
         Buffer<double> h_new(h_new_py);
         Buffer<uint64_t> samples(samples_py);
+        draw_samples_internal(i, h_old, samples, h_new);
+    }
+
+    void draw_samples_internal(uint64_t i, 
+            Buffer<double> &h_old, 
+            Buffer<uint64_t> &samples, 
+            Buffer<double> &h_new) {
+
         Buffer<uint64_t> row_buffer({J}, samples(i, 0));
         Buffer<double> dummy({h_old.shape[0], h_old.shape[1]}); 
 
