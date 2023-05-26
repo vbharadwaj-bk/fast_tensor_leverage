@@ -149,10 +149,10 @@ class TensorTrain:
         return idxs @ np.flip(vec)
 
 def test_tt_sampling():
-    I = 6
-    R = 2
-    N = 4
-    J = 10000
+    I = 20
+    R = 4
+    N = 3
+    J = 50000
 
     dims = [I] * N 
     ranks = [R] * (N-1) 
@@ -167,9 +167,6 @@ def test_tt_sampling():
     tt.place_into_canonical_form(N-1)
     tt.build_fast_sampler(N-1, J)
     left_chain = tt.left_chain_matricize(N-1)
-
-    U0 = tt.U[0]
-    U1 = tt.U[1]
 
     normsq_rows = la.norm(left_chain, axis=1) ** 2
 
