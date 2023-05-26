@@ -167,34 +167,11 @@ class TensorTrain:
         TODO: Should allow drawing more than one sample! Also -
         this only draws a sample from the left contraction for now.
         '''
-        rng = np.random.default_rng()
         sample_idxs = np.zeros((j, J), dtype=np.uint64)
-
-        H_old = None
-
-        for i in reversed(range(j)):
-            H_new = np.zeros((J, self.ranks[i]))
-
-            if i == j-1:
-                I = self.U[i].shape[1]
-                R = self.U[i].shape[2] 
-
-                for k in range(J):
-                    first_col_idx = rng.choice(R)
-                    leverage_scores = la.norm(self.U[i][:, :, first_col_idx], axis=0) ** 2
-                    leverage_scores /= np.sum(leverage_scores)
-                    row_idx = rng.choice(range(I), p=leverage_scores)
-                    sample_idxs[i, k] = row_idx
-                    H_new[k, :] = self.U[i][:, row_idx, first_col_idx].T
-            else:
-                self.internal_sampler.draw_samples(i, H_old, sample_idxs, H_new)
-
-            H_old = H_new
-
+        self.internal_sampler.sample(j, J, sample_idxs)
         sample_idxs = sample_idxs.T
-        sample_rows = H_new
 
-        return np.array(sample_idxs, dtype=np.uint64), np.array(sample_rows) 
+        return np.array(sample_idxs, dtype=np.uint64) 
 
     def linearize_idxs_left(self, idxs):
         cols = idxs.shape[1]
@@ -235,7 +212,7 @@ def test_tt_sampling():
     normsq_rows_normalized = normsq_rows / np.sum(normsq_rows)
 
     #samples, rows = tt.leverage_sample_alternate(j=N-1, J=J)
-    samples, rows = tt.leverage_sample(j=N-1, J=J)
+    samples = tt.leverage_sample(j=N-1, J=J)
 
     linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
 
