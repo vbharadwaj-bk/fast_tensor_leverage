@@ -26,8 +26,7 @@ class TensorTrain:
         else:
             assert(False)
 
-        self.left_matricizations = [None] * self.N
-        self.right_matricizations = [None] * self.N
+        self.matricizations = [None] * self.N
 
     def evaluate_left(self, idxs, upto=-1):
         left = np.ones((1, 1), dtype=np.double)
@@ -107,7 +106,7 @@ class TensorTrain:
 
     def build_fast_sampler(self, idx_nonorthogonal, J):
         '''
-        Warning: before calling this function, the TT
+        Before calling this function, the TT
         must be in canonical form with the specified core
         non-orthogonal.
         '''
@@ -116,16 +115,14 @@ class TensorTrain:
                                           max(self.ranks),
                                           self.dims)
 
-        self.samplers = {}
         for i in range(self.N):
             if i < idx_nonorthogonal:
-                cols = self.ranks[i+1]
-                self.left_matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
-                self.internal_sampler.update_matricization(self.left_matricizations[i], i)
+                self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
+                self.internal_sampler.update_matricization(self.matricizations[i], i, "left")
 
-            # TODO: This is broken, need to fix it... 
             if i > idx_nonorthogonal:
-                cols = self.ranks[i+1]
+                self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
+                self.internal_sampler.update_matricization(self.matricizations[i], i, "right")
 
     def leverage_sample(self, j, J):
         '''
@@ -133,7 +130,7 @@ class TensorTrain:
         this only draws a sample from the left contraction for now.
         '''
         sample_idxs = np.zeros((j, J), dtype=np.uint64)
-        self.internal_sampler.sample(j, J, sample_idxs)
+        self.internal_sampler.sample(j, J, sample_idxs, "left")
         sample_idxs = sample_idxs.T
 
         return np.array(sample_idxs, dtype=np.uint64) 

@@ -20,6 +20,9 @@ class __attribute__((visibility("hidden"))) TTSampler {
 public:
     vector<unique_ptr<Buffer<double>>> matricizations;
     vector<unique_ptr<PartitionTree>> tree_samplers;
+
+    vector<std::string> orthogonality;
+
     vector<int64_t> dimensions;
     uint64_t N, J, R_max;
     ScratchBuffer scratch;
@@ -45,6 +48,7 @@ public:
             matricizations.emplace_back();
             tree_samplers.emplace_back();
             dimensions.push_back(dim_wrapper[i]);
+            orthogonality.push_back("none");
         }
 
         // Set up independent random streams for different threads.
@@ -84,7 +88,14 @@ public:
 }
     }
 
-    void update_matricization(py::array_t<double> &matricization, uint64_t i) {
+    void update_matricization(py::array_t<double> &matricization, uint64_t i,
+        std::string orthogonality) {
+
+        if(orthogonality != "left" && orthogonality != "right") {
+            throw std::invalid_argument("orthogonality must be one of 'left' or 'right'.");
+        }
+        orthogonality[i] = orthogonality;
+
         matricizations[i].reset(new Buffer<double>(matricization));
         tree_samplers[i].reset(
             new PartitionTree(
@@ -99,13 +110,30 @@ public:
 
     void sample(int64_t exclude,
             uint64_t J,
-            py::array_t<uint64_t> samples_py) {
+            py::array_t<uint64_t> samples_py,
+            std::string orthogonality 
+            ) {
         Buffer<uint64_t> samples(samples_py);
 
         unique_ptr<Buffer<double>> h_old;
         unique_ptr<Buffer<double>> h_new;
 
-        for(int64_t i = (int64_t) exclude-1; i >= 0; i--) { 
+        int64_t start, stop, offset;
+        if(orthogonality == "left") {
+            start = exclude - 1;
+            stop = -1;
+            offset = -1;
+        }
+        else if(orthogonality == "right") {
+            start = exclude + 1;
+            stop = N;
+            offset = 1;
+        }
+        else {
+            throw std::invalid_argument("orthogonality must be one of 'left' or 'right'.");
+        }
+
+        for(int64_t i = start; i != stop; i += offset) { 
             Buffer<double> &mat = *(matricizations[i]); 
             uint64_t left_rank = mat.shape[0] / dimensions[i];
             uint64_t right_rank = mat.shape[1];
@@ -113,6 +141,9 @@ public:
             h_new.reset(new Buffer<double>({J, left_rank}));
 
             if(i == exclude - 1) {
+
+                // ERROR: THE ROW BUFFER OFFSET IS WRONG FOR
+                // RHS-sampling 
                 Buffer<uint64_t> row_buffer({J}, samples(i, 0));
 
                 Buffer<double> squared_mat({mat.shape[1], mat.shape[0]});
