@@ -21,7 +21,10 @@ public:
     vector<unique_ptr<Buffer<double>>> matricizations;
     vector<unique_ptr<PartitionTree>> tree_samplers;
 
-    vector<std::string> orthogonality;
+    // 0 is right-orthogonal
+    // 1 is left-orthogonal
+    // -1 is undefined
+    vector<int> orthogonality;
 
     vector<int64_t> dimensions;
     uint64_t N, J, R_max;
@@ -48,7 +51,7 @@ public:
             matricizations.emplace_back();
             tree_samplers.emplace_back();
             dimensions.push_back(dim_wrapper[i]);
-            orthogonality.push_back("none");
+            orthogonality.push_back(-1);
         }
 
         // Set up independent random streams for different threads.
@@ -88,13 +91,11 @@ public:
 }
     }
 
-    void update_matricization(py::array_t<double> &matricization, uint64_t i,
-        std::string orthogonality) {
+    void update_matricization(py::array_t<double> &matricization, 
+        uint64_t i,
+        int core_orthogonality) {
 
-        if(orthogonality != "left" && orthogonality != "right") {
-            throw std::invalid_argument("orthogonality must be one of 'left' or 'right'.");
-        }
-        orthogonality[i] = orthogonality;
+        orthogonality[i] = core_orthogonality;
 
         matricizations[i].reset(new Buffer<double>(matricization));
         tree_samplers[i].reset(
@@ -111,7 +112,7 @@ public:
     void sample(int64_t exclude,
             uint64_t J,
             py::array_t<uint64_t> samples_py,
-            std::string orthogonality 
+            int orthogonality 
             ) {
         Buffer<uint64_t> samples(samples_py);
 
@@ -119,18 +120,18 @@ public:
         unique_ptr<Buffer<double>> h_new;
 
         int64_t start, stop, offset;
-        if(orthogonality == "left") {
+        if(orthogonality == 1) {
             start = exclude - 1;
             stop = -1;
             offset = -1;
         }
-        else if(orthogonality == "right") {
+        else if(orthogonality == 0) {
             start = exclude + 1;
             stop = N;
             offset = 1;
         }
         else {
-            throw std::invalid_argument("orthogonality must be one of 'left' or 'right'.");
+            throw std::invalid_argument("orthogonality must be either 0 or 1");
         }
 
         for(int64_t i = start; i != stop; i += offset) { 

@@ -118,11 +118,11 @@ class TensorTrain:
         for i in range(self.N):
             if i < idx_nonorthogonal:
                 self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, "left")
+                self.internal_sampler.update_matricization(self.matricizations[i], i, 1)
 
             if i > idx_nonorthogonal:
                 self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, "right")
+                self.internal_sampler.update_matricization(self.matricizations[i], i, 0)
 
     def leverage_sample(self, j, J):
         '''
@@ -130,7 +130,7 @@ class TensorTrain:
         this only draws a sample from the left contraction for now.
         '''
         sample_idxs = np.zeros((j, J), dtype=np.uint64)
-        self.internal_sampler.sample(j, J, sample_idxs, "left")
+        self.internal_sampler.sample(j, J, sample_idxs, 1)
         sample_idxs = sample_idxs.T
 
         return np.array(sample_idxs, dtype=np.uint64) 
