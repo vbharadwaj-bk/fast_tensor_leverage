@@ -91,22 +91,30 @@ public:
 }
     }
 
-    void update_matricization(py::array_t<double> &matricization, 
+    void update_matricization(
+        py::array_t<double> &matricization, 
         uint64_t i,
-        int core_orthogonality) {
+        int core_orthogonality,
+        bool build_tree 
+        ) {
 
         orthogonality[i] = core_orthogonality;
-
         matricizations[i].reset(new Buffer<double>(matricization));
-        tree_samplers[i].reset(
-            new PartitionTree(
-                matricizations[i]->shape[0],
-                (uint32_t) matricizations[i]->shape[1],
-                (uint32_t) J,
-                (uint32_t) matricizations[i]->shape[1],
-                scratch
-        ));
-        tree_samplers[i]->build_tree(*(matricizations[i]));
+
+        if(build_tree) {
+            tree_samplers[i].reset(
+                new PartitionTree(
+                    matricizations[i]->shape[0],
+                    (uint32_t) matricizations[i]->shape[1],
+                    (uint32_t) J,
+                    (uint32_t) matricizations[i]->shape[1],
+                    scratch
+            ));
+            tree_samplers[i]->build_tree(*(matricizations[i]));
+        }
+        else {
+            tree_samplers[i].reset(nullptr);
+        }
     }
 
     void sample(int64_t exclude,
@@ -144,9 +152,6 @@ public:
             }
 
             h_new.reset(new Buffer<double>({J, left_rank}));
-
-            // ERROR: THE ROW BUFFER OFFSET IS WRONG FOR
-            // RHS-sampling
 
             int64_t sample_start_idx;
             if(orth == 1) {

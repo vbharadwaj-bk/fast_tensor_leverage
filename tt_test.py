@@ -118,11 +118,17 @@ class TensorTrain:
         for i in range(self.N):
             if i < idx_nonorthogonal:
                 self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, 1)
+                self.internal_sampler.update_matricization(self.matricizations[i], i, 1, True)
+
+            # The non-orthogonal core is always left-matricized,
+            # but we don't build a tree for it
+            if i == idx_nonorthogonal:
+                self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
+                self.internal_sampler.update_matricization(self.matricizations[i], i, 1, False)
 
             if i > idx_nonorthogonal:
                 self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, 0)
+                self.internal_sampler.update_matricization(self.matricizations[i], i, 0, True)
 
     def leverage_sample(self, j, J, direction):
         '''
@@ -171,7 +177,7 @@ def test_tt_sampling():
     seed = 20
     tt = TensorTrain(dims, ranks, seed)
 
-    test_direction = "left"
+    test_direction = "right"
 
     if test_direction == "left":
         tt.place_into_canonical_form(N-1)
