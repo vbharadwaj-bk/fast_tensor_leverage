@@ -193,7 +193,6 @@ public:
                     } 
                 }
 }
-
             }
             else {
                 draw_samples_internal(i, *h_old, row_buffer, *h_new);

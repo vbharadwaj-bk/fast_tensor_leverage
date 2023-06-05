@@ -137,7 +137,7 @@ class TensorTrain:
         
         self.internal_sampler.sample(j, J, sample_idxs, direction_int)
         sample_idxs = sample_idxs.T
-        return sample_idxs 
+        return np.array(sample_idxs, dtype=np.uint64)
 
     def linearize_idxs_left(self, idxs):
         cols = idxs.shape[1]
@@ -160,10 +160,10 @@ class TensorTrain:
         return idxs @ vec
 
 def test_tt_sampling():
-    I = 5
+    I = 20
     R = 4
     N = 3
-    J = 100000
+    J = 300000
 
     dims = [I] * N 
     ranks = [R] * (N-1) 
@@ -171,33 +171,26 @@ def test_tt_sampling():
     seed = 20
     tt = TensorTrain(dims, ranks, seed)
 
-    # Sweep so that the rightmost core is orthogonal
-    #for i in range(N - 1):
-    #    tt.orthogonalize_push_right(i) 
-
-    left_chain = tt.left_chain_matricize(N-1)
-    right_chain = tt.right_chain_matricize(0)
-
-    normsq_rows_left = la.norm(left_chain, axis=1) ** 2
-    normsq_rows_right = la.norm(right_chain, axis=1) ** 2 
-
-    normsq_rows_normalized_left = normsq_rows_left / np.sum(normsq_rows_left)
-    normsq_rows_normalized_right = normsq_rows_right / np.sum(normsq_rows_right)
-
     test_direction = "left"
 
     if test_direction == "left":
         tt.place_into_canonical_form(N-1)
         tt.build_fast_sampler(N-1, J)
         samples = tt.leverage_sample(j=N-1, J=J, direction="left")
-        true_dist = normsq_rows_normalized_left
         linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
+        left_chain = tt.left_chain_matricize(N-1)
+        normsq_rows_left = la.norm(left_chain, axis=1) ** 2
+        normsq_rows_normalized_left = normsq_rows_left / np.sum(normsq_rows_left)
+        true_dist = normsq_rows_normalized_left
     else:
         tt.place_into_canonical_form(0)
         tt.build_fast_sampler(0, J)
         samples = tt.leverage_sample(j=0, J=J, direction="right")
-        true_dist = normsq_rows_normalized_right
         linear_idxs = np.array(tt.linearize_idxs_right(samples), dtype=np.int64)
+        right_chain = tt.right_chain_matricize(0)
+        normsq_rows_right = la.norm(right_chain, axis=1) ** 2 
+        normsq_rows_normalized_right = normsq_rows_right / np.sum(normsq_rows_right)
+        true_dist = normsq_rows_normalized_right
 
     fig, ax = plt.subplots()
     ax.plot(true_dist, label="True leverage distribution")
