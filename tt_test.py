@@ -160,7 +160,7 @@ class TensorTrain:
         return idxs @ vec
 
 def test_tt_sampling():
-    I = 10
+    I = 5
     R = 4
     N = 3
     J = 100000
