@@ -124,22 +124,35 @@ class TensorTrain:
                 self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
                 self.internal_sampler.update_matricization(self.matricizations[i], i, 0)
 
-    def leverage_sample(self, j, J):
+    def leverage_sample(self, j, J, direction):
         '''
-        TODO: Should allow drawing more than one sample! Also -
-        this only draws a sample from the left contraction for now.
+        TODO: Should allow drawing more than one sample! 
         '''
+        if direction == "left":
+            direction_int = 1
+        elif direction == "right":
+            direction_int = 0
+        
         sample_idxs = np.zeros((j, J), dtype=np.uint64)
-        self.internal_sampler.sample(j, J, sample_idxs, 1)
+        self.internal_sampler.sample(j, J, sample_idxs, direction_int)
         sample_idxs = sample_idxs.T
-
-        return np.array(sample_idxs, dtype=np.uint64) 
+        return sample_idxs 
 
     def linearize_idxs_left(self, idxs):
         cols = idxs.shape[1]
         entry = 1
         vec = np.zeros(cols, dtype=np.uint64) 
         for i in range(cols):
+            vec[i] = entry
+            entry *= self.dims[i]
+
+        return idxs @ np.flip(vec)
+
+    def linearize_idxs_right(self, idxs):
+        cols = idxs.shape[1]
+        entry = 1
+        vec = np.zeros(cols, dtype=np.uint64) 
+        for i in reversed(range(self.N - cols, self.N)):
             vec[i] = entry
             entry *= self.dims[i]
 
@@ -164,20 +177,29 @@ def test_tt_sampling():
     tt.place_into_canonical_form(N-1)
     tt.build_fast_sampler(N-1, J)
     left_chain = tt.left_chain_matricize(N-1)
+    right_chain = tt.right_chain_matricize(0)
 
-    normsq_rows = la.norm(left_chain, axis=1) ** 2
+    normsq_rows_left = la.norm(left_chain, axis=1) ** 2
+    normsq_rows_right = la.norm(right_chain, axis=1) ** 2 
 
-    #normsq_rows = left_chain ** 2
-    normsq_rows_normalized = normsq_rows / np.sum(normsq_rows)
+    normsq_rows_normalized_left = normsq_rows_left / np.sum(normsq_rows_left)
+    normsq_rows_normalized_right = normsq_rows_right / np.sum(normsq_rows_right)
 
-    #samples, rows = tt.leverage_sample_alternate(j=N-1, J=J)
-    samples = tt.leverage_sample(j=N-1, J=J)
+    test_direction = "left"
 
-    linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
+    if test_direction == "left":
+        samples = tt.leverage_sample(j=N-1, J=J, direction="left")
+        true_dist = normsq_rows_normalized_left
+        linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
+    else:
+        samples = tt.leverage_sample(j=0, J=J, direction="right")
+        true_dist = normsq_rows_normalized_right
+        linear_idxs = np.array(tt.linearize_idxs_right(samples), dtype=np.int64)
+
 
     fig, ax = plt.subplots()
-    ax.plot(normsq_rows_normalized, label="True leverage distribution")
-    bins = np.array(np.bincount(linear_idxs, minlength=len(normsq_rows_normalized))) / J
+    ax.plot(true_dist, label="True leverage distribution")
+    bins = np.array(np.bincount(linear_idxs, minlength=len(true_dist))) / J
 
     ax.plot(bins, label="Our sampler")
     ax.set_xlabel("Row Index")
