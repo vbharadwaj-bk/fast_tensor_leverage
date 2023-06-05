@@ -258,8 +258,68 @@ public:
                     h_new(j * left_rank), 1);
         }
 }
+    }
 
+    void evaluate_indices_partial(
+            py::array_t<uint64_t> indices_py,
+            uint32_t j, 
+            int direction,
+            py::array_t<double> result_py
+            ) {
+
+        Buffer<uint64_t> indices(indices_py);
+        Buffer<double> result(result_py);
+
+        uint64_t J = indices.shape[0];
+
+        int start, stop, offset;
+        if(direction == 1) {
+            start = 0;
+            stop = j - 1;
+            offset = 1;
+        }
+        else if(direction == 0){
+            start = N - 1;
+            stop = -1;
+            offset = -1;
+        }
+        else {
+            throw std::invalid_argument("direction must be either 0 or 1");
+        }
+
+        unique_ptr<Buffer<double>> h_old;
+        unique_ptr<Buffer<double>> h_new;
+
+        h_old.reset(new Buffer<double>({J, 1}));
+        std::fill(h_old(), h_old(J), 1.0);
+
+        #pragma omp parallel
+{
+        for(int64_t i = start; i != stop; i += offset) {
+
+            uint64_t left_rank = matricizations[i]->shape[0] / dimensions[i];
+            uint64_t right_rank = matricizations[i]->shape[1];
+            uint64_t mat_size = left_rank * right_rank;
+
+            auto transposition = (direction == orthogonality) ? CblasNoTrans : CblasTrans; 
+
+            #pragma omp for
+            for(uint64_t j = 0; j < J; j++) {
+                uint64_t core_idx = *(indices(j, i));
+                double* mat_ptr = (*(matricizations[i]))(core_idx * mat_size);
+
+                // Need to figure out how to do the CBLAS call correctly...
+                cblas_dgemv(CblasRowMajor, CblasNoTrans, 
+                        left_rank, right_rank, 1.0, 
+                        mat_ptr, right_rank, 
+                        h_old(j * right_rank), 1, 
+                        0.0, 
+                        h_new(j * left_rank), 1);
+            }
+        }
+}
 
     }
+
 };
 
