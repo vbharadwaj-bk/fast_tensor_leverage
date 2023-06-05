@@ -130,10 +130,11 @@ class TensorTrain:
         '''
         if direction == "left":
             direction_int = 1
+            sample_idxs = np.zeros((j, J), dtype=np.uint64)
         elif direction == "right":
+            sample_idxs = np.zeros((self.N - j - 1, J), dtype=np.uint64)
             direction_int = 0
         
-        sample_idxs = np.zeros((j, J), dtype=np.uint64)
         self.internal_sampler.sample(j, J, sample_idxs, direction_int)
         sample_idxs = sample_idxs.T
         return sample_idxs 
@@ -153,16 +154,16 @@ class TensorTrain:
         entry = 1
         vec = np.zeros(cols, dtype=np.uint64) 
         for i in reversed(range(self.N - cols, self.N)):
-            vec[i] = entry
+            vec[i - self.N + cols] = entry
             entry *= self.dims[i]
 
-        return idxs @ np.flip(vec)
+        return idxs @ vec
 
 def test_tt_sampling():
-    I = 20
+    I = 10
     R = 4
     N = 3
-    J = 50000
+    J = 100000
 
     dims = [I] * N 
     ranks = [R] * (N-1) 
@@ -174,8 +175,6 @@ def test_tt_sampling():
     #for i in range(N - 1):
     #    tt.orthogonalize_push_right(i) 
 
-    tt.place_into_canonical_form(N-1)
-    tt.build_fast_sampler(N-1, J)
     left_chain = tt.left_chain_matricize(N-1)
     right_chain = tt.right_chain_matricize(0)
 
@@ -188,14 +187,17 @@ def test_tt_sampling():
     test_direction = "left"
 
     if test_direction == "left":
+        tt.place_into_canonical_form(N-1)
+        tt.build_fast_sampler(N-1, J)
         samples = tt.leverage_sample(j=N-1, J=J, direction="left")
         true_dist = normsq_rows_normalized_left
         linear_idxs = np.array(tt.linearize_idxs_left(samples), dtype=np.int64)
     else:
+        tt.place_into_canonical_form(0)
+        tt.build_fast_sampler(0, J)
         samples = tt.leverage_sample(j=0, J=J, direction="right")
         true_dist = normsq_rows_normalized_right
         linear_idxs = np.array(tt.linearize_idxs_right(samples), dtype=np.int64)
-
 
     fig, ax = plt.subplots()
     ax.plot(true_dist, label="True leverage distribution")

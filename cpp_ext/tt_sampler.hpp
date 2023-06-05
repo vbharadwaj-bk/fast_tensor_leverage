@@ -112,7 +112,7 @@ public:
     void sample(int64_t exclude,
             uint64_t J,
             py::array_t<uint64_t> samples_py,
-            int orthogonality 
+            int orth 
             ) {
         Buffer<uint64_t> samples(samples_py);
 
@@ -120,12 +120,12 @@ public:
         unique_ptr<Buffer<double>> h_new;
 
         int64_t start, stop, offset;
-        if(orthogonality == 1) {
+        if(orth == 1) {
             start = exclude - 1;
             stop = -1;
             offset = -1;
         }
-        else if(orthogonality == 0) {
+        else if(orth == 0) {
             start = exclude + 1;
             stop = N;
             offset = 1;
@@ -139,14 +139,25 @@ public:
             uint64_t left_rank = mat.shape[0] / dimensions[i];
             uint64_t right_rank = mat.shape[1];
 
+            if(orthogonality[i] != orth) {
+                throw std::invalid_argument("orthogonality of matricization does not match");
+            }
+
             h_new.reset(new Buffer<double>({J, left_rank}));
 
-            if(i == exclude - 1) {
+            // ERROR: THE ROW BUFFER OFFSET IS WRONG FOR
+            // RHS-sampling
 
-                // ERROR: THE ROW BUFFER OFFSET IS WRONG FOR
-                // RHS-sampling 
-                Buffer<uint64_t> row_buffer({J}, samples(i, 0));
+            int64_t sample_start_idx;
+            if(orth == 1) {
+                sample_start_idx = i;
+            }
+            else {
+                sample_start_idx = i - start;
+            }
+            Buffer<uint64_t> row_buffer({J}, samples(sample_start_idx, 0));
 
+            if(i == start) {
                 Buffer<double> squared_mat({mat.shape[1], mat.shape[0]});
                 vector<std::discrete_distribution<int>> distributions;
 
@@ -185,7 +196,7 @@ public:
 
             }
             else {
-                draw_samples_internal(i, *h_old, samples, *h_new);
+                draw_samples_internal(i, *h_old, row_buffer, *h_new);
             }
 
             h_old = std::move(h_new);
@@ -200,15 +211,18 @@ public:
         Buffer<double> h_old(h_old_py);
         Buffer<double> h_new(h_new_py);
         Buffer<uint64_t> samples(samples_py);
-        draw_samples_internal(i, h_old, samples, h_new);
+
+        // The row buffer is off, but this function
+        // is deprecated anyway.
+        Buffer<uint64_t> row_buffer({J}, samples(i, 0));
+        draw_samples_internal(i, h_old, row_buffer, h_new);
     }
 
     void draw_samples_internal(uint64_t i, 
             Buffer<double> &h_old, 
-            Buffer<uint64_t> &samples, 
+            Buffer<uint64_t> &row_buffer, 
             Buffer<double> &h_new) {
 
-        Buffer<uint64_t> row_buffer({J}, samples(i, 0));
         Buffer<double> dummy({h_old.shape[0], h_old.shape[1]}); 
 
         fill_buffer_random_draws(scratch.random_draws(), J); 
