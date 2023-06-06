@@ -292,6 +292,7 @@ public:
 
         h_old.reset(new Buffer<double>({J, 1}));
         std::fill(h_old(), h_old(J), 1.0);
+        h_new.reset(nullptr);
 
         #pragma omp parallel
 {
@@ -301,24 +302,44 @@ public:
             uint64_t right_rank = matricizations[i]->shape[1];
             uint64_t mat_size = left_rank * right_rank;
 
-            auto transposition = (direction == orthogonality) ? CblasNoTrans : CblasTrans; 
+            CBLAS_TRANSPOSE transposition;
 
-            #pragma omp for
+            uint64_t h_old_col_count = h_old.shape[1];
+            uint64_t h_new_col_count;
+            if(direction == orthogonality[i]) {
+                transposition = CblasTrans;
+                h_new_col_count = right_rank; 
+            }
+            else {
+                transposition = CblasNoTrans;
+                h_new_col_count = left_rank; 
+            } 
+
+            h_new.reset(new Buffer<double>({J, h_new_col_count}));
+
+            #pragma omp for 
             for(uint64_t j = 0; j < J; j++) {
                 uint64_t core_idx = *(indices(j, i));
                 double* mat_ptr = (*(matricizations[i]))(core_idx * mat_size);
 
-                // Need to figure out how to do the CBLAS call correctly...
-                cblas_dgemv(CblasRowMajor, CblasNoTrans, 
+                cblas_dgemv(CblasRowMajor, transposition, 
                         left_rank, right_rank, 1.0, 
                         mat_ptr, right_rank, 
-                        h_old(j * right_rank), 1, 
+                        h_old(j * h_old_col_count), 1, 
                         0.0, 
-                        h_new(j * left_rank), 1);
+                        h_new(j * h_new_col_count), 1);
             }
+
+            h_old = std::move(h_new);
         }
 }
+        if(result.shape[0] != J || result.shape[1] != h_old.shape[1]) {
+            throw std::invalid_argument("Incorrect result shape!");
+        }
 
+        std::copy(h_old(), 
+                h_old(h_old.shape[0] * h_old.shape[1]), 
+                result());
     }
 
 };

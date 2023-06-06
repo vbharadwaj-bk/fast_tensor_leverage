@@ -11,6 +11,9 @@ def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)
 
 class TensorTrain:
+    '''
+    Core[i] has dimensions (ranks[i], dims[i], ranks[i+1]) 
+    '''
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"): 
         if seed is None:
             rng = np.random.default_rng()
@@ -27,6 +30,7 @@ class TensorTrain:
             assert(False)
 
         self.matricizations = [None] * self.N
+        self.internal_sampler = None
 
     def evaluate_left(self, idxs, upto=-1):
         left = np.ones((1, 1), dtype=np.double)
@@ -45,7 +49,20 @@ class TensorTrain:
         for i in reversed(range(upto+1, self.N)):
             right = right @ self.U[i][:, idxs[i], :].T
 
-        return right 
+        return right
+
+    def evaluate_partial_fast(self, idxs, upto, direction):
+        J = idxs.shape[1]
+        if direction == "left":
+            result = np.zeros((J, self.ranks[upto]), dtype=np.double)
+            direction_int = 1
+        elif direction == "right":
+            result = np.zeros((J, self.ranks[upto+1]), dtype=np.double)
+            direction_int = 0
+        else:
+            assert(False)
+
+        self.internal_sampler.evaluate_indices_partial(idxs, upto, direction_int, result)
 
     def orthogonalize_push_right(self, idx):
         assert(idx < self.N - 1)

@@ -20,7 +20,8 @@ PYBIND11_MODULE(tt_module, m) {
         .def(py::init<uint64_t, uint64_t, uint64_t, py::array_t<uint64_t>>())
         .def("update_matricization", &TTSampler::update_matricization)
         .def("draw_samples", &TTSampler::draw_samples)
-        .def("sample", &TTSampler::sample);
+        .def("sample", &TTSampler::sample)
+        .def("evaluate_indices_partial", &TTSampler::evaluate_indices_partial);
 }
 
 /*
