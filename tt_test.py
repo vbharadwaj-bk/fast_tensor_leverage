@@ -51,19 +51,6 @@ class TensorTrain:
 
         return right
 
-    def evaluate_partial_fast(self, idxs, upto, direction):
-        J = idxs.shape[1]
-        if direction == "left":
-            result = np.zeros((J, self.ranks[upto]), dtype=np.double)
-            direction_int = 1
-        elif direction == "right":
-            result = np.zeros((J, self.ranks[upto+1]), dtype=np.double)
-            direction_int = 0
-        else:
-            assert(False)
-
-        self.internal_sampler.evaluate_indices_partial(idxs, upto, direction_int, result)
-
     def orthogonalize_push_right(self, idx):
         assert(idx < self.N - 1)
         dim = self.dims[idx]
@@ -182,6 +169,20 @@ class TensorTrain:
 
         return idxs @ vec
 
+    def evaluate_partial_fast(self, idxs, upto, direction):
+        J = idxs.shape[0]
+        if direction == "left":
+            result = np.zeros((J, self.ranks[upto]), dtype=np.double)
+            direction_int = 1
+        elif direction == "right":
+            result = np.zeros((J, self.ranks[upto+1]), dtype=np.double)
+            direction_int = 0
+        else:
+            assert(False)
+
+        self.internal_sampler.evaluate_indices_partial(idxs, upto, direction_int, result)
+        return result 
+
 def test_tt_sampling():
     I = 20
     R = 4
@@ -194,7 +195,7 @@ def test_tt_sampling():
     seed = 20
     tt = TensorTrain(dims, ranks, seed)
 
-    test_direction = "right"
+    test_direction = "left"
 
     if test_direction == "left":
         tt.place_into_canonical_form(N-1)
@@ -215,18 +216,28 @@ def test_tt_sampling():
         normsq_rows_normalized_right = normsq_rows_right / np.sum(normsq_rows_right)
         true_dist = normsq_rows_normalized_right
 
-    fig, ax = plt.subplots()
-    ax.plot(true_dist, label="True leverage distribution")
-    bins = np.array(np.bincount(linear_idxs, minlength=len(true_dist))) / J
+    J = 1
+    upto = 2
+    indices = np.zeros((J, N), dtype=np.uint64)
+    indices[0] = [2, 3, 0]
+    partial_evaluation = tt.evaluate_partial_fast(indices, upto=upto, direction="right")
+    ground_truth = tt.evaluate_right(indices[0], upto=upto)
 
-    ax.plot(bins, label="Our sampler")
-    ax.set_xlabel("Row Index")
-    ax.set_ylabel("Probability Density")
-    ax.grid(True)
-    ax.legend()
-    ax.set_title(f"{J} samples drawn by our method vs. true distribution")
+    print(partial_evaluation)
+    print(ground_truth)
 
-    fig.savefig('plotting/distribution_comparison.png')
+
+    #fig, ax = plt.subplots()
+    #ax.plot(true_dist, label="True leverage distribution")
+    #bins = np.array(np.bincount(linear_idxs, minlength=len(true_dist))) / J
+
+    #ax.plot(bins, label="Our sampler")
+    #ax.set_xlabel("Row Index")
+    #ax.set_ylabel("Probability Density")
+    #ax.grid(True)
+    #ax.legend()
+    #ax.set_title(f"{J} samples drawn by our method vs. true distribution")
+    #fig.savefig('plotting/distribution_comparison.png')
 
 if __name__=='__main__':
     #test_tt_functions_small()

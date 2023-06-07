@@ -275,29 +275,27 @@ public:
         int start, stop, offset;
         if(direction == 1) {
             start = 0;
-            stop = j - 1;
+            stop = j;
             offset = 1;
         }
         else if(direction == 0){
             start = N - 1;
-            stop = -1;
+            stop = j;
             offset = -1;
         }
         else {
             throw std::invalid_argument("direction must be either 0 or 1");
         }
 
-        unique_ptr<Buffer<double>> h_old;
-        unique_ptr<Buffer<double>> h_new;
+        Buffer<double> h_old;
+        Buffer<double> h_new;
 
-        h_old.reset(new Buffer<double>({J, 1}));
+        h_old.reset_to_shape({J, 1});
         std::fill(h_old(), h_old(J), 1.0);
-        h_new.reset(nullptr);
 
-        #pragma omp parallel
+        //#pragma omp parallel
 {
         for(int64_t i = start; i != stop; i += offset) {
-
             uint64_t left_rank = matricizations[i]->shape[0] / dimensions[i];
             uint64_t right_rank = matricizations[i]->shape[1];
             uint64_t mat_size = left_rank * right_rank;
@@ -315,9 +313,9 @@ public:
                 h_new_col_count = left_rank; 
             } 
 
-            h_new.reset(new Buffer<double>({J, h_new_col_count}));
+            h_new.reset_to_shape({J, h_new_col_count});
 
-            #pragma omp for 
+            //#pragma omp for 
             for(uint64_t j = 0; j < J; j++) {
                 uint64_t core_idx = *(indices(j, i));
                 double* mat_ptr = (*(matricizations[i]))(core_idx * mat_size);
@@ -330,10 +328,12 @@ public:
                         h_new(j * h_new_col_count), 1);
             }
 
-            h_old = std::move(h_new);
+            h_old.steal_resources(h_new); 
         }
 }
         if(result.shape[0] != J || result.shape[1] != h_old.shape[1]) {
+            cout << "Provided Buffer Shape: " << result.shape[0] << " " << result.shape[1] << endl;
+            cout << "Internal Buffer Shape: " << h_old.shape[0] << " " << h_old.shape[1] << endl;
             throw std::invalid_argument("Incorrect result shape!");
         }
 
