@@ -53,7 +53,7 @@ class TensorTrainALS:
             data_t = np.transpose(self.ground_truth.data, target_modes)
             data_mat = data_t.reshape([-1, data_t.shape[-1]])
             mode_cols = data_mat.shape[1]
-            self.tt_approx.U[i] = (design.T @ data_mat).reshape(mode_cols, left_cols, right_cols).transpose([1, 0, 2]).copy()
+            self.tt_approx.U[i] = (design.T @ data_mat).reshape(left_cols, right_cols, mode_cols).transpose([0, 2, 1]).copy()
 
         for _ in range(num_sweeps):
             for i in range(N - 1):
@@ -80,7 +80,7 @@ if __name__=='__main__':
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
     print(tt_als.compute_exact_fit())
-    tt_als.execute_exact_als_sweeps_slow(2)
+    tt_als.execute_exact_als_sweeps_slow(5)
     print(tt_approx.evaluate_left([0, 0, 0], upto=3))
     print(ground_truth.data[0, 0, 0])
 
