@@ -293,7 +293,7 @@ public:
         h_old.reset_to_shape({J, 1});
         std::fill(h_old(), h_old(J), 1.0);
 
-        //#pragma omp parallel
+        #pragma omp parallel
 {
         for(int64_t i = start; i != stop; i += offset) {
             uint64_t left_rank = matricizations[i]->shape[0] / dimensions[i];
@@ -312,10 +312,13 @@ public:
                 transposition = CblasNoTrans;
                 h_new_col_count = left_rank; 
             } 
-
+            
+            #pragma omp single
+{ 
             h_new.reset_to_shape({J, h_new_col_count});
+}
 
-            //#pragma omp for 
+            #pragma omp for
             for(uint64_t j = 0; j < J; j++) {
                 uint64_t core_idx = *(indices(j, i));
                 double* mat_ptr = (*(matricizations[i]))(core_idx * mat_size);
@@ -327,8 +330,10 @@ public:
                         0.0, 
                         h_new(j * h_new_col_count), 1);
             }
-
+            #pragma omp single
+{
             h_old.steal_resources(h_new); 
+}
         }
 }
         if(result.shape[0] != J || result.shape[1] != h_old.shape[1]) {

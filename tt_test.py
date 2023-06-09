@@ -217,11 +217,11 @@ def test_tt_sampling():
         true_dist = normsq_rows_normalized_right
 
     J = 1
-    upto = 2
+    upto = 3
     indices = np.zeros((J, N), dtype=np.uint64)
     indices[0] = [2, 3, 0]
-    partial_evaluation = tt.evaluate_partial_fast(indices, upto=upto, direction="right")
-    ground_truth = tt.evaluate_right(indices[0], upto=upto)
+    partial_evaluation = tt.evaluate_partial_fast(indices, upto=upto, direction="left")
+    ground_truth = tt.evaluate_left(indices[0], upto=upto)
 
     print(partial_evaluation)
     print(ground_truth)
