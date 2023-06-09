@@ -86,7 +86,7 @@ class TensorTrain:
 
     def left_chain_matricize(self, j):
         if j == 0:
-            contraction = np.ones(1, 1)
+            contraction = np.ones((1, 1), dtype=np.double)
         else:
             contraction = self.U[0]
 
@@ -97,7 +97,7 @@ class TensorTrain:
 
     def right_chain_matricize(self, j):
         if j == self.N-1:
-            contraction = np.ones(1, 1)
+            contraction = np.ones((1, 1), dtype=np.double)
         else:
             contraction = self.U[j+1]
 
