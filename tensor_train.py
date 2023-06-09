@@ -184,4 +184,5 @@ class TensorTrain:
             assert(False)
 
         self.internal_sampler.evaluate_indices_partial(idxs, upto, direction_int, result)
-        return result 
+        return result
+

@@ -60,6 +60,7 @@ class TensorTrainALS:
                 optimize_core(i)
                 tt_approx.orthogonalize_push_right(i)
                 print(tt_als.compute_exact_fit())
+                exit(1)
 
             for i in range(N - 1, 0, -1):
                 optimize_core(i)
@@ -72,10 +73,12 @@ if __name__=='__main__':
     N = 3
 
     data = np.ones([I] * N) * 5
-    ground_truth = PyDenseTensor(data)
     tt_approx = TensorTrain([I] * N, [R] * (N - 1))
+    ground_truth = PyDenseTensor(tt_approx.materialize_dense()) 
+
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
-    sweeps = 2
-    tt_als.execute_exact_als_sweeps_slow(sweeps)
+    tt_als.execute_exact_als_sweeps_slow(10)
+    print(tt_approx.evaluate_left([0, 0, 0], upto=3))
+
