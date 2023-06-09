@@ -60,7 +60,7 @@ class TensorTrainALS:
                 optimize_core(i)
                 tt_approx.orthogonalize_push_right(i)
                 print(tt_als.compute_exact_fit())
-                exit(1)
+                #exit(1)
 
             for i in range(N - 1, 0, -1):
                 optimize_core(i)
@@ -79,6 +79,8 @@ if __name__=='__main__':
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
-    tt_als.execute_exact_als_sweeps_slow(10)
+    print(tt_als.compute_exact_fit())
+    tt_als.execute_exact_als_sweeps_slow(2)
     print(tt_approx.evaluate_left([0, 0, 0], upto=3))
+    print(ground_truth.data[0, 0, 0])
 
