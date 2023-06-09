@@ -18,7 +18,7 @@ class TensorTrainALS:
         else:
             raise NotImplementedError
 
-    def execute_exact_als_sweep_slow(self):
+    def execute_exact_als_sweeps_slow(self, num_sweeps):
         '''
         Assumes that the TT is in orthogonal
         form with core 0 non-orthogonal. This is a slow
@@ -31,10 +31,19 @@ class TensorTrainALS:
 
         N = self.tt_approx.N
 
-        for i in range(N - 1):
+        def optimize_core(i):
             left_chain = self.tt_approx.left_chain_matricize(i)
             right_chain = self.tt_approx.right_chain_matricize(i)
-            left_cols, right_cols = left_chain.shape[1], right_chain.shape[1]
+
+            if len(left_chain.shape) == 0:
+                left_cols = 1
+            else:
+                left_cols = left_chain.shape[1]
+
+            if len(right_chain.shape) == 0:
+                right_cols = 1
+            else:
+                right_cols = right_chain.shape[1] 
 
             design = np.kron(left_chain, right_chain)
             target_modes = list(range(N))
@@ -45,12 +54,17 @@ class TensorTrainALS:
             data_mat = data_t.reshape([-1, data_t.shape[-1]])
             mode_cols = data_mat.shape[1]
             self.tt_approx.U[i] = (design.T @ data_mat).reshape(mode_cols, left_cols, right_cols).transpose([1, 0, 2]).copy()
-            print(self.tt_approx.U[i].shape)
-            exit(1)
 
-            tt_approx.orthogonalize_push_right(self, i)
+        for _ in range(num_sweeps):
+            for i in range(N - 1):
+                optimize_core(i)
+                tt_approx.orthogonalize_push_right(i)
+                print(tt_als.compute_exact_fit())
 
-
+            for i in range(N - 1, 0, -1):
+                optimize_core(i)
+                tt_approx.orthogonalize_push_left(i)
+                print(tt_als.compute_exact_fit())
 
 if __name__=='__main__': 
     I = 20
@@ -63,5 +77,5 @@ if __name__=='__main__':
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
-    tt_als.execute_exact_als_sweep_slow()
-    print(tt_als.compute_exact_fit())
+    sweeps = 2
+    tt_als.execute_exact_als_sweeps_slow(sweeps)
