@@ -96,14 +96,12 @@ class TensorTrainALS:
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
             design_gram_matrix = design.T @ design
 
-            design_t_times_obs = np.zeros((design.shape[1], tt_approx.dims[j]), dtype=np.double)
-            self.ground_truth.execute_downsampled_mttkrp_py(
+            design_t_times_obs = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
+            self.ground_truth.ten.execute_downsampled_mttkrp(
                     samples,
                     design,
                     j,
-                    design_t_times_obs)
-            
-            print(design_t_times_obs)
+                    design_t_times_obs) 
 
         for _ in range(num_sweeps):
             for j in range(N - 1):
