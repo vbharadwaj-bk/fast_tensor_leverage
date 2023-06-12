@@ -113,6 +113,18 @@ class TensorTrain:
         '''
         tensor_vec = self.left_chain_matricize(self.N) 
         return tensor_vec.reshape(self.dims)
+    
+    def update_internal_sampler(self, i, direction, rebuild_tree):
+        '''
+        Updates the matricization associated with this core.
+        '''
+        if direction == "left":
+            self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
+            self.internal_sampler.update_matricization(self.matricizations[i], i, 1, rebuild_tree)
+        else:
+            self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
+            self.internal_sampler.update_matricization(self.matricizations[i], i, 0, rebuild_tree)
+
 
     def build_fast_sampler(self, idx_nonorthogonal, J):
         '''

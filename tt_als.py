@@ -60,11 +60,37 @@ class TensorTrainALS:
                 optimize_core(i)
                 tt_approx.orthogonalize_push_right(i)
                 print(tt_als.compute_exact_fit())
-                #exit(1)
 
             for i in range(N - 1, 0, -1):
                 optimize_core(i)
                 tt_approx.orthogonalize_push_left(i)
+                print(tt_als.compute_exact_fit())
+
+    def execute_randomized_als_sweeps(self, num_sweeps, J):
+        print("Starting randomized sweeps!")
+        N = self.tt_approx.N
+        def optimize_core(j):
+            print(j)
+            samples = np.zeros((J, N), dtype=np.uint64)
+            left_rows = None
+            right_rows = None
+            if j > 0: 
+                left_samples = tt_approx.leverage_sample(j, J, "left")
+                samples[:, :j] = left_samples
+
+            if j < N - 1:
+                right_samples = tt_approx.leverage_sample(j, J, "right")
+                samples[:, j+1:] = right_samples 
+
+        for _ in range(num_sweeps):
+            for j in range(N - 1):
+                optimize_core(j)
+                tt_approx.orthogonalize_push_right(j)
+                print(tt_als.compute_exact_fit())
+
+            for j in range(N - 1, 0, -1):
+                optimize_core(j)
+                tt_approx.orthogonalize_push_left(j)
                 print(tt_als.compute_exact_fit())
 
 if __name__=='__main__': 
@@ -80,7 +106,8 @@ if __name__=='__main__':
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
     print(tt_als.compute_exact_fit())
-    tt_als.execute_exact_als_sweeps_slow(5)
-    print(tt_approx.evaluate_left([0, 0, 0], upto=3))
-    print(ground_truth.data[0, 0, 0])
+    #tt_als.execute_exact_als_sweeps_slow(5)
 
+    J = 5
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J)

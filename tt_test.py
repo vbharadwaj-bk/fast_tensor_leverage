@@ -48,7 +48,6 @@ def test_tt_sampling():
     print(partial_evaluation)
     print(ground_truth)
 
-
     #fig, ax = plt.subplots()
     #ax.plot(true_dist, label="True leverage distribution")
     #bins = np.array(np.bincount(linear_idxs, minlength=len(true_dist))) / J
