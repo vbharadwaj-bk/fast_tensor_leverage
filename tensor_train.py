@@ -116,15 +116,17 @@ class TensorTrain:
     
     def update_internal_sampler(self, i, direction, rebuild_tree):
         '''
-        Updates the matricization associated with this core.
+        Updates the matricization associated with a given core. The change
+        is propagated to the internal sampler. 
         '''
         if direction == "left":
             self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
             self.internal_sampler.update_matricization(self.matricizations[i], i, 1, rebuild_tree)
-        else:
+        elif direction == "right":
             self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
             self.internal_sampler.update_matricization(self.matricizations[i], i, 0, rebuild_tree)
-
+        else:
+            raise(ValueError("Invalid direction!"))
 
     def build_fast_sampler(self, idx_nonorthogonal, J):
         '''
@@ -139,18 +141,16 @@ class TensorTrain:
 
         for i in range(self.N):
             if i < idx_nonorthogonal:
-                self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, 1, True)
+                self.update_internal_sampler(i, "left", True)
 
             # The non-orthogonal core is always left-matricized,
             # but we don't build a tree for it
             if i == idx_nonorthogonal:
-                self.matricizations[i] = self.U[i].view().transpose([1, 0, 2]).reshape(self.ranks[i] * self.dims[i], self.ranks[i+1]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, 1, False)
+                self.update_internal_sampler(i, "left", False)
 
             if i > idx_nonorthogonal:
-                self.matricizations[i] = self.U[i].view().transpose([1, 2, 0]).reshape(self.ranks[i+1] * self.dims[i], self.ranks[i]).copy()
-                self.internal_sampler.update_matricization(self.matricizations[i], i, 0, True)
+                self.update_internal_sampler(i, "right", True)
+
 
     def leverage_sample(self, j, J, direction):
         if direction == "left":
