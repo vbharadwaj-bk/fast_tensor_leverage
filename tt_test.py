@@ -8,8 +8,8 @@ from reference_implementation.segment_tree import *
 def test_tt_sampling():
     I = 20
     R = 4
-    N = 3
-    J = 300000
+    N = 2
+    J = 10000
 
     dims = [I] * N 
     ranks = [R] * (N-1) 
@@ -38,27 +38,26 @@ def test_tt_sampling():
         normsq_rows_normalized_right = normsq_rows_right / np.sum(normsq_rows_right)
         true_dist = normsq_rows_normalized_right
 
-    J = 1
-    upto = 3
-    indices = np.zeros((J, N), dtype=np.uint64)
-    indices[0] = [2, 3, 0]
-    partial_evaluation = tt.evaluate_partial_fast(indices, upto=upto, direction="left")
-    ground_truth = tt.evaluate_left(indices[0], upto=upto)
+    #J = 1
+    #upto = 3
+    #indices = np.zeros((J, N), dtype=np.uint64)
+    #indices[0] = [2, 3, 0]
+    #partial_evaluation = tt.evaluate_partial_fast(indices, upto=upto, direction="left")
+    #ground_truth = tt.evaluate_left(indices[0], upto=upto)
+    #print(partial_evaluation)
+    #print(ground_truth)
 
-    print(partial_evaluation)
-    print(ground_truth)
+    fig, ax = plt.subplots()
+    ax.plot(true_dist, label="True leverage distribution")
+    bins = np.array(np.bincount(linear_idxs, minlength=len(true_dist))) / J
 
-    #fig, ax = plt.subplots()
-    #ax.plot(true_dist, label="True leverage distribution")
-    #bins = np.array(np.bincount(linear_idxs, minlength=len(true_dist))) / J
-
-    #ax.plot(bins, label="Our sampler")
-    #ax.set_xlabel("Row Index")
-    #ax.set_ylabel("Probability Density")
-    #ax.grid(True)
-    #ax.legend()
-    #ax.set_title(f"{J} samples drawn by our method vs. true distribution")
-    #fig.savefig('plotting/distribution_comparison.png')
+    ax.plot(bins, label="Our sampler")
+    ax.set_xlabel("Row Index")
+    ax.set_ylabel("Probability Density")
+    ax.grid(True)
+    ax.legend()
+    ax.set_title(f"{J} samples drawn by our method vs. true distribution")
+    fig.savefig('plotting/distribution_comparison.png')
 
 if __name__=='__main__':
     #test_tt_functions_small()
