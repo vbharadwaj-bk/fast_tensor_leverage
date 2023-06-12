@@ -53,8 +53,8 @@ class TensorTrainALS:
 
             data_t = np.transpose(self.ground_truth.data, target_modes)
             data_mat = data_t.reshape([-1, data_t.shape[-1]])
-            mode_cols = data_mat.shape[1]
-            tt_approx.U[i] = (design.T @ data_mat).reshape(left_cols, right_cols, mode_cols).transpose([0, 2, 1]).copy()
+            mode_size = data_mat.shape[1]
+            tt_approx.U[i] = (design.T @ data_mat).reshape(left_cols, right_cols, mode_size).transpose([0, 2, 1]).copy()
 
         for _ in range(num_sweeps):
             for i in range(N - 1):
@@ -68,7 +68,7 @@ class TensorTrainALS:
                 print(tt_als.compute_exact_fit())
 
     def execute_randomized_als_sweeps(self, num_sweeps, J):
-        print("Starting randomized sweeps!")
+        print("Starting randomized ALS!")
         tt_approx = self.tt_approx
         N = tt_approx.N
         def optimize_core(j):
@@ -79,10 +79,16 @@ class TensorTrainALS:
                 left_samples = tt_approx.leverage_sample(j, J, "left")
                 samples[:, :j] = left_samples
                 left_rows = tt_approx.evaluate_partial_fast(samples, j, "left")
+                left_cols = left_rows.shape[1]
+            else:
+                left_cols = 1
             if j < N - 1:
                 right_samples = tt_approx.leverage_sample(j, J, "right")
                 samples[:, j+1:] = right_samples
                 right_rows = tt_approx.evaluate_partial_fast(samples, j, "right")
+                right_cols = right_rows.shape[1]
+            else:
+                right_cols = 1
 
             if left_rows is None:
                 design = right_rows
@@ -101,7 +107,10 @@ class TensorTrainALS:
                     samples,
                     design,
                     j,
-                    design_t_times_obs) 
+                    design_t_times_obs)
+            
+            # For now, we will not pre-multiply by PINV(gram)
+            tt_approx.U[j] = design_t_times_obs.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
         for _ in range(num_sweeps):
             for j in range(N - 1):
