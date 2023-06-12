@@ -189,7 +189,7 @@ public:
                 for(uint64_t j = 0; j < J; j++) {
                     int random_col = col_selector(par_gen[thread_id]);
                     uint64_t row_idx = distributions[random_col](par_gen[thread_id]);
-                    row_idx /= right_rank;
+                    row_idx /= left_rank;
                     row_buffer[j] = row_idx;
 
                     uint64_t offset = row_idx * left_rank * right_rank;
