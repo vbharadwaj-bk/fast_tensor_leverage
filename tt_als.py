@@ -99,8 +99,12 @@ class TensorTrainALS:
                 design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
 
             weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
+
+            # We do this in two steps so we can (potentially) compute the
+            # gram matrix 
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
-            design_gram_matrix = design.T @ design
+            #design_gram = design.T @ design
+            design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
             design_t_times_obs = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
             self.ground_truth.ten.execute_downsampled_mttkrp(
@@ -108,8 +112,7 @@ class TensorTrainALS:
                     design,
                     j,
                     design_t_times_obs)
-            
-            # For now, we will not pre-multiply by PINV(gram)
+
             tt_approx.U[j] = design_t_times_obs.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
         for _ in range(num_sweeps):
@@ -140,6 +143,6 @@ if __name__=='__main__':
     print(tt_als.compute_exact_fit())
     #tt_als.execute_exact_als_sweeps_slow(5)
 
-    J = 50000
+    J = 20000 
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=1, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J)
