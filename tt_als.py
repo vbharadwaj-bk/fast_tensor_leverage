@@ -79,30 +79,10 @@ class TensorTrainALS:
                 left_samples = tt_approx.leverage_sample(j, J, "left")
                 samples[:, :j] = left_samples
                 left_rows = tt_approx.evaluate_partial_fast(samples, j, "left")
-
-                weights = la.norm(left_rows, axis=1) ** 2 / left_rows.shape[1] * J
-                design = np.einsum("ij,i->ij", left_rows, np.sqrt(1.0 / weights))
-                design_gram_matrix = design.T @ design
-
-                if j == 1:
-                    print(f"Left Test: {j}")
-                    print(design_gram_matrix)
-
-
             if j < N - 1:
                 right_samples = tt_approx.leverage_sample(j, J, "right")
                 samples[:, j+1:] = right_samples
                 right_rows = tt_approx.evaluate_partial_fast(samples, j, "right")
-
-                weights = la.norm(right_rows, axis=1) ** 2 / right_rows.shape[1] * J
-                design = np.einsum("ij,i->ij", right_rows, np.sqrt(1.0 / weights))
-                design_gram_matrix = design.T @ design
-
-                if j == 1:
-                    print(right_rows)
-                    print(f"Right Test: {j}")
-                    print(design_gram_matrix)
-
 
             if left_rows is None:
                 design = right_rows
@@ -115,13 +95,15 @@ class TensorTrainALS:
             weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
             design_gram_matrix = design.T @ design
-            
+
             design_t_times_obs = np.zeros((design.shape[1], tt_approx.dims[j]), dtype=np.double)
-            #self.ground_truth.execute_downsampled_mttkrp_py(
-            #        samples,
-            #        design,
-            #        j,
-            #        design_t_times_obs)
+            self.ground_truth.execute_downsampled_mttkrp_py(
+                    samples,
+                    design,
+                    j,
+                    design_t_times_obs)
+            
+            print(design_t_times_obs)
 
         for _ in range(num_sweeps):
             for j in range(N - 1):
@@ -151,6 +133,6 @@ if __name__=='__main__':
     print(tt_als.compute_exact_fit())
     #tt_als.execute_exact_als_sweeps_slow(5)
 
-    J = 10000
+    J = 50000
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=1, J=J)
