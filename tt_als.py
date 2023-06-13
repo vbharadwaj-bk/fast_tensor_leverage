@@ -103,39 +103,41 @@ class TensorTrainALS:
             # We do this in two steps so we can (potentially) compute the
             # gram matrix 
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
-            #design_gram = design.T @ design
+            design_gram = design.T @ design
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
-            design_t_times_obs = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
+            result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
             self.ground_truth.ten.execute_downsampled_mttkrp(
                     samples,
                     design,
                     j,
-                    design_t_times_obs)
+                    result)
 
-            tt_approx.U[j] = design_t_times_obs.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
+            result = result @ la.pinv(design_gram) 
+            tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
         for _ in range(num_sweeps):
             for j in range(N - 1):
                 optimize_core(j)
                 tt_approx.orthogonalize_push_right(j)
                 tt_approx.update_internal_sampler(j, "left", True)
-                print(tt_als.compute_exact_fit())
 
             for j in range(N - 1, 0, -1):
                 optimize_core(j)
                 tt_approx.orthogonalize_push_left(j)
                 tt_approx.update_internal_sampler(j, "right", True)
-                print(tt_als.compute_exact_fit())
+
+            print(tt_als.compute_exact_fit())
 
 if __name__=='__main__': 
-    I = 20
-    R = 4
-    N = 3
+    I = 100
+    R = 8
+    N = 4
 
     data = np.ones([I] * N) * 5
     tt_approx = TensorTrain([I] * N, [R] * (N - 1))
-    ground_truth = PyDenseTensor(tt_approx.materialize_dense()) 
+    tt_approx_GT = TensorTrain([I] * N, [R] * (N - 1))
+    ground_truth = PyDenseTensor(tt_approx_GT.materialize_dense()) 
 
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
@@ -143,6 +145,6 @@ if __name__=='__main__':
     print(tt_als.compute_exact_fit())
     #tt_als.execute_exact_als_sweeps_slow(5)
 
-    J = 20000 
+    J = 1000
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J)
