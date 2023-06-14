@@ -13,7 +13,6 @@ class __attribute__((visibility("hidden"))) BlackBoxTensor : public Tensor {
 public:
     vector<uint64_t> dims;
     uint64_t max_rhs_rows;
-    Buffer<double>* rhs_buf;
 
     virtual void preprocess(Buffer<uint64_t> &samples, uint64_t j) = 0;
     virtual void materialize_rhs(Buffer<uint64_t> &samples, uint64_t j, Buffer<double> &rhs_buf) = 0; 
@@ -28,9 +27,12 @@ public:
         uint64_t N = dims.size();
         uint64_t num_samples = samples_transpose.shape[0];
 
-        rhs_buf = new Buffer<double>({max_rhs_rows, dims[j]});
-        Buffer<double> &temp_buf = (*rhs_buf);
+        Buffer<double> rhs_buf({max_rhs_rows, dims[j]});
         preprocess(samples_transpose, j);
+
+        if(result.shape[0] != dims[j] || result.shape[1] != lhs.shape[1]) {
+            throw runtime_error("Result buffer has incorrect shape");
+        }
 
         // Result is a dims[j] x R matrix
         std::fill(result(), result(dims[j], 0), 0.0);
@@ -44,7 +46,7 @@ public:
                 {rows, N},
                 samples_transpose(i * N));
 
-            materialize_rhs(sample_view, j, *rhs_buf);
+            materialize_rhs(sample_view, j, rhs_buf);
 
             cblas_dgemm(
                 CblasRowMajor,
@@ -54,7 +56,7 @@ public:
                 (uint32_t) lhs.shape[1],
                 (uint32_t) rows,
                 1.0,
-                temp_buf(),
+                rhs_buf(),
                 (uint32_t) dims[j],
                 lhs(i, 0),
                 (uint32_t) lhs.shape[1],
@@ -63,6 +65,5 @@ public:
                 (uint32_t) lhs.shape[1]
             );
         }
-        delete rhs_buf; 
     }
 };

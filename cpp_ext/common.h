@@ -45,7 +45,6 @@ public:
     }
 };
 
-//#pragma GCC visibility push(hidden)
 template<typename T>
 class __attribute__((visibility("hidden"))) Buffer {
     py::buffer_info info;
@@ -53,6 +52,7 @@ class __attribute__((visibility("hidden"))) Buffer {
     T* ptr;
     uint64_t dim0;
     uint64_t dim1;
+    bool initialized;
 
 public:
     vector<uint64_t> shape;
@@ -63,38 +63,59 @@ public:
             ptr(std::move(other.ptr)),
             dim0(other.dim0),
             dim1(other.dim1),
+            initialized(other.initialized),
             shape(std::move(other.shape))
     {}
     Buffer& operator=(const Buffer& other) = default;
 
-    Buffer(py::array_t<T> arr_py) {
+    void steal_resources(Buffer& other) {
+        info = std::move(other.info); 
+        managed_ptr = std::move(other.managed_ptr);
+        ptr = other.ptr;
+        dim0 = other.dim0;
+        dim1 = other.dim1;
+        shape = other.shape;
+        initialized = other.initialized;
+    }
+
+    Buffer(py::array_t<T> arr_py, bool copy) {
         info = arr_py.request();
-        ptr = static_cast<T*>(info.ptr);
 
         if(info.ndim == 2) {
             dim0 = info.shape[0];
             dim1 = info.shape[1];
         }
+        else if(info.ndim == 1) {
+            dim0 = info.shape[0];
+            dim1 = 1;
+        }
 
+        uint64_t buffer_size = 1;
         for(int64_t i = 0; i < info.ndim; i++) {
             shape.push_back(info.shape[i]);
+            buffer_size *= info.shape[i];
         }
+
+        if(! copy) {
+            ptr = static_cast<T*>(info.ptr);
+        }
+        else {
+            managed_ptr.reset(new T[buffer_size]);
+            ptr = managed_ptr.get();
+            std::copy(static_cast<T*>(info.ptr), static_cast<T*>(info.ptr) + info.size, ptr);
+        }
+        initialized = true;
+    }
+
+    Buffer(py::array_t<T> arr_py) :
+        Buffer(arr_py, false)
+    {
+        // Default behavior is a thin alias of the C++ array 
     }
 
     Buffer(initializer_list<uint64_t> args) {
-        uint64_t buffer_size = 1;
-        for(uint64_t i : args) {
-            buffer_size *= i;
-            shape.push_back(i);
-        }
-
-        if(args.size() == 2) {
-            dim0 = shape[0];
-            dim1 = shape[1];
-        }
-
-        managed_ptr.reset(new T[buffer_size]);
-        ptr = managed_ptr.get();
+        initialized = false;
+        reset_to_shape(args);
     }
 
     Buffer(initializer_list<uint64_t> args, T* ptr) {
@@ -108,6 +129,29 @@ public:
         }
 
         this->ptr = ptr;
+        initialized = true;
+    }
+
+    Buffer() {
+        initialized = false;
+    }
+
+    void reset_to_shape(initializer_list<uint64_t> args) {
+        shape.clear();
+        uint64_t buffer_size = 1;
+        for(uint64_t i : args) {
+            buffer_size *= i;
+            shape.push_back(i);
+        }
+
+        if(args.size() == 2) {
+            dim0 = shape[0];
+            dim1 = shape[1];
+        }
+
+        managed_ptr.reset(new T[buffer_size]);
+        ptr = managed_ptr.get();
+        initialized = true;
     }
 
     T* operator()() {
@@ -127,14 +171,34 @@ public:
         return ptr[offset];
     }
 
-    void steal_resources(Buffer& other) {
-            info = std::move(other.info); 
-            managed_ptr = std::move(other.managed_ptr);
-            ptr = other.ptr;
-            dim0 = other.dim0;
-            dim1 = other.dim1;
-            shape = other.shape;
+    void print() {
+        cout << "------------------------" << endl;
+        if(shape.size() == 1) {
+            cout << "[ " << " "; 
+            for(uint64_t i = 0; i < shape[0]; i++) {
+                cout << ptr[i] << " ";
+            }
+            cout << "]" << endl;
+            return;
         }
+        else if(shape.size() == 2) {
+            for(uint64_t i = 0; i < shape[0]; i++) {
+                cout << "[ ";
+                for(uint64_t j = 0; j < shape[1]; j++) {
+                    cout << ptr[i * shape[1] + j] << " ";
+                }
+                cout << "]" << endl; 
+            }
+        }
+        else {
+            cout << "Cannot print buffer with shape: ";
+            for(uint64_t i : shape) {
+                cout << i << " ";
+            }
+            cout << endl;
+        }
+        cout << "------------------------" << endl;
+    }
 
     ~Buffer() {}
 };

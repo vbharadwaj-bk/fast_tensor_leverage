@@ -95,13 +95,6 @@ class PySparseTensor:
         self.ten = SparseTensor(self.tensor_idxs, self.values, lookup) 
         print("Finished loading sparse tensor...")
 
-class PyDenseTensor:
-    def __init__(self, data):
-        if np.issubdtype(data.dtype, np.float32):
-            self.ten = DenseTensor_float(data, 10000) 
-        elif np.issubdtype(data.dtype, np.float64):
-            self.ten = DenseTensor_double(data, 10000) 
-
 #from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
 
 #@jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)

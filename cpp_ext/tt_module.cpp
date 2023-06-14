@@ -8,6 +8,9 @@
 
 #include "common.h"
 #include "tt_sampler.hpp"
+#include "tensor.hpp"
+#include "black_box_tensor.hpp"
+#include "dense_tensor.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -20,7 +23,15 @@ PYBIND11_MODULE(tt_module, m) {
         .def(py::init<uint64_t, uint64_t, uint64_t, py::array_t<uint64_t>>())
         .def("update_matricization", &TTSampler::update_matricization)
         .def("draw_samples", &TTSampler::draw_samples)
-        .def("sample", &TTSampler::sample);
+        .def("sample", &TTSampler::sample)
+        .def("evaluate_indices_partial", &TTSampler::evaluate_indices_partial);
+    py::class_<Tensor>(m, "Tensor")
+        .def("execute_downsampled_mttkrp", &Tensor::execute_downsampled_mttkrp_py);
+    py::class_<BlackBoxTensor, Tensor>(m, "BlackBoxTensor"); 
+    py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")
+        .def(py::init<py::array_t<double>, uint64_t>());
+    py::class_<DenseTensor<float>, BlackBoxTensor>(m, "DenseTensor_float")
+        .def(py::init<py::array_t<float>, uint64_t>());
 }
 
 /*
@@ -69,6 +80,9 @@ cfg['extra_compile_args'] = compile_args
 cfg['extra_link_args'] = link_args 
 cfg['dependencies'] = [ 'common.h', 
                         'tt_sampler.hpp',
+                        'tensor.hpp',
+                        'black_box_tensor.hpp',
+                        'dense_tensor.hpp',
                         '../config.json'
                         ] 
 %>

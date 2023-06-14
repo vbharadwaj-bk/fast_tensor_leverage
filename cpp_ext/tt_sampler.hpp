@@ -91,28 +91,36 @@ public:
 }
     }
 
-    void update_matricization(py::array_t<double> &matricization, 
+    void update_matricization(
+        py::array_t<double> &matricization, 
         uint64_t i,
-        int core_orthogonality) {
+        int core_orthogonality,
+        bool build_tree 
+        ) {
 
         orthogonality[i] = core_orthogonality;
-
         matricizations[i].reset(new Buffer<double>(matricization));
-        tree_samplers[i].reset(
-            new PartitionTree(
-                matricizations[i]->shape[0],
-                (uint32_t) matricizations[i]->shape[1],
-                (uint32_t) J,
-                (uint32_t) matricizations[i]->shape[1],
-                scratch
-        ));
-        tree_samplers[i]->build_tree(*(matricizations[i]));
+
+        if(build_tree) {
+            tree_samplers[i].reset(
+                new PartitionTree(
+                    matricizations[i]->shape[0],
+                    (uint32_t) matricizations[i]->shape[1],
+                    (uint32_t) J,
+                    (uint32_t) matricizations[i]->shape[1],
+                    scratch
+            ));
+            tree_samplers[i]->build_tree(*(matricizations[i]));
+        }
+        else {
+            tree_samplers[i].reset(nullptr);
+        }
     }
 
     void sample(int64_t exclude,
             uint64_t J,
             py::array_t<uint64_t> samples_py,
-            int orthogonality 
+            int orth 
             ) {
         Buffer<uint64_t> samples(samples_py);
 
@@ -120,12 +128,12 @@ public:
         unique_ptr<Buffer<double>> h_new;
 
         int64_t start, stop, offset;
-        if(orthogonality == 1) {
+        if(orth == 1) {
             start = exclude - 1;
             stop = -1;
             offset = -1;
         }
-        else if(orthogonality == 0) {
+        else if(orth == 0) {
             start = exclude + 1;
             stop = N;
             offset = 1;
@@ -139,14 +147,22 @@ public:
             uint64_t left_rank = mat.shape[0] / dimensions[i];
             uint64_t right_rank = mat.shape[1];
 
+            if(orthogonality[i] != orth) {
+                throw std::invalid_argument("orthogonality of matricization does not match");
+            }
+
             h_new.reset(new Buffer<double>({J, left_rank}));
 
-            if(i == exclude - 1) {
+            int64_t sample_start_idx;
+            if(orth == 1) {
+                sample_start_idx = i;
+            }
+            else {
+                sample_start_idx = i - start;
+            }
+            Buffer<uint64_t> row_buffer({J}, samples(sample_start_idx, 0));
 
-                // ERROR: THE ROW BUFFER OFFSET IS WRONG FOR
-                // RHS-sampling 
-                Buffer<uint64_t> row_buffer({J}, samples(i, 0));
-
+            if(i == start) {
                 Buffer<double> squared_mat({mat.shape[1], mat.shape[0]});
                 vector<std::discrete_distribution<int>> distributions;
 
@@ -173,7 +189,7 @@ public:
                 for(uint64_t j = 0; j < J; j++) {
                     int random_col = col_selector(par_gen[thread_id]);
                     uint64_t row_idx = distributions[random_col](par_gen[thread_id]);
-                    row_idx /= right_rank;
+                    row_idx /= left_rank;
                     row_buffer[j] = row_idx;
 
                     uint64_t offset = row_idx * left_rank * right_rank;
@@ -182,10 +198,9 @@ public:
                     } 
                 }
 }
-
             }
             else {
-                draw_samples_internal(i, *h_old, samples, *h_new);
+                draw_samples_internal(i, *h_old, row_buffer, *h_new);
             }
 
             h_old = std::move(h_new);
@@ -200,15 +215,18 @@ public:
         Buffer<double> h_old(h_old_py);
         Buffer<double> h_new(h_new_py);
         Buffer<uint64_t> samples(samples_py);
-        draw_samples_internal(i, h_old, samples, h_new);
+
+        // The row buffer is off, but this function
+        // is deprecated anyway.
+        Buffer<uint64_t> row_buffer({J}, samples(i, 0));
+        draw_samples_internal(i, h_old, row_buffer, h_new);
     }
 
     void draw_samples_internal(uint64_t i, 
             Buffer<double> &h_old, 
-            Buffer<uint64_t> &samples, 
+            Buffer<uint64_t> &row_buffer, 
             Buffer<double> &h_new) {
 
-        Buffer<uint64_t> row_buffer({J}, samples(i, 0));
         Buffer<double> dummy({h_old.shape[0], h_old.shape[1]}); 
 
         fill_buffer_random_draws(scratch.random_draws(), J); 
@@ -240,8 +258,94 @@ public:
                     h_new(j * left_rank), 1);
         }
 }
-
-
     }
+
+    void evaluate_indices_partial(
+            py::array_t<uint64_t> indices_py,
+            uint32_t j, 
+            int direction,
+            py::array_t<double> result_py
+            ) {
+
+        Buffer<uint64_t> indices(indices_py);
+        Buffer<double> result(result_py);
+
+        uint64_t J = indices.shape[0];
+
+        int start, stop, offset;
+        if(direction == 1) {
+            start = 0;
+            stop = j;
+            offset = 1;
+        }
+        else if(direction == 0){
+            start = N - 1;
+            stop = j;
+            offset = -1;
+        }
+        else {
+            throw std::invalid_argument("direction must be either 0 or 1");
+        }
+
+        Buffer<double> h_old;
+        Buffer<double> h_new;
+
+        h_old.reset_to_shape({J, 1});
+        std::fill(h_old(), h_old(J), 1.0);
+
+        #pragma omp parallel
+{
+        for(int64_t i = start; i != stop; i += offset) {
+            uint64_t left_rank = matricizations[i]->shape[0] / dimensions[i];
+            uint64_t right_rank = matricizations[i]->shape[1];
+            uint64_t mat_size = left_rank * right_rank;
+
+            CBLAS_TRANSPOSE transposition;
+
+            uint64_t h_old_col_count = h_old.shape[1];
+            uint64_t h_new_col_count;
+            if(direction == orthogonality[i]) {
+                transposition = CblasTrans;
+                h_new_col_count = right_rank; 
+            }
+            else {
+                transposition = CblasNoTrans;
+                h_new_col_count = left_rank; 
+            } 
+            
+            #pragma omp single
+{ 
+            h_new.reset_to_shape({J, h_new_col_count});
+}
+
+            #pragma omp for
+            for(uint64_t j = 0; j < J; j++) {
+                uint64_t core_idx = *(indices(j, i));
+                double* mat_ptr = (*(matricizations[i]))(core_idx * mat_size);
+
+                cblas_dgemv(CblasRowMajor, transposition, 
+                        left_rank, right_rank, 1.0, 
+                        mat_ptr, right_rank, 
+                        h_old(j * h_old_col_count), 1, 
+                        0.0, 
+                        h_new(j * h_new_col_count), 1);
+            }
+            #pragma omp single
+{
+            h_old.steal_resources(h_new); 
+}
+        }
+}
+        if(result.shape[0] != J || result.shape[1] != h_old.shape[1]) {
+            cout << "Provided Buffer Shape: " << result.shape[0] << " " << result.shape[1] << endl;
+            cout << "Internal Buffer Shape: " << h_old.shape[0] << " " << h_old.shape[1] << endl;
+            throw std::invalid_argument("Incorrect result shape!");
+        }
+
+        std::copy(h_old(), 
+                h_old(h_old.shape[0] * h_old.shape[1]), 
+                result());
+    }
+
 };
 
