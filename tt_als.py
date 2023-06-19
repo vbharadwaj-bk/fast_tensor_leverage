@@ -1,6 +1,8 @@
 from tensor_train import *
 from dense_tensor import *
 
+import time
+
 class TensorTrainALS:
     def __init__(self, ground_truth, tt_approx):
         self.ground_truth = ground_truth
@@ -67,7 +69,7 @@ class TensorTrainALS:
                 tt_approx.orthogonalize_push_left(i)
                 print(tt_als.compute_exact_fit())
 
-    def execute_randomized_als_sweeps(self, num_sweeps, J):
+    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
         N = tt_approx.N
@@ -75,17 +77,32 @@ class TensorTrainALS:
             samples = np.zeros((J, N), dtype=np.uint64)
             left_rows = None
             right_rows = None
-            if j > 0: 
+            if j > 0:
+                start = time.time()
                 left_samples = tt_approx.leverage_sample(j, J, "left")
+                end = time.time()
+                print(f"Sampled {J} left indices in {end - start} seconds.")
+
                 samples[:, :j] = left_samples
+
+                start = time.time()
                 left_rows = tt_approx.evaluate_partial_fast(samples, j, "left")
+                end = time.time()
+                print(f"Evaluated {J} left indices in {end - start} seconds.")
                 left_cols = left_rows.shape[1]
             else:
                 left_cols = 1
             if j < N - 1:
+                start = time.time()
                 right_samples = tt_approx.leverage_sample(j, J, "right")
+                end = time.time()
+                print(f"Sampled {J} right indices in {end - start} seconds.")
                 samples[:, j+1:] = right_samples
+                
+                start = time.time()
                 right_rows = tt_approx.evaluate_partial_fast(samples, j, "right")
+                end = time.time()
+                print(f"Evaluated {J} right indices in {end - start} seconds.")
                 right_cols = right_rows.shape[1]
             else:
                 right_cols = 1
@@ -116,7 +133,8 @@ class TensorTrainALS:
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
-        for _ in range(num_sweeps):
+        for i in range(num_sweeps):
+            print(f"Starting sweep {i}...")
             for j in range(N - 1):
                 optimize_core(j)
                 tt_approx.orthogonalize_push_right(j)
@@ -127,14 +145,14 @@ class TensorTrainALS:
                 tt_approx.orthogonalize_push_left(j)
                 tt_approx.update_internal_sampler(j, "right", True)
 
-            print(tt_als.compute_exact_fit())
+            if i % epoch_interval == 0:
+                print(self.compute_exact_fit())
 
 if __name__=='__main__': 
     I = 100
     R = 8
     N = 4
 
-    data = np.ones([I] * N) * 5
     tt_approx = TensorTrain([I] * N, [R] * (N - 1))
     tt_approx_GT = TensorTrain([I] * N, [R] * (N - 1))
     ground_truth = PyDenseTensor(tt_approx_GT.materialize_dense()) 
@@ -143,7 +161,6 @@ if __name__=='__main__':
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
     print(tt_als.compute_exact_fit())
-    #tt_als.execute_exact_als_sweeps_slow(5)
 
     J = 1000
     tt_approx.build_fast_sampler(0, J=J)
