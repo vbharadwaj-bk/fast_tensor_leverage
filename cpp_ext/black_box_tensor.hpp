@@ -37,6 +37,7 @@ public:
         // Result is a dims[j] x R matrix
         std::fill(result(), result(dims[j], 0), 0.0);
 
+
         for(uint64_t i = 0; i < num_samples; i += max_rhs_rows) {
             uint64_t max_range = min(i + max_rhs_rows, num_samples);
             uint64_t rows = (uint64_t) (max_range - i);
@@ -47,7 +48,6 @@ public:
                 samples_transpose(i * N));
 
             materialize_rhs(sample_view, j, rhs_buf);
-
             cblas_dgemm(
                 CblasRowMajor,
                 CblasTrans,

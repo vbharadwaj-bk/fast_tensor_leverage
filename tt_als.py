@@ -78,31 +78,18 @@ class TensorTrainALS:
             left_rows = None
             right_rows = None
             if j > 0:
-                start = time.time()
                 left_samples = tt_approx.leverage_sample(j, J, "left")
-                end = time.time()
-                print(f"Sampled {J} left indices in {end - start} seconds.")
-
                 samples[:, :j] = left_samples
 
-                start = time.time()
                 left_rows = tt_approx.evaluate_partial_fast(samples, j, "left")
-                end = time.time()
-                print(f"Evaluated {J} left indices in {end - start} seconds.")
                 left_cols = left_rows.shape[1]
             else:
                 left_cols = 1
             if j < N - 1:
-                start = time.time()
                 right_samples = tt_approx.leverage_sample(j, J, "right")
-                end = time.time()
-                print(f"Sampled {J} right indices in {end - start} seconds.")
                 samples[:, j+1:] = right_samples
                 
-                start = time.time()
                 right_rows = tt_approx.evaluate_partial_fast(samples, j, "right")
-                end = time.time()
-                print(f"Evaluated {J} right indices in {end - start} seconds.")
                 right_cols = right_rows.shape[1]
             else:
                 right_cols = 1
@@ -124,14 +111,17 @@ class TensorTrainALS:
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
+
             self.ground_truth.ten.execute_downsampled_mttkrp(
                     samples,
                     design,
                     j,
                     result)
+            end = time.time()
 
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
+
 
         for i in range(num_sweeps):
             print(f"Starting sweep {i}...")
