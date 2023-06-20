@@ -1,5 +1,6 @@
 from tensor_train import *
 from dense_tensor import *
+from sparse_tensor import *
 
 import time
 
@@ -17,6 +18,8 @@ class TensorTrainALS:
         if isinstance(self.ground_truth, PyDenseTensor):
             tt_materialization = self.tt_approx.materialize_dense()
             return 1.0 - la.norm(tt_materialization - self.ground_truth.data) / self.ground_truth.data_norm
+        elif isinstance(self.ground_truth, PySparseTensor):
+            return 0.0 
         else:
             raise NotImplementedError
 
@@ -62,12 +65,13 @@ class TensorTrainALS:
             for i in range(N - 1):
                 optimize_core(i)
                 tt_approx.orthogonalize_push_right(i)
-                print(tt_als.compute_exact_fit())
+
 
             for i in range(N - 1, 0, -1):
                 optimize_core(i)
                 tt_approx.orthogonalize_push_left(i)
-                print(tt_als.compute_exact_fit())
+
+            print(tt_als.compute_exact_fit())
 
     def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):
         print("Starting randomized ALS!")
@@ -117,7 +121,6 @@ class TensorTrainALS:
                     design,
                     j,
                     result)
-            end = time.time()
 
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
@@ -137,21 +140,3 @@ class TensorTrainALS:
 
             if i % epoch_interval == 0:
                 print(self.compute_exact_fit())
-
-if __name__=='__main__': 
-    I = 100
-    R = 8
-    N = 4
-
-    tt_approx = TensorTrain([I] * N, [R] * (N - 1))
-    tt_approx_GT = TensorTrain([I] * N, [R] * (N - 1))
-    ground_truth = PyDenseTensor(tt_approx_GT.materialize_dense()) 
-
-    tt_approx.place_into_canonical_form(0)
-    tt_als = TensorTrainALS(ground_truth, tt_approx)
-
-    print(tt_als.compute_exact_fit())
-
-    J = 1000
-    tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J)

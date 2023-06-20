@@ -207,21 +207,6 @@ public:
         }
     }
 
-    void draw_samples(uint64_t i, 
-            py::array_t<double> h_old_py, 
-            py::array_t<uint64_t> samples_py, 
-            py::array_t<double> h_new_py) {
-
-        Buffer<double> h_old(h_old_py);
-        Buffer<double> h_new(h_new_py);
-        Buffer<uint64_t> samples(samples_py);
-
-        // The row buffer is off, but this function
-        // is deprecated anyway.
-        Buffer<uint64_t> row_buffer({J}, samples(i, 0));
-        draw_samples_internal(i, h_old, row_buffer, h_new);
-    }
-
     void draw_samples_internal(uint64_t i, 
             Buffer<double> &h_old, 
             Buffer<uint64_t> &row_buffer, 
