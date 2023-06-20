@@ -247,7 +247,7 @@ public:
 
     void evaluate_indices_partial(
             py::array_t<uint64_t> indices_py,
-            uint32_t j, 
+            int j, 
             int direction,
             py::array_t<double> result_py
             ) {

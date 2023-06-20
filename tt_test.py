@@ -87,7 +87,50 @@ def test_image_feature_extraction(dataset="mnist", R=14, J=20000):
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
-def test_sparse_tensor_decomposition(tensor_name="uber", R=4, J=65000):
+def test_norm_computation():
+    I = 100
+    R = 2
+    N = 4
+
+    tt_approx = TensorTrain([I] * N, [R] * (N - 1))
+    tt_approx.place_into_canonical_form(0)
+
+    full_materialized = tt_approx.materialize_dense()
+    norm_materialized = la.norm(full_materialized)
+    norm_test = la.norm(tt_approx.U[0])
+
+    print(f'Norm of materialized tensor: {norm_materialized}')
+    print(f'Norm test: {norm_test}')
+
+def test_dense_recovery():
+    '''
+    Test that TT-ALS can recover a tensor with a known
+    low TT-rank representation.
+    '''
+    I = 3
+    R = 2
+    N = 3
+    J = 1000
+
+    tt_approx = TensorTrain([I] * N, [R] * (N - 1))
+
+    data = np.zeros((I, I, I), dtype=np.double)
+    for i in range(I):
+        for j in range(I):
+            for k in range(I):
+                data[i, j, k] = i + j + k
+
+    ground_truth = PyDenseTensor(data)
+
+    tt_approx.place_into_canonical_form(0)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+
+    print(tt_als.compute_exact_fit())
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+
+
+def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
     param_map = {
         "uber": {
             "preprocessing": None,
@@ -99,18 +142,37 @@ def test_sparse_tensor_decomposition(tensor_name="uber", R=4, J=65000):
     initialization = param_map[tensor_name]["initialization"]    
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
+    I = 3
+    data = np.zeros((I, I, I), dtype=np.double)
+    for i in range(I):
+        for j in range(I):
+            for k in range(I):
+                data[i, j, k] = i + j + k
+
+    #ground_truth = PyDenseTensor(data)
+
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
         [R] * (ground_truth.N - 1))
 
     tt_approx.place_into_canonical_form(0)
-    tt_als = TensorTrainALS(ground_truth, tt_approx)
-
-    print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+    print(tt_als.compute_exact_fit())
 
-    pass
+    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J, epoch_interval=1)
+
+    tt_values = tt_approx.evaluate_partial_fast(
+            ground_truth.tensor_idxs,
+            tt_approx.N, "left").squeeze()
+
+    print(tt_values)
+    print(ground_truth.values)
+
+    left_chain = tt_approx.left_chain_matricize(ground_truth.N)
+    print(left_chain)
 
 if __name__=='__main__':
     test_sparse_tensor_decomposition() 
+    #test_dense_recovery()
+

@@ -15,11 +15,25 @@ class TensorTrainALS:
         '''
         This operation can be particularly expensive for dense tensors.
         '''
-        if isinstance(self.ground_truth, PyDenseTensor):
+        ground_truth = self.ground_truth
+        if isinstance(ground_truth, PyDenseTensor):
             tt_materialization = self.tt_approx.materialize_dense()
-            return 1.0 - la.norm(tt_materialization - self.ground_truth.data) / self.ground_truth.data_norm
-        elif isinstance(self.ground_truth, PySparseTensor):
-            return 0.0 
+            return 1.0 - la.norm(tt_materialization - ground_truth.data) / ground_truth.data_norm
+        elif isinstance(ground_truth, PySparseTensor):
+            # Slow way to compute this, but okay for now
+            # Also relies on core 0 being non-orthogonal 
+            #tt_values = self.tt_approx.evaluate_partial_fast(
+            #        ground_truth.tensor_idxs,
+            #        ground_truth.N, "left").squeeze()
+
+            #print(ground_truth.values ** 2)
+
+            #partial_diff_sum = np.sum(ground_truth.values * ground_truth.values - tt_values * ground_truth.values)
+            #tt_normsq = la.norm(self.tt_approx.U[0]) ** 2
+            #diff_norm = np.sqrt(tt_normsq + partial_diff_sum)
+
+            #return 1.0 - (diff_norm / ground_truth.data_norm)
+            return 0.0
         else:
             raise NotImplementedError
 
@@ -65,7 +79,6 @@ class TensorTrainALS:
             for i in range(N - 1):
                 optimize_core(i)
                 tt_approx.orthogonalize_push_right(i)
-
 
             for i in range(N - 1, 0, -1):
                 optimize_core(i)
@@ -116,11 +129,25 @@ class TensorTrainALS:
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
 
-            self.ground_truth.ten.execute_downsampled_mttkrp(
+            data = np.zeros((3, 3, 3), dtype=np.double)
+            for u in range(3):
+                for v in range(3):
+                    for w in range(3):
+                        data[u, v, w] = u + v + w 
+
+            test_truth = PyDenseTensor(data)
+ 
+            test_truth.ten.execute_downsampled_mttkrp(
                     samples,
                     design,
                     j,
                     result)
+
+            #self.ground_truth.ten.execute_downsampled_mttkrp(
+            #        samples,
+            #        design,
+            #        j,
+            #        result)
 
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()

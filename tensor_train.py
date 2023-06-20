@@ -24,6 +24,9 @@ class TensorTrain:
             self.ranks = np.array([1] + ranks + [1], np.uint64)
 
             self.U = [rng.normal(size=(self.ranks[i], self.dims[i], self.ranks[i+1])) for i in range(self.N)]
+
+            for i in range(self.N):
+                self.U[i] /= la.norm(self.U[i])
         else:
             assert(False)
 

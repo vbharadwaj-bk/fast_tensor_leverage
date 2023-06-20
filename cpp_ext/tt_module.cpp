@@ -82,6 +82,7 @@ cfg['extra_compile_args'] = compile_args
 cfg['extra_link_args'] = link_args 
 cfg['dependencies'] = [ 'common.h', 
                         'tt_sampler.hpp',
+                        'sort_lookup.hpp',
                         'sparse_tensor.hpp',
                         'tensor.hpp',
                         'black_box_tensor.hpp',
