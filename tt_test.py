@@ -173,6 +173,6 @@ def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
     print(left_chain)
 
 if __name__=='__main__':
-    test_sparse_tensor_decomposition() 
+    #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
-
+    test_tt_als()
