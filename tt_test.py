@@ -162,17 +162,24 @@ def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
 
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J, epoch_interval=1)
 
-    tt_values = tt_approx.evaluate_partial_fast(
-            ground_truth.tensor_idxs,
-            tt_approx.N, "left").squeeze()
+    #tt_values = tt_approx.evaluate_partial_fast(
+    #        ground_truth.tensor_idxs,
+    #        tt_approx.N, "left").squeeze()
 
-    print(tt_values)
-    print(ground_truth.values)
+    tt_values_A = tt_approx.evaluate_partial_fast(
+            np.array([[0, 0, 0]], dtype=np.uint64),
+            tt_approx.N - 1, "left").squeeze()
+    
+    tt_values_B = None
+
+
+    #print(tt_values)
+    #print(ground_truth.values)
 
     left_chain = tt_approx.left_chain_matricize(ground_truth.N)
     print(left_chain)
 
 if __name__=='__main__':
-    #test_sparse_tensor_decomposition() 
+    test_sparse_tensor_decomposition() 
     #test_dense_recovery()
-    test_tt_als()
+    #test_tt_als()
