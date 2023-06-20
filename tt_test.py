@@ -142,15 +142,6 @@ def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
     initialization = param_map[tensor_name]["initialization"]    
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
-    I = 3
-    data = np.zeros((I, I, I), dtype=np.double)
-    for i in range(I):
-        for j in range(I):
-            for k in range(I):
-                data[i, j, k] = i + j + k
-
-    #ground_truth = PyDenseTensor(data)
-
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
         [R] * (ground_truth.N - 1))
@@ -158,26 +149,9 @@ def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=J)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
-    print(tt_als.compute_exact_fit())
 
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J, epoch_interval=1)
 
-    #tt_values = tt_approx.evaluate_partial_fast(
-    #        ground_truth.tensor_idxs,
-    #        tt_approx.N, "left").squeeze()
-
-    tt_values_A = tt_approx.evaluate_partial_fast(
-            np.array([[0, 0, 0]], dtype=np.uint64),
-            tt_approx.N - 1, "left").squeeze()
-    
-    tt_values_B = None
-
-
-    #print(tt_values)
-    #print(ground_truth.values)
-
-    left_chain = tt_approx.left_chain_matricize(ground_truth.N)
-    print(left_chain)
 
 if __name__=='__main__':
     test_sparse_tensor_decomposition() 

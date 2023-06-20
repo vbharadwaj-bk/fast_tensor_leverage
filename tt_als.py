@@ -22,18 +22,15 @@ class TensorTrainALS:
         elif isinstance(ground_truth, PySparseTensor):
             # Slow way to compute this, but okay for now
             # Also relies on core 0 being non-orthogonal 
-            #tt_values = self.tt_approx.evaluate_partial_fast(
-            #        ground_truth.tensor_idxs,
-            #        ground_truth.N, "left").squeeze()
+            tt_values = self.tt_approx.evaluate_partial_fast(
+                    ground_truth.tensor_idxs,
+                    ground_truth.N, "left").squeeze()
 
-            #print(ground_truth.values ** 2)
+            partial_diff_sum = np.sum(ground_truth.values * ground_truth.values - 2 * tt_values * ground_truth.values)
+            tt_normsq = la.norm(self.tt_approx.U[0]) ** 2
+            diff_norm = np.sqrt(np.maximum(tt_normsq + partial_diff_sum, 0.0))
 
-            #partial_diff_sum = np.sum(ground_truth.values * ground_truth.values - tt_values * ground_truth.values)
-            #tt_normsq = la.norm(self.tt_approx.U[0]) ** 2
-            #diff_norm = np.sqrt(tt_normsq + partial_diff_sum)
-
-            #return 1.0 - (diff_norm / ground_truth.data_norm)
-            return 0.0
+            return 1.0 - (diff_norm / ground_truth.data_norm)
         else:
             raise NotImplementedError
 
@@ -129,25 +126,11 @@ class TensorTrainALS:
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
 
-            data = np.zeros((3, 3, 3), dtype=np.double)
-            for u in range(3):
-                for v in range(3):
-                    for w in range(3):
-                        data[u, v, w] = u + v + w 
-
-            test_truth = PyDenseTensor(data)
- 
-            test_truth.ten.execute_downsampled_mttkrp(
+            self.ground_truth.ten.execute_downsampled_mttkrp(
                     samples,
                     design,
                     j,
                     result)
-
-            #self.ground_truth.ten.execute_downsampled_mttkrp(
-            #        samples,
-            #        design,
-            #        j,
-            #        result)
 
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
@@ -164,6 +147,8 @@ class TensorTrainALS:
                 optimize_core(j)
                 tt_approx.orthogonalize_push_left(j)
                 tt_approx.update_internal_sampler(j, "right", True)
+
+            tt_approx.update_internal_sampler(0, "left", False)
 
             if i % epoch_interval == 0:
                 print(self.compute_exact_fit())
