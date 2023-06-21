@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <string>
+#include <random>
 #include "common.h"
 #include "cblas.h"
 #include "lapacke.h"
@@ -12,6 +13,7 @@
 #include "sort_lookup.hpp"
 #include "index_filter.hpp"
 #include "low_rank_tensor.hpp"
+#include "random_util.hpp"
 
 using namespace std;
 namespace py = pybind11;
@@ -26,10 +28,12 @@ public:
     Buffer<double> values;
     vector<unique_ptr<IdxLookup<uint32_t, double>>> lookups;
 
-    unique_ptr<IndexFilter> idx_filter;
-
     uint64_t N, nnz;
     double normsq;
+
+    // Related to randomized accuracy estimation
+    unique_ptr<IndexFilter> idx_filter;
+    Multistream_RNG rng;
 
     SparseTensor(py::array_t<uint32_t> indices_py, 
         py::array_t<double> values_py,
@@ -111,24 +115,69 @@ public:
     }
 
     double compute_residual_normsq_estimated(LowRankTensor &lr) {
-      uint64_t sample_count = nnz;
+      uint64_t nz_sample_count = nnz;
+      uint64_t zero_sample_count = nnz;
+
       if(idx_filter.get() == nullptr) {
         throw std::runtime_error("Randomized accuracy estimation not initialized.");
       }
 
       // Currently implemented as a 50-50 split between
       // zero and nonzero values 
-      Buffer<double> nonzero_values({sample_count}); 
+      Buffer<double> nonzero_values({nz_sample_count}); 
       lr.evaluate_indices(indices, nonzero_values);
       double nonzero_loss = 0.0;
+      double zero_loss = 0.0;
 
       #pragma omp parallel for reduction(+:nonzero_loss)
-      for(uint64_t i = 0; i < sample_count; i++) {
+      for(uint64_t i = 0; i < nz_sample_count; i++) {
         double diff = nonzero_values[i] - values[i];
         nonzero_loss += diff * diff; 
       }
 
-      return nonzero_loss;
+      vector<std::uniform_int_distribution<uint32_t>> dists;
+      double dense_entries = 1.0;
+      for(uint64_t j = 0; j < N; j++) {
+        uint32_t max_idx = (uint32_t) lr.U[j].shape[0] - 1;
+        dists.emplace_back(0, max_idx); 
+        dense_entries *= max_idx;
+      }
+
+      Buffer<uint32_t> zero_samples({zero_sample_count, N});
+      Buffer<double> zero_values({zero_sample_count});
+
+      #pragma omp parallel
+      {
+        int thread_num = omp_get_thread_num();
+
+        #pragma omp for
+        for(uint64_t i = 0; i < zero_sample_count; i++) {
+          for(uint64_t j = 0; j < N; j++) {
+            zero_samples[i * N + j] = dists[j](rng.par_gen[thread_num]);
+          }
+        }
+      }
+
+      lr.evaluate_indices(zero_samples, zero_values); 
+
+      vector<uint64_t> collisions = idx_filter->check_idxs(zero_samples);
+      for(uint64_t i = 0; i < collisions.size(); i++) {
+        zero_values[collisions[i]] = 0.0;
+      } 
+
+      #pragma omp parallel for reduction(+:zero_loss)
+      for(uint64_t i = 0; i < zero_sample_count; i++) {
+        zero_loss += zero_values[i] * zero_values[i]; 
+      }
+
+      uint64_t true_zero_count = zero_sample_count - collisions.size();
+      uint64_t sfit = nz_sample_count + true_zero_count;
+      double alpha = (double) nz_sample_count / (double) sfit;
+
+      nonzero_loss *= nnz / (alpha * sfit);
+      zero_loss *= (dense_entries - nnz) / ((1.0 - alpha) * sfit);
+
+      return nonzero_loss + zero_loss;
     }
 
     double get_normsq() {
