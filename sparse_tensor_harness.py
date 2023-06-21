@@ -38,7 +38,7 @@ class SparseTensorALSExperiment:
         self.ground_truth = PySparseTensor(self.tensor_path, lookup="sort", preprocessing=self.preprocessing)
         self.approx = PyLowRank(self.ground_truth.dims, self.target_rank)
         if initialization is not None and initialization == "rrf":
-            rhs.ten.execute_rrf(self.approx.ten)
+            self.ground_truth.ten.execute_rrf(self.approx.ten)
         else:
             self.approx.ten.renormalize_columns(-1)
 
