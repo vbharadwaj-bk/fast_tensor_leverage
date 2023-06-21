@@ -53,6 +53,9 @@ class SparseTensorALSExperiment:
         if self.method != "exact":
             self.als.initialize_ds_als(self.sample_count, self.method)
 
+    def setup_randomized_accuracy_estimation(self, nz_samples):
+        self.ground_truth.initialize_randomized_accuracy_estimation(nz_samples)
+
     def change_sample_count(self, new_sample_count):
         self.sample_count = new_sample_count
         self.als = None
@@ -85,6 +88,15 @@ class SparseTensorALSExperiment:
         start = time.time()
         self.iterations.append(self.iteration_count + 1)
         self.fits.append(self.approx.compute_exact_fit(self.ground_truth))
+        print(f"Iteration: {self.iteration_count+1}\tFit: {self.fits[-1]}")
+        elapsed = time.time() - start
+        self.fit_computation_times.append(elapsed)
+        return self.fits[-1]  
+
+    def compute_approx_fit(self):
+        start = time.time()
+        self.iterations.append(self.iteration_count + 1)
+        self.fits.append(self.approx.compute_approx_fit(self.ground_truth))
         print(f"Iteration: {self.iteration_count+1}\tFit: {self.fits[-1]}")
         elapsed = time.time() - start
         self.fit_computation_times.append(elapsed)
