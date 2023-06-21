@@ -111,12 +111,24 @@ public:
     }
 
     double compute_residual_normsq_estimated(LowRankTensor &lr) {
-      uint64_t sample_count = 10000;
+      uint64_t sample_count = nnz;
       if(idx_filter.get() == nullptr) {
         throw std::runtime_error("Randomized accuracy estimation not initialized.");
       }
 
-      return lookups[0]->compute_residual_normsq(lr.sigma, lr.U);
+      // Currently implemented as a 50-50 split between
+      // zero and nonzero values 
+      Buffer<double> nonzero_values({sample_count}); 
+      lr.evaluate_indices(indices, nonzero_values);
+      double nonzero_loss = 0.0;
+
+      #pragma omp parallel for reduction(+:nonzero_loss)
+      for(uint64_t i = 0; i < sample_count; i++) {
+        double diff = nonzero_values[i] - values[i];
+        nonzero_loss += diff * diff; 
+      }
+
+      return nonzero_loss;
     }
 
     double get_normsq() {

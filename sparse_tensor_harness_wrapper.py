@@ -72,7 +72,7 @@ class SparseTensorALSExperiment:
     def compute_fit(self):
         start = time.time()
         self.iterations.append(self.iteration_count + 1)
-        self.fits.append(self.approx.compute_estimated_fit(self.ground_truth))
+        self.fits.append(self.approx.compute_exact_fit(self.ground_truth))
         print(f"Iteration: {self.iteration_count+1}\tFit: {self.fits[-1]}")
         elapsed = time.time() - start
         self.fit_computation_times.append(elapsed)

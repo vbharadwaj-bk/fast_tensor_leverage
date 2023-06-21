@@ -21,7 +21,7 @@ def sparse_tensor_test():
     J = 2 ** 16
 
     trial_count = 1
-    max_iterations = 40
+    max_iterations = 20
     stop_tolerance = 1e-5
 
     result = {}
@@ -31,6 +31,7 @@ def sparse_tensor_test():
     R_values = [25]
 
     rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
+    rhs.ten.initialize_randomized_accuracy_estimation(0.01)
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
@@ -49,16 +50,16 @@ def sparse_tensor_test():
                 lhs = PyLowRank(rhs.dims, R)
                 #rhs.ten.execute_rrf(lhs.ten)
                 lhs.ten.renormalize_columns(-1)
-
-                #print("Starting exact initialization")
-                #als = ALS(lhs.ten, rhs.ten)
-                #for j in range(lhs.N):
-                #    als.execute_exact_als_update(j, True, True)
-                #fit = lhs.compute_estimated_fit(rhs)
-                #print(f"Fit after initialization: {fit}")
-
                 start = time.time()
+
+                approx_fit = lhs.compute_approx_fit(rhs)
+                print(f"Approximate fit: {approx_fit}")
+
                 result[R][sampler].append(als_prod(lhs, rhs, J, sampler, max_iterations, stop_tolerance, verbose=True))
+
+                approx_fit = lhs.compute_approx_fit(rhs)
+                print(f"Approximate fit: {approx_fit}")
+
                 elapsed = time.time() - start
                 print(f"Elapsed: {elapsed}")
 

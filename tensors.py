@@ -47,10 +47,21 @@ class PyLowRank:
         normsq = rhs.ten.compute_residual_normsq(sigma_lhs, self.U)
         return np.sqrt(normsq)
 
-    def compute_estimated_fit(self, rhs_ten):
-        diff_norm = self.compute_diff_resid(rhs_ten)
-        rhs_norm = np.sqrt(rhs_ten.ten.get_normsq())
+    def compute_exact_fit(self, rhs):
+        diff_norm = self.compute_diff_resid(rhs)
+        rhs_norm = np.sqrt(rhs.ten.get_normsq())
         return 1.0 - diff_norm / rhs_norm
+
+    def compute_approx_fit(self, rhs):
+        if not isinstance(rhs, PySparseTensor):
+            raise NotImplementedError("This function is only implemented for sparse tensors!")
+
+        #diff_norm = np.sqrt(rhs.ten.compute_residual_normsq_estimated(self.ten))
+        #rhs_norm = np.sqrt(rhs_ten.ten.get_normsq())
+        #return 1.0 - diff_norm / rhs_norm
+
+        res = rhs.ten.compute_residual_normsq_estimated(self.ten)
+        return res
 
     def compute_integral(self, dx):
         '''

@@ -39,7 +39,7 @@ def als_exact_comparison(lhs, rhs, J, method, iter):
             else:
                 ratio = 1.0
 
-            fit = lhs.compute_estimated_fit(rhs)
+            fit = lhs.compute_exact_fit(rhs)
             #fit=-1
             print(f"Ratio: {ratio}, Residual: {residual_approx / rhs_norm}, AResidual: {residual_approx}")
             print(f"Fit {fit}")
@@ -74,7 +74,7 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
         als.initialize_ds_als(J, method)
 
     iterations.append(0)
-    fits.append(lhs.compute_estimated_fit(rhs))
+    fits.append(lhs.compute_exact_fit(rhs))
     verb_print(f"Before ALS:\tFit: {fits[-1]}")
 
     for i in range(max_iter):
@@ -91,7 +91,7 @@ def als_prod(lhs, rhs, J, method, max_iter, stop_tolerance, epoch_length=5, verb
         if (i + 1) % epoch_length == 0:
             start = time.time()
             iterations.append(i + 1)
-            fits.append(lhs.compute_estimated_fit(rhs))
+            fits.append(lhs.compute_exact_fit(rhs))
             verb_print(f"Iteration: {i+1}\tFit: {fits[-1]}")
             elapsed = time.time() - start
             fit_computation_times.append(elapsed)
