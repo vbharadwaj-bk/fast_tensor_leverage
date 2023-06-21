@@ -102,11 +102,11 @@ class TensorClassifier:
 
         self.features = lhs.U[0].copy()
 
-        self.classifier = KNeighborsClassifier(n_neighbors=4)
-        self.classifier.fit(self.features, labels_np)
-        self.lhs = lhs
+        #self.classifier = KNeighborsClassifier(n_neighbors=4)
+        #self.classifier.fit(self.features, labels_np)
+        #self.lhs = lhs
 
-        print("Trained K-Neighbors Classifier!")
+        #print("Trained K-Neighbors Classifier!")
 
     def test(self):
         dataset_class = self.param_map[self.dataset_name]
@@ -124,3 +124,7 @@ class TensorClassifier:
         print(f"Loaded test set {self.dataset_name}...") 
         rhs = PyDenseTensor(images_np)
         print("Initialized dense tensor...")
+
+if __name__=='__main__':
+    classifier = TensorClassifier('mnist', 50000, "efficient", 25, max_iter=40)
+    classifier.train()
