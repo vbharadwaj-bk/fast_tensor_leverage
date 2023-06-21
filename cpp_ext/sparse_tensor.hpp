@@ -10,6 +10,8 @@
 #include "tensor.hpp"
 #include "idx_lookup.hpp"
 #include "sort_lookup.hpp"
+#include "index_filter.hpp"
+#include "low_rank_tensor.hpp"
 
 using namespace std;
 namespace py = pybind11;
@@ -24,6 +26,8 @@ public:
     Buffer<double> values;
     vector<unique_ptr<IdxLookup<uint32_t, double>>> lookups;
 
+    unique_ptr<IndexFilter> idx_filter;
+
     uint64_t N, nnz;
     double normsq;
 
@@ -36,6 +40,7 @@ public:
     {
       nnz = indices.shape[0]; 
       N = indices.shape[1];
+      idx_filter.reset(nullptr);
 
       for(uint64_t j = 0; j < N; j++) {
         if(method == "sort") {
@@ -64,13 +69,15 @@ public:
       lookups[j]->execute_exact_mttkrp(U_L, mttkrp_res);
     }
 
-    void execute_rrf(vector<Buffer<double>> &U) {
+    void execute_rrf(LowRankTensor &lr) {
+      vector<Buffer<double>> &U = lr.U;
       for(uint64_t j = 0; j < U.size(); j++) {
         uint64_t rows = U[j].shape[0];
         uint64_t cols = U[j].shape[1];
         std::fill(U[j](), U[j](rows * cols), 0.0);
         lookups[j]->execute_rrf(U[j]);
-      }
+      } 
+      lr.renormalize_columns(-1);
     }
 
     void execute_downsampled_mttkrp(
@@ -98,7 +105,20 @@ public:
     double compute_residual_normsq(Buffer<double> &sigma, vector<Buffer<double>> &U) {
         return lookups[0]->compute_residual_normsq(sigma, U);
     }
- 
+
+    void initialize_randomized_accuracy_estimation(double fp_tol) {
+      idx_filter.reset(new IndexFilter(indices, fp_tol));
+    }
+
+    double compute_residual_normsq_estimated(LowRankTensor &lr) {
+      uint64_t sample_count = 10000;
+      if(idx_filter.get() == nullptr) {
+        throw std::runtime_error("Randomized accuracy estimation not initialized.");
+      }
+
+      return lookups[0]->compute_residual_normsq(lr.sigma, lr.U);
+    }
+
     double get_normsq() {
       return normsq; 
     }

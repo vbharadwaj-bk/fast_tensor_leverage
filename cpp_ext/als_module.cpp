@@ -84,7 +84,7 @@ public:
 PYBIND11_MODULE(als_module, m) {
     py::class_<Tensor>(m, "Tensor")
         .def("execute_downsampled_mttkrp_py", &Tensor::execute_downsampled_mttkrp_py)
-        .def("compute_residual_normsq", &Tensor::compute_residual_normsq_py) 
+        .def("compute_residual_normsq", &Tensor::compute_residual_normsq_py)
         .def("get_normsq", &Tensor::get_normsq);
     py::class_<BlackBoxTensor, Tensor>(m, "BlackBoxTensor");
     py::class_<LowRankTensor, BlackBoxTensor>(m, "LowRankTensor")
@@ -92,7 +92,6 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns)
-        .def("initialize_rrf", &LowRankTensor::initialize_rrf)
         .def("multiply_random_factor_entries", &LowRankTensor::multiply_random_factor_entries)
         .def("materialize_rhs", &LowRankTensor::materialize_rhs_py);
     py::class_<DenseTensor<double>, BlackBoxTensor>(m, "DenseTensor_double")
@@ -100,7 +99,10 @@ PYBIND11_MODULE(als_module, m) {
     py::class_<DenseTensor<float>, BlackBoxTensor>(m, "DenseTensor_float")
         .def(py::init<py::array_t<float>, uint64_t>());
     py::class_<SparseTensor, Tensor>(m, "SparseTensor")
-        .def(py::init<py::array_t<uint32_t>, py::array_t<double>, std::string>());
+        .def(py::init<py::array_t<uint32_t>, py::array_t<double>, std::string>())
+        .def("execute_rrf", &SparseTensor::execute_rrf)
+        .def("initialize_randomized_accuracy_estimation", &SparseTensor::initialize_randomized_accuracy_estimation)
+        .def("compute_residual_normsq_estimated", &SparseTensor::compute_residual_normsq_estimated);
     /*py::class_<PyFunctionTensor, BlackBoxTensor>(m, "PyFunctionTensor")
         .def(py::init<py::array_t<uint64_t>, uint64_t, uint64_t, double>()) 
         .def("test_fiber_evaluator", &PyFunctionTensor::test_fiber_evaluator);*/
@@ -178,6 +180,7 @@ cfg['dependencies'] = [ 'common.h',
                         'tests.hpp',
                         'als.hpp',
                         'random_util.hpp',
+                        'index_filter.hpp',
                         '../config.json'
                         ] 
 %>

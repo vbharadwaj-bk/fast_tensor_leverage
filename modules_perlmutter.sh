@@ -2,7 +2,7 @@ export CC=gcc
 export CXX=g++
 
 module load python
-#module load pytorch
+module load pytorch
 
 OPENBLAS_LIB=/global/homes/v/vbharadw/OpenBLAS_install/lib
 TBB_LIB=/global/homes/v/vbharadw/intel/oneapi/tbb/2021.8.0/lib/intel64/gcc4.8

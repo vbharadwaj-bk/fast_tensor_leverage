@@ -7,7 +7,6 @@
 #include "cblas.h"
 #include "lapacke.h"
 #include "black_box_tensor.hpp"
-#include "sparse_tensor.hpp"
 
 using namespace std;
 
@@ -81,18 +80,6 @@ public:
         double self_normsq = get_normsq();
         double other_normsq = ATB_chain_prod_sum(U_other, U_other, sigma_other, sigma_other);
         double inner_prod = ATB_chain_prod_sum(U_other, U, sigma_other, sigma);
-
-        /*cout << self_normsq << " "
-            << other_normsq << " "
-            << inner_prod << " Data" << endl;*/
-
-        //cout << self_normsq + other_normsq << " "
-        //    << 2 * inner_prod << " Data" << endl;
-
-        /*for(uint64_t i = 0; i < R; i++) {
-            cout << sigma[i] << " ";
-        }
-        cout << endl;*/
 
         return max(self_normsq + other_normsq - 2 * inner_prod, 0.0);
     } 
@@ -272,10 +259,26 @@ public:
         }
     }
 
-    void initialize_rrf(SparseTensor &sp_ten) {
-        sp_ten.execute_rrf(U);
-        renormalize_columns(-1);
+    void evaluate_indices(Buffer<uint32_t> &indices, Buffer<double> &result) {
+        uint64_t J = indices.shape[0];
+
+        #pragma omp parallel
+        {
+            Buffer<double> local_row_buffer({R}); 
+
+            #pragma omp for
+            for(uint64_t j = 0; j < J; j++) {
+                std::copy(sigma(), sigma(R), local_row_buffer());
+                for(uint32_t i = 0; i < N; i++) {
+                    for(uint32_t k = 0; k < R; k++) {
+                        local_row_buffer[k] *= U[i][indices[j * N + i] * R + k];
+                    }
+                }
+                result[j] = std::accumulate(local_row_buffer(), local_row_buffer(R), 0.0); 
+            }
+        } 
     }
+
 
     // This function is just for testing purposes
     void multiply_random_factor_entries(double rho, double A) {

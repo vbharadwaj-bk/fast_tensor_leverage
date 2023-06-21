@@ -117,7 +117,7 @@ def execute_task(task, rhs, folder):
                     
     lhs = PyLowRank(rhs.dims, R)
     if initialization is not None and initialization == "rrf":
-        lhs.ten.initialize_rrf(rhs.ten)
+        rhs.ten.execute_rrf(lhs.ten)
     else:
         lhs.ten.renormalize_columns(-1)
 

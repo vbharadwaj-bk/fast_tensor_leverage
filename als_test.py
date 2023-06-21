@@ -47,7 +47,7 @@ def sparse_tensor_test():
             result[R][sampler] = []
             for trial in range(trial_count):
                 lhs = PyLowRank(rhs.dims, R)
-                #lhs.ten.initialize_rrf(rhs.ten)
+                #rhs.ten.execute_rrf(lhs.ten)
                 lhs.ten.renormalize_columns(-1)
 
                 #print("Starting exact initialization")
