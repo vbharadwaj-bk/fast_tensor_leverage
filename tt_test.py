@@ -72,13 +72,18 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
 def test_image_feature_extraction(dataset="mnist", R=14, J=20000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
+    #tt_approx = TensorTrain(ground_truth.shape, 
+    #    [R] * (ground_truth.N - 1))
+
     tt_approx = TensorTrain(ground_truth.shape, 
-        [R] * (ground_truth.N - 1))
+        #[R] * (ground_truth.N - 1) 
+        [R, R] 
+        )
 
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
@@ -167,6 +172,8 @@ def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
 
 
 if __name__=='__main__':
-    test_sparse_tensor_decomposition() 
+    #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
     #test_tt_als()
+    test_image_feature_extraction()
+
