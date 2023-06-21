@@ -106,6 +106,13 @@ class PySparseTensor:
         self.ten = SparseTensor(self.tensor_idxs, self.values, lookup) 
         print("Finished loading sparse tensor...")
 
+    def initialize_randomized_accuracy_estimation(self, nz_samples, zero_samples=None, fp_tol=0.01):
+        if zero_samples is None:
+            zero_samples = nz_samples
+        
+        dims_np = np.array(self.dims, dtype=np.uint32)
+        self.ten.initialize_randomized_accuracy_estimation(0.01, nz_samples, zero_samples, dims_np)
+
 class PyDenseTensor:
     def __init__(self, data):
         if np.issubdtype(data.dtype, np.float32):

@@ -26,6 +26,7 @@ class __attribute__((visibility("hidden"))) SparseTensor : public Tensor {
 public:
     Buffer<uint32_t> indices;
     Buffer<double> values;
+
     vector<unique_ptr<IdxLookup<uint32_t, double>>> lookups;
 
     uint64_t N, nnz;
@@ -34,6 +35,13 @@ public:
     // Related to randomized accuracy estimation
     unique_ptr<IndexFilter> idx_filter;
     Multistream_RNG rng;
+    uint64_t nz_sample_count; 
+    uint64_t zero_sample_count;
+    unique_ptr<Buffer<uint32_t>> nonzero_samples;
+    unique_ptr<Buffer<double>> nonzero_values;
+    unique_ptr<Buffer<uint32_t>> zero_samples;
+    double dense_entries;
+    vector<uint64_t> collisions;
 
     SparseTensor(py::array_t<uint32_t> indices_py, 
         py::array_t<double> values_py,
@@ -110,24 +118,21 @@ public:
         return lookups[0]->compute_residual_normsq(sigma, U);
     }
 
-    void initialize_randomized_accuracy_estimation(double fp_tol) {
+    void initialize_randomized_accuracy_estimation(
+        double fp_tol, 
+        uint64_t nz_sample_count, 
+        uint64_t zero_sample_count,
+        py::array_t<uint32_t> shape_py) {
+
+      Buffer<uint32_t> shape(shape_py);
       idx_filter.reset(new IndexFilter(indices, fp_tol));
-    }
 
-    double compute_residual_normsq_estimated(LowRankTensor &lr) {
-      uint64_t nz_sample_count = nnz;
-      uint64_t zero_sample_count = nnz;
+      this->nz_sample_count = nz_sample_count;
+      this->zero_sample_count = zero_sample_count;
 
-      if(idx_filter.get() == nullptr) {
-        throw std::runtime_error("Randomized accuracy estimation not initialized.");
-      }
-
-      // Currently implemented as a 50-50 split between
-      // zero and nonzero values 
-
-      Buffer<uint32_t> nonzero_samples({nz_sample_count, N});
-      Buffer<double> nonzero_evals({nz_sample_count}); 
-      Buffer<double> nonzero_values({nz_sample_count}); 
+      nonzero_samples.reset(new Buffer<uint32_t>({nz_sample_count, N}));
+      nonzero_values.reset(new Buffer<double>({nz_sample_count}));
+      zero_samples.reset(new Buffer<uint32_t>({zero_sample_count, N}));
 
       std::uniform_int_distribution<uint32_t> nz_dist(0, nnz -1); 
 
@@ -139,33 +144,19 @@ public:
         for(uint64_t i = 0; i < nz_sample_count; i++) {
           uint32_t idx = nz_dist(rng.par_gen[thread_num]);
           for(uint64_t j = 0; j < N; j++) {
-            nonzero_samples[i * N + j] = indices[idx * N + j];
-            nonzero_values[i] = values[idx];
+            (*nonzero_samples)[i * N + j] = indices[idx * N + j];
+            (*nonzero_values)[i] = values[idx];
           }
         }
       }
 
-      lr.evaluate_indices(nonzero_samples, nonzero_evals);
-      //lr.evaluate_indices(indices, nonzero_evals);
-      double nonzero_loss = 0.0;
-      double zero_loss = 0.0;
-
-      #pragma omp parallel for reduction(+:nonzero_loss)
-      for(uint64_t i = 0; i < nz_sample_count; i++) {
-        double diff = nonzero_values[i] - nonzero_evals[i];
-        nonzero_loss += diff * diff; 
-      }
-
       vector<std::uniform_int_distribution<uint32_t>> zero_dists;
-      double dense_entries = 1.0;
+      dense_entries = 1.0;
       for(uint64_t j = 0; j < N; j++) {
-        uint32_t max_idx = (uint32_t) lr.U[j].shape[0] - 1;
+        uint32_t max_idx = shape[j] - 1;
         zero_dists.emplace_back(0, max_idx); 
         dense_entries *= max_idx;
       }
-
-      Buffer<uint32_t> zero_samples({zero_sample_count, N});
-      Buffer<double> zero_evals({zero_sample_count});
 
       #pragma omp parallel
       {
@@ -174,14 +165,33 @@ public:
         #pragma omp for
         for(uint64_t i = 0; i < zero_sample_count; i++) {
           for(uint64_t j = 0; j < N; j++) {
-            zero_samples[i * N + j] = zero_dists[j](rng.par_gen[thread_num]);
+            (*zero_samples)[i * N + j] = zero_dists[j](rng.par_gen[thread_num]);
           }
         }
       }
 
-      lr.evaluate_indices(zero_samples, zero_evals); 
+      collisions = idx_filter->check_idxs(*zero_samples);
+    }
 
-      vector<uint64_t> collisions = idx_filter->check_idxs(zero_samples);
+    double compute_residual_normsq_estimated(LowRankTensor &lr) {
+      if(idx_filter.get() == nullptr) {
+        throw std::runtime_error("Randomized accuracy estimation not initialized.");
+      }
+
+      Buffer<double> nonzero_evals({nz_sample_count}); 
+      Buffer<double> zero_evals({zero_sample_count});
+      lr.evaluate_indices(*nonzero_samples, nonzero_evals);
+      lr.evaluate_indices(*zero_samples, zero_evals); 
+
+      double nonzero_loss = 0.0;
+      double zero_loss = 0.0;
+
+      #pragma omp parallel for reduction(+:nonzero_loss)
+      for(uint64_t i = 0; i < nz_sample_count; i++) {
+        double diff = (*nonzero_values)[i] - nonzero_evals[i];
+        nonzero_loss += diff * diff; 
+      }
+
       for(uint64_t i = 0; i < collisions.size(); i++) {
         zero_evals[collisions[i]] = 0.0;
       } 

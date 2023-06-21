@@ -31,7 +31,6 @@ def sparse_tensor_test():
     R_values = [25]
 
     rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5", lookup="sort")
-    rhs.ten.initialize_randomized_accuracy_estimation(0.01)
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/amazon-reviews.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/reddit-2015.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/enron.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
@@ -41,6 +40,8 @@ def sparse_tensor_test():
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/flickr-4d.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/patents.tns_converted.hdf5", lookup="sort")
     #rhs = PySparseTensor("/pscratch/sd/v/vbharadw/tensors/nell-2.tns_converted.hdf5", lookup="sort", preprocessing="log_count")
+
+    rhs.initialize_randomized_accuracy_estimation(nz_samples=50000)
 
     for R in R_values: 
         result[R] = {}
