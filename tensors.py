@@ -62,7 +62,7 @@ class PyLowRank:
         if not isinstance(rhs, PySparseTensor):
             raise NotImplementedError("This function is only implemented for sparse tensors!")
 
-        diff_norm = self.compute_diff_norm(rhs) 
+        diff_norm = self.compute_approx_diff_norm(rhs) 
         rhs_norm = np.sqrt(rhs.ten.get_normsq())
         return 1.0 - diff_norm / rhs_norm
 
