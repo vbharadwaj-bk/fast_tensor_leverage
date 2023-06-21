@@ -171,11 +171,8 @@ public:
       }
 
       uint64_t true_zero_count = zero_sample_count - collisions.size();
-      uint64_t sfit = nz_sample_count + true_zero_count;
-      double alpha = (double) nz_sample_count / (double) sfit;
-
-      nonzero_loss *= nnz / (alpha * sfit);
-      zero_loss *= (dense_entries - nnz) / ((1.0 - alpha) * sfit);
+      nonzero_loss *= (double) nnz / nz_sample_count; 
+      zero_loss *= (dense_entries - nnz) / zero_sample_count; 
 
       return nonzero_loss + zero_loss;
     }
