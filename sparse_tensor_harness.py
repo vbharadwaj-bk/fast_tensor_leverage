@@ -61,6 +61,13 @@ class SparseTensorALSExperiment:
         if self.method != "exact":
             self.als.initialize_ds_als(self.sample_count, self.method)
 
+    def get_ground_truth_norm(self):
+        normsq = self.ground_truth.ten.get_normsq() 
+        return np.sqrt(normsq)
+
+    def get_ground_truth_dimensions(self):
+        return self.ground_truth.dims 
+
     def run_als_round(self):
         print(f"Starting Iteration {self.iteration_count + 1}.")
         for j in range(self.approx.N):
