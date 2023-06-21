@@ -270,7 +270,7 @@ public:
         throw std::runtime_error("Failed to initialize bloom filter");  
     }
 
-    buffer_len = 8 * dim; // A single unsigned long for each dimension 
+    buffer_len = 4 * dim; // A single unsigned int for each dimension 
 
     uint32_t* idxs_ptr = idxs();
 
