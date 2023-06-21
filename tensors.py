@@ -52,11 +52,17 @@ class PyLowRank:
         rhs_norm = np.sqrt(rhs.ten.get_normsq())
         return 1.0 - diff_norm / rhs_norm
 
+    def compute_approx_diff_norm(self, rhs):
+        if not isinstance(rhs, PySparseTensor):
+            raise NotImplementedError("This function is only implemented for sparse tensors!")
+
+        return np.sqrt(rhs.ten.compute_residual_normsq_estimated(self.ten))
+
     def compute_approx_fit(self, rhs):
         if not isinstance(rhs, PySparseTensor):
             raise NotImplementedError("This function is only implemented for sparse tensors!")
 
-        diff_norm = np.sqrt(rhs.ten.compute_residual_normsq_estimated(self.ten))
+        diff_norm = self.compute_diff_norm(rhs) 
         rhs_norm = np.sqrt(rhs.ten.get_normsq())
         return 1.0 - diff_norm / rhs_norm
 
