@@ -124,27 +124,48 @@ public:
 
       // Currently implemented as a 50-50 split between
       // zero and nonzero values 
+
+      Buffer<uint32_t> nonzero_samples({nz_sample_count, N});
+      Buffer<double> nonzero_evals({nz_sample_count}); 
       Buffer<double> nonzero_values({nz_sample_count}); 
-      lr.evaluate_indices(indices, nonzero_values);
+
+      std::uniform_int_distribution<uint32_t> nz_dist(0, nnz -1); 
+
+      #pragma omp parallel
+      {
+        int thread_num = omp_get_thread_num();
+
+        #pragma omp for
+        for(uint64_t i = 0; i < nz_sample_count; i++) {
+          uint32_t idx = nz_dist(rng.par_gen[thread_num]);
+          for(uint64_t j = 0; j < N; j++) {
+            nonzero_samples[i * N + j] = indices[idx * N + j];
+            nonzero_values[i] = values[idx];
+          }
+        }
+      }
+
+      lr.evaluate_indices(nonzero_samples, nonzero_evals);
+      //lr.evaluate_indices(indices, nonzero_evals);
       double nonzero_loss = 0.0;
       double zero_loss = 0.0;
 
       #pragma omp parallel for reduction(+:nonzero_loss)
       for(uint64_t i = 0; i < nz_sample_count; i++) {
-        double diff = nonzero_values[i] - values[i];
+        double diff = nonzero_values[i] - nonzero_evals[i];
         nonzero_loss += diff * diff; 
       }
 
-      vector<std::uniform_int_distribution<uint32_t>> dists;
+      vector<std::uniform_int_distribution<uint32_t>> zero_dists;
       double dense_entries = 1.0;
       for(uint64_t j = 0; j < N; j++) {
         uint32_t max_idx = (uint32_t) lr.U[j].shape[0] - 1;
-        dists.emplace_back(0, max_idx); 
+        zero_dists.emplace_back(0, max_idx); 
         dense_entries *= max_idx;
       }
 
       Buffer<uint32_t> zero_samples({zero_sample_count, N});
-      Buffer<double> zero_values({zero_sample_count});
+      Buffer<double> zero_evals({zero_sample_count});
 
       #pragma omp parallel
       {
@@ -153,26 +174,26 @@ public:
         #pragma omp for
         for(uint64_t i = 0; i < zero_sample_count; i++) {
           for(uint64_t j = 0; j < N; j++) {
-            zero_samples[i * N + j] = dists[j](rng.par_gen[thread_num]);
+            zero_samples[i * N + j] = zero_dists[j](rng.par_gen[thread_num]);
           }
         }
       }
 
-      lr.evaluate_indices(zero_samples, zero_values); 
+      lr.evaluate_indices(zero_samples, zero_evals); 
 
       vector<uint64_t> collisions = idx_filter->check_idxs(zero_samples);
       for(uint64_t i = 0; i < collisions.size(); i++) {
-        zero_values[collisions[i]] = 0.0;
+        zero_evals[collisions[i]] = 0.0;
       } 
 
       #pragma omp parallel for reduction(+:zero_loss)
       for(uint64_t i = 0; i < zero_sample_count; i++) {
-        zero_loss += zero_values[i] * zero_values[i]; 
+        zero_loss += zero_evals[i] * zero_evals[i]; 
       }
 
       uint64_t true_zero_count = zero_sample_count - collisions.size();
       nonzero_loss *= (double) nnz / nz_sample_count; 
-      zero_loss *= (dense_entries - nnz) / zero_sample_count; 
+      zero_loss *= (dense_entries - nnz) / true_zero_count; 
 
       return nonzero_loss + zero_loss;
     }
