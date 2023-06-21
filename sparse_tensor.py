@@ -26,7 +26,6 @@ class PySparseTensor:
             self.tensor_idxs[:, i] = f[f'MODE_{i}'][:] - self.min_idxs[i]
 
         self.values = f['VALUES'][:]
-        self.data_norm = la.norm(self.values)
         print("Loaded tensor values from disk...")
 
         if preprocessing is not None:
@@ -35,5 +34,6 @@ class PySparseTensor:
             else:
                 print(f"Unknown preprocessing option '{preprocessing}' specified!")
 
+        self.data_norm = la.norm(self.values)
         self.ten = SparseTensor(self.tensor_idxs, self.values, lookup) 
         print("Finished loading sparse tensor...")

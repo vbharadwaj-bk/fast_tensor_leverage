@@ -130,10 +130,22 @@ def test_dense_recovery():
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
 
-def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
+def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
     param_map = {
         "uber": {
             "preprocessing": None,
+            "initialization": None
+        },
+        "enron": {
+            "preprocessing": "log_count",
+            "initialization": None
+        },
+        "nell-2": {
+            "preprocessing": "log_count",
+            "initialization": None
+        },
+        "amazon-reviews": {
+            "preprocessing": None, 
             "initialization": None
         }
     }
@@ -142,15 +154,16 @@ def test_sparse_tensor_decomposition(tensor_name="uber", R=2, J=10000):
     initialization = param_map[tensor_name]["initialization"]    
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
+    ranks = [R] * (ground_truth.N - 1)
+
     print("Loaded dataset...")
-    tt_approx = TensorTrain(ground_truth.shape, 
-        [R] * (ground_truth.N - 1))
+    tt_approx = TensorTrain(ground_truth.shape, ranks)
 
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=J)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
-    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J, epoch_interval=1)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J, epoch_interval=5)
 
 
 if __name__=='__main__':
