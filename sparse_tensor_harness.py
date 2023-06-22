@@ -100,7 +100,10 @@ class SparseTensorALSExperiment:
         print(f"Iteration: {self.iteration_count+1}\tFit: {self.fits[-1]}")
         elapsed = time.time() - start
         self.fit_computation_times.append(elapsed)
-        return self.fits[-1]  
+        return self.fits[-1] 
+
+    def compute_approx_diff_norm(self):
+        return self.approx.compute_approx_diff_norm(self.ground_truth)
 
 if __name__=='__main__':
     experiment = SparseTensorALSExperiment(
