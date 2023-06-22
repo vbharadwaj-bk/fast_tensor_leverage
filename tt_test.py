@@ -74,7 +74,7 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
-def test_image_feature_extraction(dataset="mnist", R=14, J=20000):
+def test_image_feature_extraction(dataset="mnist", R=22, J=50000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
     #tt_approx = TensorTrain(ground_truth.shape, 
@@ -90,7 +90,7 @@ def test_image_feature_extraction(dataset="mnist", R=14, J=20000):
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J)
 
 def test_norm_computation():
     I = 100
@@ -170,10 +170,19 @@ def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
 
     tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J, epoch_interval=5)
 
+def print_tensor_param_counts(dims, rank_cp, rank_tt):
+    dims = np.array(dims)
+    cp_param_count = np.sum(dims) * rank_cp
+    tt_param_count = np.sum(dims[1:-1]) * rank_tt * rank_tt + (dims[0] + dims[-1]) * rank_tt
+    print(f"CP param count: {cp_param_count}")
+    print(f"TT param count: {tt_param_count}")
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
     #test_tt_als()
-    test_image_feature_extraction()
+
+    print_tensor_param_counts([60000, 28, 28], 
+        rank_cp=25, rank_tt=21)
+    #test_image_feature_extraction()
 
