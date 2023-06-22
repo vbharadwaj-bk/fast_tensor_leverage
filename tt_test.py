@@ -10,6 +10,7 @@ import cppimport.import_hook
 from tensor_train import *
 from tt_als import *
 from sparse_tensor import *
+from function_tensor import *
 from tensor_io.torch_tensor_loader import get_torch_tensor
 
 def test_tt_sampling(I=20, R=4, N=3, J=10000, seed=20, test_direction="left"): 
@@ -77,10 +78,9 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
 def test_image_feature_extraction(dataset="mnist", R=10, J=10000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
-    #tt_approx = TensorTrain(ground_truth.shape, 
-    #    [R] * (ground_truth.N - 1))
+    tt_approx = TensorTrain(ground_truth.shape, 
+        [R] * (ground_truth.N - 1))
 
-    tt_approx = TensorTrain(ground_truth.shape, [R+1, R])
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
@@ -131,7 +131,7 @@ def test_dense_recovery():
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
 
-def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
+def test_sparse_tensor_decomposition(tensor_name="uber", R=10, J=65000):
     param_map = {
         "uber": {
             "preprocessing": None,
@@ -155,7 +155,8 @@ def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
     initialization = param_map[tensor_name]["initialization"]    
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
-    ranks = [R] * (ground_truth.N - 1)
+    # ranks = [R] * (ground_truth.N - 1)
+    ranks = [R, R+1, R]
 
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, ranks)
@@ -173,6 +174,15 @@ def print_tensor_param_counts(dims, rank_cp, rank_tt):
     print(f"CP param count: {cp_param_count}")
     print(f"TT param count: {tt_param_count}")
 
+def test_function_tensor():
+    def sin_func(idxs):
+        return np.sin(np.sum(idxs, axis=1))
+
+    ten = FunctionTensor(np.array([[0, 1], [0, 1]]), [5, 5], sin_func)
+
+    eval_idxs = np.array([[1, 0]], dtype=np.uint64) 
+    ten.compute_observation_matrix(eval_idxs, 0)
+
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
@@ -180,5 +190,6 @@ if __name__=='__main__':
 
     #print_tensor_param_counts([60000, 28, 28], 
     #    rank_cp=25, rank_tt=21)
-    test_image_feature_extraction()
+    #test_image_feature_extraction()
 
+    test_function_tensor()

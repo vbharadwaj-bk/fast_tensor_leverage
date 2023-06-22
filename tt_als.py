@@ -123,6 +123,8 @@ class TensorTrainALS:
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
             design_gram = design.T @ design
 
+            print(np.min(weights), np.max(weights))
+
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)

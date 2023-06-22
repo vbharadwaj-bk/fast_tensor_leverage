@@ -64,35 +64,3 @@ class PyLowRank:
             buffers.append(scipy.integrate.simpson(self.U[i], axis=0, dx=dx[i]))
 
         return np.sum(chain_had_prod(buffers))
-
-#from numba import cfunc, types, carray, void, uint32, float64, uint64, jit 
-
-#@jit(void(float64[:, :],uint64[:, :],uint32,uint32,uint32,uint32), nopython=True)
-#def test_function(out_buffer, samples, j, row_pos, M, Ij):
-#    delta_X = 0.01
-#
-#    for i in range(row_pos, row_pos + M):
-#        samples[i, j] = 0
-#        temp_sum = np.sum(samples[i, :])
-#
-#        for k in range(Ij):
-            #out_buffer[i-row_pos, k] = np.sin((temp_sum + k) * delta_X)
-            #out_buffer[i-row_pos, k] = (temp_sum + k) * delta_X
-#            out_buffer[i-row_pos, k] = samples[i, 0] 
-
-
-#def test_wrapper(out_buffer_, samples_, j, row_pos, M, Ij, tensor_dim):
-#    out_ptr = ctypes.c_void_p(out_buffer_)
-#    samples_ptr = ctypes.c_void_p(samples_)
-#    out_buffer = carray(out_ptr, (M, Ij), dtype=np.double)
-#    samples = carray(samples_ptr, (M, tensor_dim), dtype=np.uint64)
-#    test_function(out_buffer, samples, j, row_pos, M, Ij)
-
-class FunctionTensor:
-    def __init__(self, dims, J, dx, func=None, func_batch=None):
-        self.N = len(dims)
-        self.J = J
-        #self.bounds = bounds
-        #self.subdivisions = subdivisions
-        self.dims = np.array(dims, dtype=np.uint64)
-        self.ten = PyFunctionTensor(self.dims, J, 10000, dx)
