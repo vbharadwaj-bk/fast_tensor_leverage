@@ -105,6 +105,9 @@ class SparseTensorALSExperiment:
     def compute_approx_diff_norm(self):
         return self.approx.compute_approx_diff_norm(self.ground_truth)
 
+    def compute_exact_diff_norm(self):
+        return self.approx.compute_diff_resid(self.ground_truth)
+
 if __name__=='__main__':
     experiment = SparseTensorALSExperiment(
         tensor_path="/pscratch/sd/v/vbharadw/tensors/uber.tns_converted.hdf5",
