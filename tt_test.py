@@ -74,17 +74,13 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
-def test_image_feature_extraction(dataset="mnist", R=22, J=50000):
+def test_image_feature_extraction(dataset="mnist", R=10, J=10000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
     #tt_approx = TensorTrain(ground_truth.shape, 
     #    [R] * (ground_truth.N - 1))
 
-    tt_approx = TensorTrain(ground_truth.shape, 
-        #[R] * (ground_truth.N - 1) 
-        [R, R] 
-        )
-
+    tt_approx = TensorTrain(ground_truth.shape, [R+1, R])
     tt_approx.place_into_canonical_form(0)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
@@ -182,7 +178,7 @@ if __name__=='__main__':
     #test_dense_recovery()
     #test_tt_als()
 
-    print_tensor_param_counts([60000, 28, 28], 
-        rank_cp=25, rank_tt=21)
-    #test_image_feature_extraction()
+    #print_tensor_param_counts([60000, 28, 28], 
+    #    rank_cp=25, rank_tt=21)
+    test_image_feature_extraction()
 
