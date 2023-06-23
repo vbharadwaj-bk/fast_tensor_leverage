@@ -182,11 +182,12 @@ def test_function_tensor_decomposition():
     tt_rank = 5
     L = 10.0
     N = 3
-    subdivs_per_dim = 100
+    subdivs_per_dim = 1000
     grid_bounds = np.array([[0, L] for _ in range(N)], dtype=np.double)
     subdivisions = [subdivs_per_dim] * N
-    ten = FunctionTensor(grid_bounds, subdivisions, slater_function)
+    ground_truth = FunctionTensor(grid_bounds, subdivisions, slater_function)
 
+    tt_approx = TensorTrain(subdivisions, [tt_rank] * (N - 1))
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=J)
     tt_als = TensorTrainALS(ground_truth, tt_approx)

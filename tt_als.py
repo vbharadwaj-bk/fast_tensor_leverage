@@ -35,7 +35,7 @@ class TensorTrainALS:
 
         elif isinstance(ground_truth, FunctionTensor):
             # TODO: Implement this! 
-            return 0.9        
+            return 0.0 
         else:
             raise NotImplementedError
 
@@ -127,9 +127,6 @@ class TensorTrainALS:
             # gram matrix 
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
             design_gram = design.T @ design
-
-            print(np.min(weights), np.max(weights))
-
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
