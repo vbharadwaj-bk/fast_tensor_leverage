@@ -15,11 +15,16 @@ class FunctionTensor:
         of the observation matrix. Only works for the one-site version. 
         '''
         result = np.zeros((idxs_int.shape[0], self.dims[j]), dtype=np.double)
-        idxs = idxs.astype(np.double) * self.dx[j] + self.grid_bounds[:, 0]
+        idxs = idxs_int.astype(np.double) * self.dx[j] + self.grid_bounds[:, 0]
 
         for i in range(self.dims[j]):
             idxs[:, j] = i * self.dx[j] + self.grid_bounds[j, 0]
             result[:, i] = self.func(idxs)
-            print(idxs)
 
         return result
+
+    def execute_sampled_spmm(self, samples, design, j, result):
+        observation = self.compute_observation_matrix(samples, j)
+        result[:] = observation.T @ design  
+    
+    

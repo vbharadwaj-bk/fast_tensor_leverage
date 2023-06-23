@@ -174,14 +174,23 @@ def print_tensor_param_counts(dims, rank_cp, rank_tt):
     print(f"CP param count: {cp_param_count}")
     print(f"TT param count: {tt_param_count}")
 
-def test_function_tensor():
-    def sin_func(idxs):
-        return np.sin(np.sum(idxs, axis=1))
+def test_function_tensor_decomposition():
+    def slater_function(idxs):
+        return np.exp(-np.sqrt(np.sum(idxs ** 2, axis=1)))
 
-    ten = FunctionTensor(np.array([[0, 1], [0, 1]]), [5, 5], sin_func)
+    J = 10000 
+    tt_rank = 5
+    L = 10.0
+    N = 3
+    subdivs_per_dim = 100
+    grid_bounds = np.array([[0, L] for _ in range(N)], dtype=np.double)
+    subdivisions = [subdivs_per_dim] * N
+    ten = FunctionTensor(grid_bounds, subdivisions, slater_function)
 
-    eval_idxs = np.array([[1, 0]], dtype=np.uint64) 
-    ten.compute_observation_matrix(eval_idxs, 0)
+    tt_approx.place_into_canonical_form(0)
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1)
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
@@ -192,4 +201,4 @@ if __name__=='__main__':
     #    rank_cp=25, rank_tt=21)
     #test_image_feature_extraction()
 
-    test_function_tensor()
+    test_function_tensor_decomposition()

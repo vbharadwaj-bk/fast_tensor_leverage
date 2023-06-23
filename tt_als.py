@@ -1,6 +1,7 @@
 from tensor_train import *
 from dense_tensor import *
 from sparse_tensor import *
+from function_tensor import *
 
 import time
 
@@ -31,6 +32,10 @@ class TensorTrainALS:
             diff_norm = np.sqrt(np.maximum(tt_normsq + partial_diff_sum, 0.0))
 
             return 1.0 - (diff_norm / ground_truth.data_norm)
+
+        elif isinstance(ground_truth, FunctionTensor):
+            # TODO: Implement this! 
+            return 0.9        
         else:
             raise NotImplementedError
 
@@ -129,7 +134,7 @@ class TensorTrainALS:
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
 
-            self.ground_truth.ten.execute_downsampled_mttkrp(
+            self.ground_truth.execute_sampled_spmm(
                     samples,
                     design,
                     j,
@@ -137,7 +142,6 @@ class TensorTrainALS:
 
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
-
 
         for i in range(num_sweeps):
             print(f"Starting sweep {i}...")
