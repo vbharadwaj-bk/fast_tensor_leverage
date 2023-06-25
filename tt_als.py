@@ -39,7 +39,13 @@ class TensorTrainALS:
         else:
             raise NotImplementedError
 
-    def execute_exact_als_sweeps_slow(self, num_sweeps):
+    def compute_approx_fit(self):
+        if isinstance(ground_truth, FunctionTensor):
+            return ground_truth.compute_approx_tt_fit(self.tt_approx)
+        else:
+            raise NotImplementedError
+
+    def execute_exact_als_sweeps_slow(self, num_sweeps, accuracy_method="exact"):
         '''
         Assumes that the TT is in orthogonal
         form with core 0 non-orthogonal. This is a slow
@@ -52,6 +58,9 @@ class TensorTrainALS:
 
         tt_approx = self.tt_approx
         N = tt_approx.N
+
+        if accuracy_method == "approx":
+            self.ground_truth.initialize_accuracy_estimation()
 
         def optimize_core(i):
             left_chain = tt_approx.left_chain_matricize(i)
@@ -86,7 +95,10 @@ class TensorTrainALS:
                 optimize_core(i)
                 tt_approx.orthogonalize_push_left(i)
 
-            print(tt_als.compute_exact_fit())
+            if accuracy_method == "approx":
+                print(self.compute_approx_fit())
+            elif accuracy_method == "exact":
+                print(tt_als.compute_exact_fit())
 
     def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):
         print("Starting randomized ALS!")

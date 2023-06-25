@@ -191,7 +191,7 @@ def test_function_tensor_decomposition():
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=J)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_metod="approx")
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
