@@ -176,22 +176,31 @@ def print_tensor_param_counts(dims, rank_cp, rank_tt):
 
 def test_function_tensor_decomposition():
     def slater_function(idxs):
-        return np.exp(-np.sqrt(np.sum(idxs ** 2, axis=1)))
+        #return np.exp(-np.sqrt(np.sum(idxs ** 2, axis=1)))
+        return np.sin((np.sum(idxs, axis=1)))
 
     J = 10000 
     tt_rank = 5
     L = 10.0
     N = 3
-    subdivs_per_dim = 1000
+    subdivs_per_dim = 5
     grid_bounds = np.array([[0, L] for _ in range(N)], dtype=np.double)
     subdivisions = [subdivs_per_dim] * N
     ground_truth = FunctionTensor(grid_bounds, subdivisions, slater_function)
+
+    #idxs_test = np.array([[1, 1, 1]], dtype=np.uint64)
+    #observation = ground_truth.compute_observation_matrix(idxs_test, 2)
+    #print(observation)
+    #exit(1)
 
     tt_approx = TensorTrain(subdivisions, [tt_rank] * (N - 1))
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=J)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_metod="approx")
+    ground_truth.initialize_accuracy_estimation()
+
+    print(tt_als.compute_approx_fit())
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 

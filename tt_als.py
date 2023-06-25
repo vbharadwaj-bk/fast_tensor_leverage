@@ -40,12 +40,12 @@ class TensorTrainALS:
             raise NotImplementedError
 
     def compute_approx_fit(self):
-        if isinstance(ground_truth, FunctionTensor):
-            return ground_truth.compute_approx_tt_fit(self.tt_approx)
+        if isinstance(self.ground_truth, FunctionTensor):
+            return self.ground_truth.compute_approx_tt_fit(self.tt_approx)
         else:
             raise NotImplementedError
 
-    def execute_exact_als_sweeps_slow(self, num_sweeps, accuracy_method="exact"):
+    def execute_exact_als_sweeps_slow(self, num_sweeps):
         '''
         Assumes that the TT is in orthogonal
         form with core 0 non-orthogonal. This is a slow
@@ -58,9 +58,6 @@ class TensorTrainALS:
 
         tt_approx = self.tt_approx
         N = tt_approx.N
-
-        if accuracy_method == "approx":
-            self.ground_truth.initialize_accuracy_estimation()
 
         def optimize_core(i):
             left_chain = tt_approx.left_chain_matricize(i)
@@ -100,10 +97,11 @@ class TensorTrainALS:
             elif accuracy_method == "exact":
                 print(tt_als.compute_exact_fit())
 
-    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):
+    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5, accuracy_method="exact"):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
         N = tt_approx.N
+
         def optimize_core(j):
             samples = np.zeros((J, N), dtype=np.uint64)
             left_rows = None
@@ -167,4 +165,7 @@ class TensorTrainALS:
             tt_approx.update_internal_sampler(0, "left", False)
 
             if i % epoch_interval == 0:
-                print(self.compute_exact_fit())
+                if accuracy_method == "approx":
+                    print(self.compute_approx_fit())
+                elif accuracy_method == "exact":
+                    print(self.compute_exact_fit())

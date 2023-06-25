@@ -17,11 +17,11 @@ class FunctionTensor:
         if method != "randomized":
             raise NotImplementedError("Only randomized validation set generation is supported")
 
-        validation_samples_int = np.zeros((rsample_count, self.N), dtype=np.uint64)
+        self.validation_samples_int = np.zeros((rsample_count, self.N), dtype=np.uint64)
         for i in range(self.N):
-            validation_samples_int[:, i] = np.random.randint(0, self.dims[i], size=rsample_count)
+            self.validation_samples_int[:, i] = np.random.randint(0, self.dims[i], size=rsample_count)
 
-        self.validation_samples = validation_samples_int.astype(np.double) * self.dx[j] + self.grid_bounds[:, 0]
+        self.validation_samples = self.validation_samples_int.astype(np.double) * self.dx + self.grid_bounds[:, 0]
         self.validation_values = self.func(self.validation_samples)
 
     def compute_observation_matrix(self, idxs_int, j):
@@ -30,7 +30,7 @@ class FunctionTensor:
         of the observation matrix. Only works for the one-site version. 
         '''
         result = np.zeros((idxs_int.shape[0], self.dims[j]), dtype=np.double)
-        idxs = idxs_int.astype(np.double) * self.dx[j] + self.grid_bounds[:, 0]
+        idxs = idxs_int.astype(np.double) * self.dx + self.grid_bounds[:, 0]
 
         for i in range(self.dims[j]):
             idxs[:, j] = i * self.dx[j] + self.grid_bounds[j, 0]
@@ -49,6 +49,9 @@ class FunctionTensor:
         if self.validation_samples is None:
             raise ValueError("Must set validation samples before computing fit")
 
-        validation_approx = tt_approx.evaluate(self.validation_samples)
+        validation_approx = tt_approx.evaluate_partial_fast(
+                self.validation_samples_int,
+                self.N, "left").squeeze()
+
         return 1.0 - la.norm(self.validation_values - validation_approx) / la.norm(self.validation_values)
 
