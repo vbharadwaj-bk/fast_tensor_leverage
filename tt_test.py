@@ -176,15 +176,16 @@ def print_tensor_param_counts(dims, rank_cp, rank_tt):
 
 def test_function_tensor_decomposition():
     def slater_function(idxs):
-        #return np.exp(-np.sqrt(np.sum(idxs ** 2, axis=1)))
-        return np.sin((np.sum(idxs, axis=1)))
+        norms = np.sqrt(np.sum(idxs ** 2, axis=1))
+        return np.exp(-norms) / norms 
+        #return np.sin((np.sum(idxs, axis=1)))
 
-    J = 10000 
-    tt_rank = 5
+    J = 200
+    tt_rank = 4
     L = 10.0
     N = 3
-    subdivs_per_dim = 5
-    grid_bounds = np.array([[0, L] for _ in range(N)], dtype=np.double)
+    subdivs_per_dim = 1000
+    grid_bounds = np.array([[1.0, L] for _ in range(N)], dtype=np.double)
     subdivisions = [subdivs_per_dim] * N
     ground_truth = FunctionTensor(grid_bounds, subdivisions, slater_function)
 
