@@ -39,11 +39,12 @@ def test_tt_cross(d,cores,r,func_names,nswp,J):
 
     return tt_cross_fit_results, rand_als_fit_results
 
-tt_cross_fit_results, rand_als_fit_results = test_tt_cross(100,4,8,['schaffer','sine'],5,10000)
 
 
-print(tt_cross_fit_results)
-print(rand_als_fit_results)
+if __name__=='__main__':
+    tt_cross_fit_results, rand_als_fit_results = test_tt_cross(100,4,8,['schaffer','sine'],5,10000)
+    print(tt_cross_fit_results)
+    print(rand_als_fit_results)
 
 
 
