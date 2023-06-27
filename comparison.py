@@ -1,21 +1,61 @@
-import torch
 import numpy as np
-import math
-import tensorly as tl
-import tntorch as tn
+from tensor_train import *
+from dense_tensor import *
+from tt_als import *
+from functions import *
+import teneva
+from time import perf_counter as tpc
+np.random.seed(42)
 
-def function(X):  # Matrix (one row per sample, one column per input variable) and return a vector with one result per sample
-    return torch.sin(torch.sum(X,dim=1))  #f(x1,...,xN) = sin(x1+...+xN)
+def test_tt_cross(d,cores,r,func_names,nswp,J):
+    tt_cross_fit_results = {}
+    rand_als_fit_results = {}
+    dims = [d] * cores
+    ranks = [r] * (cores- 1)
+    tt_approx = TensorTrain(dims,ranks)
+    tt_approx.place_into_canonical_form(0)
+    initialize = tt_approx.U
 
-domain = [torch.arange(1, 33) for n in range(3)]
+    I_idx = np.vstack([np.random.choice(k, 100) for k in n]).T
 
-t = tn.cross(function = function, domain=domain,function_arg='matrix',ranks_tt=3,rmax=100,return_info=True)
-print(t)
+    for name in func_names:
+        for i in range(nswp):
+            print(f"Starting sweep {i}...")
+            func = getattr(Functions, name)
+            tt_cross = teneva.cross(func, initialize, nswp)
+            tt_cross = teneva.truncate(tt_cross)
+            func_values = func(I_idx)
+            tt_cross_values = teneva.get_many(tt_cross, I_idx)
+            fit = 1 - teneva.act_two.accuracy(tt_cross_values, func_values)
+            tt_cross_fit_results[f"tt_cross_fit_{name}"] = fit
 
-def f(X):
-    return 1/torch.sum(X,dim=1) #Hilbert tensor
+        full_tt_cross = teneva.full(tt_cross)
+        ground_truth = PyDenseTensor(full_tt_cross)
+        tt_als = TensorTrainALS(ground_truth, tt_approx)
+        tt_als.execute_exact_als_sweeps_slow(nswp)
+        tt_approx.build_fast_sampler(0, J=J)
+        tt_als.execute_randomized_als_sweeps(num_sweeps=nswp, J=J)
+        rand_als_fit_results[f"rand_als_fit_{name}"] = tt_als.compute_exact_fit()
 
-domain = [torch.arange(1, 33) for n in range(2)]
+    return tt_cross_fit_results, rand_als_fit_results
 
-s = tn.cross(function = f, domain=domain,function_arg='matrix',ranks_tt=5,rmax=100)
-print(s)
+tt_cross_fit_results, rand_als_fit_results = test_tt_cross(100,4,8,['schaffer','sine'],5,10000)
+
+
+print(tt_cross_fit_results)
+print(rand_als_fit_results)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
