@@ -10,6 +10,7 @@ import cppimport.import_hook
 from tensor_train import *
 from tt_als import *
 from sparse_tensor import *
+from function_tensor import *
 from tensor_io.torch_tensor_loader import get_torch_tensor
 
 def test_tt_sampling(I=20, R=4, N=3, J=10000, seed=20, test_direction="left"): 
@@ -72,9 +73,9 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
-def test_image_feature_extraction(dataset="mnist", R=14, J=20000):
+def test_image_feature_extraction(dataset="mnist", R=10, J=10000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
@@ -85,7 +86,7 @@ def test_image_feature_extraction(dataset="mnist", R=14, J=20000):
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J)
 
 def test_norm_computation():
     I = 100
@@ -130,7 +131,7 @@ def test_dense_recovery():
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
 
-def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
+def test_sparse_tensor_decomposition(tensor_name="uber", R=10, J=65000):
     param_map = {
         "uber": {
             "preprocessing": None,
@@ -154,7 +155,8 @@ def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
     initialization = param_map[tensor_name]["initialization"]    
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
-    ranks = [R] * (ground_truth.N - 1)
+    # ranks = [R] * (ground_truth.N - 1)
+    ranks = [R, R+1, R]
 
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, ranks)
@@ -165,8 +167,48 @@ def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
 
     tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J, epoch_interval=5)
 
+def print_tensor_param_counts(dims, rank_cp, rank_tt):
+    dims = np.array(dims)
+    cp_param_count = np.sum(dims) * rank_cp
+    tt_param_count = np.sum(dims[1:-1]) * rank_tt * rank_tt + (dims[0] + dims[-1]) * rank_tt
+    print(f"CP param count: {cp_param_count}")
+    print(f"TT param count: {tt_param_count}")
+
+def test_function_tensor_decomposition():
+    def slater_function(idxs):
+        #return np.exp(-np.sqrt(np.sum(idxs ** 2, axis=1)))
+        return np.sin((np.sum(idxs, axis=1)))
+
+    J = 10000 
+    tt_rank = 5
+    L = 10.0
+    N = 3
+    subdivs_per_dim = 5
+    grid_bounds = np.array([[0, L] for _ in range(N)], dtype=np.double)
+    subdivisions = [subdivs_per_dim] * N
+    ground_truth = FunctionTensor(grid_bounds, subdivisions, slater_function)
+
+    #idxs_test = np.array([[1, 1, 1]], dtype=np.uint64)
+    #observation = ground_truth.compute_observation_matrix(idxs_test, 2)
+    #print(observation)
+    #exit(1)
+
+    tt_approx = TensorTrain(subdivisions, [tt_rank] * (N - 1))
+    tt_approx.place_into_canonical_form(0)
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+    ground_truth.initialize_accuracy_estimation()
+
+    print(tt_als.compute_approx_fit())
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
 
 if __name__=='__main__':
-    test_sparse_tensor_decomposition() 
+    #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
     #test_tt_als()
+
+    #print_tensor_param_counts([60000, 28, 28], 
+    #    rank_cp=25, rank_tt=21)
+    #test_image_feature_extraction()
+
+    test_function_tensor_decomposition()

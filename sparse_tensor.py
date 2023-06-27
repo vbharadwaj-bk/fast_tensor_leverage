@@ -37,3 +37,10 @@ class PySparseTensor:
         self.data_norm = la.norm(self.values)
         self.ten = SparseTensor(self.tensor_idxs, self.values, lookup) 
         print("Finished loading sparse tensor...")
+
+    def execute_sampled_spmm(self, samples, design, j, result):
+        self.ten.execute_downsampled_mttkrp(
+                samples,
+                design,
+                j,
+                result)

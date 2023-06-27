@@ -1,6 +1,7 @@
 from tensor_train import *
 from dense_tensor import *
 from sparse_tensor import *
+from function_tensor import *
 
 import time
 
@@ -31,6 +32,16 @@ class TensorTrainALS:
             diff_norm = np.sqrt(np.maximum(tt_normsq + partial_diff_sum, 0.0))
 
             return 1.0 - (diff_norm / ground_truth.data_norm)
+
+        elif isinstance(ground_truth, FunctionTensor):
+            # TODO: Implement this! 
+            return 0.0 
+        else:
+            raise NotImplementedError
+
+    def compute_approx_fit(self):
+        if isinstance(self.ground_truth, FunctionTensor):
+            return self.ground_truth.compute_approx_tt_fit(self.tt_approx)
         else:
             raise NotImplementedError
 
@@ -81,12 +92,16 @@ class TensorTrainALS:
                 optimize_core(i)
                 tt_approx.orthogonalize_push_left(i)
 
-            print(tt_als.compute_exact_fit())
+            if accuracy_method == "approx":
+                print(self.compute_approx_fit())
+            elif accuracy_method == "exact":
+                print(tt_als.compute_exact_fit())
 
-    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):
+    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5, accuracy_method="exact"):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
         N = tt_approx.N
+
         def optimize_core(j):
             samples = np.zeros((J, N), dtype=np.uint64)
             left_rows = None
@@ -122,12 +137,11 @@ class TensorTrainALS:
             # gram matrix 
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
             design_gram = design.T @ design
-
             design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
             result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
 
-            self.ground_truth.ten.execute_downsampled_mttkrp(
+            self.ground_truth.execute_sampled_spmm(
                     samples,
                     design,
                     j,
@@ -135,7 +149,6 @@ class TensorTrainALS:
 
             result = result @ la.pinv(design_gram) 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
-
 
         for i in range(num_sweeps):
             print(f"Starting sweep {i}...")
@@ -152,4 +165,7 @@ class TensorTrainALS:
             tt_approx.update_internal_sampler(0, "left", False)
 
             if i % epoch_interval == 0:
-                print(self.compute_exact_fit())
+                if accuracy_method == "approx":
+                    print(self.compute_approx_fit())
+                elif accuracy_method == "exact":
+                    print(self.compute_exact_fit())
