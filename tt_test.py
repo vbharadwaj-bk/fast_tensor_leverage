@@ -207,7 +207,8 @@ def test_function_tensor_decomposition():
 
 def test_amrex_decomposition(
         filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
-        J=10000):
+        J=65000,
+        R=30):
     ground_truth = get_amrex_single_plot_tensor(filepath)
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
@@ -218,7 +219,16 @@ def test_amrex_decomposition(
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=30, J=J)
+
+    tt_full = tt_approx.materialize_dense() 
+    sl = tt_full[128, :, :]
+
+    # Plot sl and save to a png file
+    fig, ax = plt.subplots()
+    ax.imshow(sl)
+    fig.savefig('outputs/charge_tt_comparison.png')
+
 
 
 if __name__=='__main__':

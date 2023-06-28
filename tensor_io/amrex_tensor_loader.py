@@ -9,9 +9,9 @@ def get_amrex_single_plot_tensor(filepath, field='charge'):
     from yt.frontends.boxlib.data_structures import AMReXDataset
     print("yt loaded!")
 
-    ds = AMReXDataset(plot_path)
+    ds = AMReXDataset(filepath)
     ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
-    charge_numpy_array = ad0['charge'].to_ndarray()
+    charge_numpy_array = ad0[field].to_ndarray()
 
     print(f"Loaded AMREX plot {filepath}...") 
     tensor = PyDenseTensor(charge_numpy_array)
