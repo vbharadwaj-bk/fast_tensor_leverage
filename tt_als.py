@@ -92,10 +92,10 @@ class TensorTrainALS:
                 optimize_core(i)
                 tt_approx.orthogonalize_push_left(i)
 
-            if accuracy_method == "approx":
-                print(self.compute_approx_fit())
-            elif accuracy_method == "exact":
-                print(tt_als.compute_exact_fit())
+            # if accuracy_method == "approx":
+            #     print(self.compute_approx_fit())
+            # elif accuracy_method == "exact":
+            print(self.compute_exact_fit())
 
     def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5, accuracy_method="exact"):
         print("Starting randomized ALS!")

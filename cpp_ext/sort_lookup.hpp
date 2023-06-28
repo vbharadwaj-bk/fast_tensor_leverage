@@ -4,7 +4,7 @@
 #include <string>
 #include <cstring>
 #include <random>
-#include <execution>
+//#include <execution>
 #include <algorithm>
 #include <numeric>
 
@@ -46,9 +46,9 @@ public:
         sort_idxs[i] = idx_ptr + (i * N);
     }
 
-    std::sort(std::execution::par_unseq, 
-    //std::sort(
-        sort_idxs(), 
+//    std::sort(std::execution::par_unseq,
+    std::sort(
+        sort_idxs(),
         sort_idxs(nnz),
         [mode_to_leave, N](IDX_T* a, IDX_T* b) {
             for(int i = 0; i < N; i++) {
