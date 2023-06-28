@@ -12,6 +12,7 @@ from tt_als import *
 from sparse_tensor import *
 from function_tensor import *
 from tensor_io.torch_tensor_loader import get_torch_tensor
+from tensor_io.amrex_tensor_loader import get_amrex_single_plot_tensor
 
 def test_tt_sampling(I=20, R=4, N=3, J=10000, seed=20, test_direction="left"): 
     '''
@@ -203,6 +204,23 @@ def test_function_tensor_decomposition():
     print(tt_als.compute_approx_fit())
     tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
 
+
+def test_amrex_decomposition(
+        filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
+        J=10000):
+    ground_truth = get_amrex_single_plot_tensor(filepath)
+    print("Loaded dataset...")
+    tt_approx = TensorTrain(ground_truth.shape, 
+        [R] * (ground_truth.N - 1))
+
+    tt_approx.place_into_canonical_form(0)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+
+    print(tt_als.compute_exact_fit())
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J)
+
+
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
@@ -212,4 +230,8 @@ if __name__=='__main__':
     #    rank_cp=25, rank_tt=21)
     #test_image_feature_extraction()
 
-    test_function_tensor_decomposition()
+    #test_function_tensor_decomposition()
+
+    test_amrex_decomposition(
+        filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
+        J=10000)
