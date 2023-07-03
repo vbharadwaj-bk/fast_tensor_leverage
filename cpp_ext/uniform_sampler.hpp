@@ -12,7 +12,7 @@
 using namespace std;
 
 /*
-* Samples uniformly at random from all rows of the KRP. 
+* Samples uniformly at random. 
 */
 class __attribute__((visibility("hidden"))) UniformSampler: public Sampler {
 public:
