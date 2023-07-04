@@ -237,6 +237,12 @@ def test_quantization():
     recovered_indices = quantization.unquantize_indices(q_indices)
     print(recovered_indices)
 
+def test_qtt_interpolation_points():
+    def slater_function(idxs):
+        norms = np.sqrt(np.sum(idxs ** 2, axis=1))
+        return np.exp(-norms) / norms 
+        #return np.sin((np.sum(idxs, axis=1)))
+
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
