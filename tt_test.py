@@ -230,7 +230,12 @@ def test_amrex_decomposition(
     fig.savefig('outputs/charge_tt_comparison.png')
 
 def test_quantization():
-    pass
+    quantization = Power2Quantization([2 ** 3] * 3, ordering="canonical")
+    indices = np.array([[3, 4, 7]], dtype=np.uint64)
+    q_indices = quantization.quantize_indices(indices)
+    recovered_indices = quantization.unquantize_indices(q_indices)
+
+    print(recovered_indices)
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 

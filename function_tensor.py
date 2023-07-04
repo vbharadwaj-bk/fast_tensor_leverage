@@ -21,12 +21,29 @@ class Power2Quantization:
             qdims.append(qdim)
 
         self.quantization_dimensions = np.zeros((len(dims), max(qdims)), dtype=np.uint64)
-        self.quantization_dimensions.fill(-1)
         for i in range(len(dims)):
             self.quantization_dimensions[i, :qdims[i]] = qdim_lists[i]
 
+        self.qdim_sum = np.sum(qdims)
+
         if ordering == "canonical":
-            self.permutation = np.arange(len(dims), dtype=np.uint64)
+            self.permutation = np.arange(self.qdim_sum, dtype=np.uint64)
+
+    def quantize_indices(self, indices):
+        J = indices.shape[0]
+        quantized_indices = np.zeros((J, self.qdim_sum), dtype=np.uint64)
+
+        quantize_indices(
+            indices, 
+            self.quantization_dimensions, 
+            self.permutation, 
+            quantized_indices)
+
+        return quantized_indices
+
+
+    def unquantize_indices(self, indices):
+        pass
 
 
 class FunctionTensor:
@@ -40,8 +57,7 @@ class FunctionTensor:
         # Validation set for fit computation
         self.validation_samples = None
         self.validation_values = None
-        
-
+        self.quantization = quantization
 
 
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):

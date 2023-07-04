@@ -22,6 +22,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(tt_module, m) {
     m.def("quantize_indices", &quantize_indices);
+    m.def("unquantize_indices", &unquantize_indices);
     py::class_<TTSampler>(m, "TTSampler")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::array_t<uint64_t>>())
         .def("update_matricization", &TTSampler::update_matricization)
@@ -92,6 +93,7 @@ cfg['dependencies'] = [ 'common.h',
                         'tensor.hpp',
                         'black_box_tensor.hpp',
                         'dense_tensor.hpp',
+                        'function_tensor.hpp',
                         '../config.json'
                         ] 
 %>
