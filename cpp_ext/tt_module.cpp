@@ -12,6 +12,7 @@
 #include "black_box_tensor.hpp"
 #include "dense_tensor.hpp"
 #include "sparse_tensor.hpp"
+#include "function_tensor.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -20,6 +21,7 @@ using namespace std;
 namespace py = pybind11;
 
 PYBIND11_MODULE(tt_module, m) {
+    m.def("quantize_indices", &quantize_indices);
     py::class_<TTSampler>(m, "TTSampler")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::array_t<uint64_t>>())
         .def("update_matricization", &TTSampler::update_matricization)

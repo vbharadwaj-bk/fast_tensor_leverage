@@ -1,8 +1,36 @@
 import numpy as np
 import numpy.linalg as la
 
+import cppimport
+import cppimport.import_hook
+from cpp_ext.tt_module import quantize_indices 
+
+class Power2Quantization:
+    def __init__(self, dims, ordering):
+        qdim_lists = []
+        qdims = []
+        for dim in dims:
+            qdim = 0
+            while dim % 2 == 0 and dim > 1:
+                dim = dim // 2
+                qdim += 1
+            if dim != 1:
+                raise ValueError("All dimensions must be powers of 2")
+
+            qdim_lists.append([2 for i in range(qdim)])
+            qdims.append(qdim)
+
+        self.quantization_dimensions = np.zeros((len(dims), max(qdims)), dtype=np.uint64)
+        self.quantization_dimensions.fill(-1)
+        for i in range(len(dims)):
+            self.quantization_dimensions[i, :qdims[i]] = qdim_lists[i]
+
+        if ordering == "canonical":
+            self.permutation = np.arange(len(dims), dtype=np.uint64)
+
+
 class FunctionTensor:
-    def __init__(self, grid_bounds, dims, func): 
+    def __init__(self, grid_bounds, dims, func, quantization=None): 
         self.grid_bounds = np.array(grid_bounds, dtype=np.double)
         self.dims = np.array(dims, dtype=np.uint64)
         self.func = func
@@ -12,6 +40,9 @@ class FunctionTensor:
         # Validation set for fit computation
         self.validation_samples = None
         self.validation_values = None
+        
+
+
 
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):
         if method != "randomized":

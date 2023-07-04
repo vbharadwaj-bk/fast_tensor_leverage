@@ -229,7 +229,8 @@ def test_amrex_decomposition(
     ax.imshow(sl)
     fig.savefig('outputs/charge_tt_comparison.png')
 
-
+def test_quantization():
+    pass
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
@@ -242,6 +243,7 @@ if __name__=='__main__':
 
     #test_function_tensor_decomposition()
 
-    test_amrex_decomposition(
-        filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
-        J=10000)
+    #test_amrex_decomposition(
+    #    filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
+    #    J=10000)
+    test_quantization()
