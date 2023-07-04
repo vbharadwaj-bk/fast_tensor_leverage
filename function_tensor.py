@@ -1,62 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
-import cppimport
-import cppimport.import_hook
-from cpp_ext.tt_module import quantize_indices, unquantize_indices
-
-class Power2Quantization:
-    def __init__(self, dims, ordering):
-        self.dims = dims
-        self.ordering = ordering
-
-        qdim_lists = []
-        qdims = []
-        for dim in dims:
-            qdim = 0
-            while dim % 2 == 0 and dim > 1:
-                dim = dim // 2
-                qdim += 1
-            if dim != 1:
-                raise ValueError("All dimensions must be powers of 2")
-
-            qdim_lists.append([2 for i in range(qdim)])
-            qdims.append(qdim)
-
-        self.quantization_dimensions = np.zeros((len(dims), max(qdims)), dtype=np.uint64)
-        for i in range(len(dims)):
-            self.quantization_dimensions[i, :qdims[i]] = qdim_lists[i]
-
-        self.qdim_sum = np.sum(qdims)
-
-        if ordering == "canonical":
-            self.permutation = np.arange(self.qdim_sum, dtype=np.uint64)
-
-    def quantize_indices(self, indices):
-        J = indices.shape[0]
-        quantized_indices = np.zeros((J, self.qdim_sum), dtype=np.uint64)
-
-        quantize_indices(
-            indices, 
-            self.quantization_dimensions, 
-            self.permutation, 
-            quantized_indices)
-
-        return quantized_indices
-
-
-    def unquantize_indices(self, quantized_indices):
-        J = quantized_indices.shape[0]
-        indices = np.zeros((J, len(self.dims)), dtype=np.uint64)
-
-        unquantize_indices(
-            quantized_indices, 
-            self.quantization_dimensions, 
-            self.permutation, 
-            indices)
-
-        return indices
-
+from quantization import *
 
 class FunctionTensor:
     def __init__(self, grid_bounds, dims, func, quantization=None): 
@@ -71,7 +16,6 @@ class FunctionTensor:
         self.validation_values = None
         self.quantization = quantization
 
-
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):
         if method != "randomized":
             raise NotImplementedError("Only randomized validation set generation is supported")
@@ -83,12 +27,20 @@ class FunctionTensor:
         self.validation_samples = self.validation_samples_int.astype(np.double) * self.dx + self.grid_bounds[:, 0]
         self.validation_values = self.func(self.validation_samples)
 
+        if self.quantization is not None:
+            self.validation_samples_int = self.quantization.quantize_indices(self.validation_samples_int)
+
     def compute_observation_matrix(self, idxs_int, j):
         '''
         j is the index to ignore in the sample array (the column dimension)
-        of the observation matrix. Only works for the one-site version. 
+        of the observation matrix. This function is specific to the one-site
+        version of the code. 
         '''
         result = np.zeros((idxs_int.shape[0], self.dims[j]), dtype=np.double)
+        
+        if self.quantization is not None:
+            idxs_int = self.quantization.unquantize_indices(idxs_int)
+
         idxs = idxs_int.astype(np.double) * self.dx + self.grid_bounds[:, 0]
 
         for i in range(self.dims[j]):
