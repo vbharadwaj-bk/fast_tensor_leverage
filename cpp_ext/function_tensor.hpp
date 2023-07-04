@@ -66,6 +66,7 @@ void quantize_indices(
             for(uint64_t k = 0; k < quant_dim_nums[j]; k++) {
                 unpermuted[current_position] = 
                     (indices[i * N + j] / prefix_prods[j * mqd + k]) % quantization_dims[j * mqd + k];
+                    current_position++;
             }
         }
         for(uint64_t j = 0; j < NQ; j++) {

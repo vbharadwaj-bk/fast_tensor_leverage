@@ -233,8 +233,8 @@ def test_quantization():
     quantization = Power2Quantization([2 ** 3] * 3, ordering="canonical")
     indices = np.array([[3, 4, 7]], dtype=np.uint64)
     q_indices = quantization.quantize_indices(indices)
+    print(q_indices)
     recovered_indices = quantization.unquantize_indices(q_indices)
-
     print(recovered_indices)
 
 if __name__=='__main__':

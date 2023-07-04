@@ -3,10 +3,13 @@ import numpy.linalg as la
 
 import cppimport
 import cppimport.import_hook
-from cpp_ext.tt_module import quantize_indices 
+from cpp_ext.tt_module import quantize_indices, unquantize_indices
 
 class Power2Quantization:
     def __init__(self, dims, ordering):
+        self.dims = dims
+        self.ordering = ordering
+
         qdim_lists = []
         qdims = []
         for dim in dims:
@@ -42,8 +45,17 @@ class Power2Quantization:
         return quantized_indices
 
 
-    def unquantize_indices(self, indices):
-        pass
+    def unquantize_indices(self, quantized_indices):
+        J = quantized_indices.shape[0]
+        indices = np.zeros((J, len(self.dims)), dtype=np.uint64)
+
+        unquantize_indices(
+            quantized_indices, 
+            self.quantization_dimensions, 
+            self.permutation, 
+            indices)
+
+        return indices
 
 
 class FunctionTensor:
