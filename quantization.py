@@ -1,3 +1,5 @@
+import numpy as np
+
 import cppimport
 import cppimport.import_hook
 from cpp_ext.tt_module import quantize_indices, unquantize_indices

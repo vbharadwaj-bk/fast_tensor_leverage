@@ -6,7 +6,6 @@ import logging, sys
 import cppimport
 import cppimport.import_hook
 
-
 from tensor_train import *
 from tt_als import *
 from sparse_tensor import *
@@ -238,10 +237,29 @@ def test_quantization():
     print(recovered_indices)
 
 def test_qtt_interpolation_points():
-    def slater_function(idxs):
-        norms = np.sqrt(np.sum(idxs ** 2, axis=1))
-        return np.exp(-norms) / norms 
-        #return np.sin((np.sum(idxs, axis=1)))
+    def sin_test(idxs):
+        return np.sin(idxs[:, 0]) / idxs[:, 0]
+
+    J = 200
+    tt_rank = 4
+    n = 2 ** 5
+    N = 1
+    grid_bounds = np.array([[0.001, 25] for _ in range(N)], dtype=np.double)
+    subdivs = [n] * N
+
+    quantization = Power2Quantization(subdivs, ordering="canonical")
+    ground_truth = FunctionTensor(grid_bounds, subdivs, sin_test, quantization=quantization)
+
+    tt_approx = TensorTrain(subdivs, [tt_rank] * (quantization.qdim_sum - 1))
+    tt_approx.place_into_canonical_form(0)
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+    ground_truth.initialize_accuracy_estimation()
+
+    print(tt_als.compute_approx_fit())
+    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
+
+
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
