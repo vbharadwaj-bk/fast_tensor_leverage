@@ -39,7 +39,7 @@ def test_qtt_interpolation_points():
 
     J = 200
     tt_rank = 4
-    n = 2 ** 5
+    n = 2 ** 10
     N = 1
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
     subdivs = [n] * N
