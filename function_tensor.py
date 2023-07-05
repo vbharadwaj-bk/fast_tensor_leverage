@@ -36,15 +36,19 @@ class FunctionTensor:
         of the observation matrix. This function is specific to the one-site
         version of the code. 
         '''
-        result = np.zeros((idxs_int.shape[0], self.dims[j]), dtype=np.double)
-        
+        ncol = None
         if self.quantization is not None:
-            idxs_int = self.quantization.unquantize_indices(idxs_int)
+            dims = self.quantization.qdim_sizes
+        else:
+            dims = self.dims
 
-        idxs = idxs_int.astype(np.double) * self.dx + self.grid_bounds[:, 0]
+        ncol = dims[j] 
+        result = np.zeros((idxs_int.shape[0], ncol), dtype=np.double)
 
-        for i in range(self.dims[j]):
-            idxs[:, j] = i * self.dx[j] + self.grid_bounds[j, 0]
+        for i in range(ncol):
+            idxs_int[:, j] = i
+            idxs_unquant = self.quantization.unquantize_indices(idxs_int) 
+            idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
             result[:, i] = self.func(idxs)
 
         return result
@@ -62,7 +66,7 @@ class FunctionTensor:
 
         validation_approx = tt_approx.evaluate_partial_fast(
                 self.validation_samples_int,
-                self.N, "left").squeeze()
+                tt_approx.N, "left").squeeze()
 
         return 1.0 - la.norm(self.validation_values - validation_approx) / la.norm(self.validation_values)
 
