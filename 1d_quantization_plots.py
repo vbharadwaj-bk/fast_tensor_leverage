@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
+from celluloid import Camera 
 import matplotlib.pyplot as plt
 
 import cppimport
@@ -10,7 +11,7 @@ from tensor_train import *
 from tt_als import *
 from function_tensor import *
 
-def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name):
+def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name, animate=None):
     f_plot_x = np.linspace(lbound, ubound, 1000)
     f_plot_y = func(np.array([f_plot_x]).T).squeeze()
 
@@ -22,15 +23,25 @@ def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name)
     approx_x = func_tensor.indices_to_spatial_points(idxs).squeeze()
     approx_y = tt_approx.evaluate_at_idxs(idxs_quant).squeeze()
 
-    fig, ax = plt.subplots()
+    fig, ax, camera = None, None, None
+
+    if animate is None:
+        fig, ax = plt.subplots()
+    else:
+        ax, camera= animate
+
     ax.plot(f_plot_x, f_plot_y, c='black')
     ax.plot(approx_x, approx_y, c='orange')
-
     ax.scatter(eval_points[0], eval_points[1], marker='x', c='red')
 
-    # Save Figure
-    fig.savefig(f'plotting/quantization_experiments/{name}')
-    plt.close(fig)
+    # Set y limits of plot from -0.5 to 1
+    ax.set_ylim([-0.5, 1])
+
+    if animate is None:
+        fig.savefig(f'plotting/quantization_experiments/{name}')
+        plt.close(fig)
+    else:
+        camera.snap()
 
 def test_qtt_interpolation_points():
     def sin_test(idxs):
@@ -41,7 +52,7 @@ def test_qtt_interpolation_points():
     func = sin_test
     num_sweeps = 5
 
-    J = 30
+    J = 100
     tt_rank = 4
     n = 2 ** 10
     N = 1
@@ -69,6 +80,9 @@ def test_qtt_interpolation_points():
         return eval_x, eval_y
 
     progress = 0
+    fig, ax = plt.subplots()
+    camera = Camera(fig)
+
     for i in range(num_sweeps):
         print(f"Starting sweep {i}...")
         for j in range(tt_approx.N - 1):
@@ -79,7 +93,7 @@ def test_qtt_interpolation_points():
             progress += 1
             eval_points = extract_evaluation_points(tt_approx, ground_truth)
             create_plot(func, lbound, ubound, tt_approx, ground_truth, eval_points,
-                            name=f"step_{progress}.png") 
+                            name=f"step_{progress}.png", animate=(ax, camera)) 
 
         for j in range(tt_approx.N - 1, 0, -1):
             tt_als.optimize_core_approx(j, J)
@@ -89,14 +103,15 @@ def test_qtt_interpolation_points():
             progress += 1
             eval_points = extract_evaluation_points(tt_approx, ground_truth)
             create_plot(func, lbound, ubound, tt_approx, ground_truth, eval_points,
-                            name=f"step_{progress}.png") 
-
+                            name=f"step_{progress}.png", animate=(ax, camera)) 
 
         tt_approx.update_internal_sampler(0, "left", False)
         print(f'Fit: {tt_als.compute_approx_fit()}') 
 
     create_plot(func, lbound, ubound, tt_approx, ground_truth, ([], []),
-                    name=f"step_{progress}.png") 
+                    name=f"final.png") 
+    animation = camera.animate()  
+    animation.save('plotting/quantization_experiments/animated.gif', writer = 'pillow')
 
 if __name__=='__main__':
     test_qtt_interpolation_points()
