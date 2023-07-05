@@ -4,7 +4,7 @@ import numpy.linalg as la
 from quantization import *
 
 class FunctionTensor:
-    def __init__(self, grid_bounds, dims, func, quantization=None): 
+    def __init__(self, grid_bounds, dims, func, quantization=None, track_evals=False): 
         self.grid_bounds = np.array(grid_bounds, dtype=np.double)
         self.dims = np.array(dims, dtype=np.uint64)
         self.func = func
@@ -15,6 +15,10 @@ class FunctionTensor:
         self.validation_samples = None
         self.validation_values = None
         self.quantization = quantization
+        self.track_evals = track_evals
+
+        if self.track_evals:
+            self.evals = []
 
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):
         if method != "randomized":
@@ -53,6 +57,9 @@ class FunctionTensor:
             idxs_unquant = self.quantization.unquantize_indices(idxs_int) 
             idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
             result[:, i] = self.func(idxs)
+
+            if self.track_evals:
+                self.evals.append(idxs)
 
         return result
 

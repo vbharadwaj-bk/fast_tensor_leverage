@@ -216,7 +216,12 @@ class TensorTrain:
         self.internal_sampler.evaluate_indices_partial(idxs, upto, direction_int, result)
         return result
 
-    def evaluate_at_idxs(self, idxs):
+    def evaluate_at_idxs(self, idxs, quantization=None):
+        if quantization is None:
+            idxs_to_use = idxs
+        else:
+            idxs_to_use = quantization.quantize_indices(idxs)
+
         return self.evaluate_partial_fast(
-                idxs,
+                idxs_to_use,
                 self.N, "left").squeeze()
