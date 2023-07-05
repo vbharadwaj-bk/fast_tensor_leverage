@@ -18,6 +18,7 @@ class Power2Quantization(Quantization):
 
         qdim_lists = []
         qdims = []
+        qdim_list_concat = []
         for dim in dims:
             qdim = 0
             while dim % 2 == 0 and dim > 1:
@@ -27,20 +28,26 @@ class Power2Quantization(Quantization):
                 raise ValueError("All dimensions must be powers of 2")
 
             qdim_lists.append([2 for i in range(qdim)])
+            qdim_list_concat.extend(qdim_lists[-1])
             qdims.append(qdim)
 
         self.quantization_dimensions = np.zeros((len(dims), max(qdims)), dtype=np.uint64)
         for i in range(len(dims)):
             self.quantization_dimensions[i, :qdims[i]] = qdim_lists[i]
 
-        self.qdim_sum = np.sum(qdims)
+        self.qdim = np.sum(qdims)
 
         if ordering == "canonical":
-            self.permutation = np.arange(self.qdim_sum, dtype=np.uint64)
+            self.permutation = np.arange(self.qdim, dtype=np.uint64)
+        else:
+            raise NotImplementedError()
+
+        # Apply the permutation to the quantization dimensions
+        self.qdim_sizes = [qdim_list_concat[i] for i in self.permutation] 
 
     def quantize_indices(self, indices):
         J = indices.shape[0]
-        quantized_indices = np.zeros((J, self.qdim_sum), dtype=np.uint64)
+        quantized_indices = np.zeros((J, self.qdim), dtype=np.uint64)
 
         quantize_indices(
             indices, 

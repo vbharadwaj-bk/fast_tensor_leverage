@@ -249,8 +249,8 @@ def test_qtt_interpolation_points():
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, sin_test, quantization=quantization)
+    tt_approx = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
 
-    tt_approx = TensorTrain(subdivs, [tt_rank] * (quantization.qdim_sum - 1))
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=J)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
@@ -258,7 +258,6 @@ def test_qtt_interpolation_points():
 
     print(tt_als.compute_approx_fit())
     tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
-
 
 
 if __name__=='__main__':
@@ -275,4 +274,6 @@ if __name__=='__main__':
     #test_amrex_decomposition(
     #    filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
     #    J=10000)
-    test_quantization()
+    #test_quantization()
+
+    test_qtt_interpolation_points()
