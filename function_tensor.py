@@ -59,7 +59,7 @@ class FunctionTensor:
             result[:, i] = self.func(idxs)
 
             if self.track_evals:
-                self.evals.append(idxs)
+                self.evals.append(idxs_unquant.copy())
 
         return result
 
