@@ -236,30 +236,6 @@ def test_quantization():
     recovered_indices = quantization.unquantize_indices(q_indices)
     print(recovered_indices)
 
-def test_qtt_interpolation_points():
-    def sin_test(idxs):
-        return np.sin(idxs[:, 0]) / idxs[:, 0]
-
-    J = 200
-    tt_rank = 4
-    n = 2 ** 5
-    N = 1
-    grid_bounds = np.array([[0.001, 25] for _ in range(N)], dtype=np.double)
-    subdivs = [n] * N
-
-    quantization = Power2Quantization(subdivs, ordering="canonical")
-    ground_truth = FunctionTensor(grid_bounds, subdivs, sin_test, quantization=quantization)
-    tt_approx = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
-
-    tt_approx.place_into_canonical_form(0)
-    tt_approx.build_fast_sampler(0, J=J)
-    tt_als = TensorTrainALS(ground_truth, tt_approx)
-    ground_truth.initialize_accuracy_estimation()
-
-    print(tt_als.compute_approx_fit())
-    tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
-
-
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
     #test_dense_recovery()

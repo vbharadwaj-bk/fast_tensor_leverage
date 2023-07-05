@@ -30,6 +30,9 @@ class FunctionTensor:
         if self.quantization is not None:
             self.validation_samples_int = self.quantization.quantize_indices(self.validation_samples_int)
 
+    def indices_to_spatial_points(self, idxs_int):  
+        return idxs_int.astype(np.double) * self.dx + self.grid_bounds[:, 0]
+
     def compute_observation_matrix(self, idxs_int, j):
         '''
         j is the index to ignore in the sample array (the column dimension)

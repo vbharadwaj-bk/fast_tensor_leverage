@@ -216,3 +216,7 @@ class TensorTrain:
         self.internal_sampler.evaluate_indices_partial(idxs, upto, direction_int, result)
         return result
 
+    def evaluate_at_idxs(self, idxs):
+        return self.evaluate_partial_fast(
+                idxs,
+                self.N, "left").squeeze()
