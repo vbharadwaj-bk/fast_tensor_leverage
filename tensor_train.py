@@ -18,20 +18,32 @@ class TensorTrain:
         else:
             rng = np.random.default_rng(seed)
 
+        self.dims = np.array(dims, dtype=np.uint64)
+        self.N = len(dims)
+        self.ranks = np.array([1] + ranks + [1], np.uint64)
+
+        reduced_ranks = []
+
+        for i in range(self.N - 1):
+            left_dim = np.prod(self.dims[:i+1])
+            right_dim = np.prod(self.dims[i+1:])
+            oldrank = self.ranks[i+1] 
+            self.ranks[i+1] = min(left_dim, right_dim, self.ranks[i+1])
+
+            if self.ranks[i+1] != oldrank:
+                reduced_ranks.append(i+1) 
+
+        if len(reduced_ranks) > 0:
+            print(f"Reduced ranks at indices {reduced_ranks} to maximum allowable.")
+
+        assert(len(self.ranks) == self.N + 1)
+
         if init_method=="gaussian":
-            self.dims = np.array(dims, dtype=np.uint64)
-            self.N = len(dims)
-            self.ranks = np.array([1] + ranks + [1], np.uint64)
-
-            assert(len(self.ranks) == self.N + 1)
-
             self.U = [rng.normal(size=(self.ranks[i], self.dims[i], self.ranks[i+1])) for i in range(self.N)]
-
             for i in range(self.N):
                 self.U[i] /= la.norm(self.U[i])
-
         else:
-            assert(False)
+            raise(NotImplementedError()) 
 
         self.matricizations = [None] * self.N
         self.internal_sampler = None
