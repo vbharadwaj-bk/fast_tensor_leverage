@@ -50,14 +50,20 @@ def test_qtt_interpolation_points():
     lbound = 0.001
     ubound = 25
     func = sin_test
-    num_sweeps = 5
-
-    J = 100
+    num_sweeps = 2
     tt_rank = 4
     n = 2 ** 10
     N = 1
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
     subdivs = [n] * N
+
+    alg = 'iid_leverage'
+    J = 30
+    J2 = None
+
+    #alg = 'reverse_iterative_volume'
+    #J = 100
+    #J2 = 30
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
@@ -86,7 +92,7 @@ def test_qtt_interpolation_points():
     for i in range(num_sweeps):
         print(f"Starting sweep {i}...")
         for j in range(tt_approx.N - 1):
-            tt_als.optimize_core_approx(j, J)
+            tt_als.optimize_core_approx(j, J, alg, J2)
             tt_approx.orthogonalize_push_right(j)
             tt_approx.update_internal_sampler(j, "left", True)
             tt_approx.update_internal_sampler(j+1, "left", False)
@@ -96,7 +102,7 @@ def test_qtt_interpolation_points():
                             name=f"step_{progress}.png", animate=(ax, camera)) 
 
         for j in range(tt_approx.N - 1, 0, -1):
-            tt_als.optimize_core_approx(j, J)
+            tt_als.optimize_core_approx(j, J, alg, J2)
             tt_approx.orthogonalize_push_left(j)
             tt_approx.update_internal_sampler(j, "right", True)
             tt_approx.update_internal_sampler(j-1, "left", False)

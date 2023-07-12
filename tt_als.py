@@ -2,6 +2,7 @@ from tensor_train import *
 from dense_tensor import *
 from sparse_tensor import *
 from function_tensor import *
+from volume import * 
 
 import time
 
@@ -100,7 +101,7 @@ class TensorTrainALS:
             print(self.compute_exact_fit())
 
 
-    def optimize_core_approx(self, j, J):
+    def optimize_core_approx(self, j, J, alg, J2):
         tt_approx = self.tt_approx
         N = tt_approx.N
 
@@ -124,34 +125,52 @@ class TensorTrainALS:
         else:
             right_cols = 1
 
-        if left_rows is None:
-            design = right_rows
-        elif right_rows is None:
-            design = left_rows
-        else:
-            # Should probably write a custom kernel for this in C++ 
-            design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
-
-        weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
-
         # We do this in two steps so we can (potentially) compute the
         # gram matrix 
-        design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
-        design_gram = design.T @ design
-        design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
+
+        design, samples_to_spmm = None, None
+
+        if alg=='iid_leverage':
+            if left_rows is None:
+                design = right_rows
+            elif right_rows is None:
+                design = left_rows
+            else:
+                # Should probably write a custom kernel for this in C++ 
+                design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
+
+            weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
+            design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
+            design_gram = design.T @ design
+            design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
+            samples_to_spmm = samples
+        elif alg=='reverse_iterative_volume':
+            if left_rows is None:
+                design = right_rows
+            elif right_rows is None:
+                design = left_rows
+            else:
+                design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
+
+            filtered_idxs = r_iter_volume_sample(design, J2)
+            design = design[filtered_idxs, :]
+            samples_to_spmm = samples[filtered_idxs, :]
+            design_gram = design.T @ design 
 
         result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
 
         self.ground_truth.execute_sampled_spmm(
-                samples,
+                samples_to_spmm,
                 design,
                 j,
                 result)
-
         result = result @ la.pinv(design_gram) 
+
+
         tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
-    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5, accuracy_method="exact"):
+    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5, accuracy_method="exact",
+                                      alg='iid_leverage', J2=None):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
         N = tt_approx.N
@@ -159,12 +178,12 @@ class TensorTrainALS:
         for i in range(num_sweeps):
             print(f"Starting sweep {i}...")
             for j in range(N - 1):
-                self.optimize_core_approx(j, J)
+                self.optimize_core_approx(j, J, alg, J2)
                 tt_approx.orthogonalize_push_right(j)
                 tt_approx.update_internal_sampler(j, "left", True)
 
             for j in range(N - 1, 0, -1):
-                self.optimize_core_approx(j, J)
+                self.optimize_core_approx(j, J, alg, J2)
                 tt_approx.orthogonalize_push_left(j)
                 tt_approx.update_internal_sampler(j, "right", True)
 
