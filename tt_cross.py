@@ -172,6 +172,7 @@ def _iter(Z, Ig, I, tau=1.1, dr_min=0, dr_max=0, tau0=1.05, k0=100, ltr=True):
 
 from function_tensor import *
 from tensor_train import TensorTrain
+from quantization_plots import create_plot
 
 def sin_test(idxs):
     return np.sin(idxs[:, 0]) / idxs[:, 0]
@@ -200,23 +201,28 @@ m_tst = int(1.E+4)
 I_tst = np.vstack([np.random.choice(k, m_tst) for k in n]).T
 
 # Function values for the test points:
-y_tst = func(I_tst)
+y_tst = wrapped_func(I_tst)
 
 m         = 8.E+3  # Number of calls to target function
 e         = None   # Desired accuracy
-nswp      = None   # Sweep number
+nswp      = 1      # Sweep number
 r         = 4      # TT-rank of the initial tensor
 dr_min    = 0      # Cross parameter (minimum number of added rows)
 dr_max    = 0      # Cross parameter (maximum number of added rows)
 
 t = tpc()
 info, cache = {}, {}
-#Y = teneva.rand(n, r)
+Y = teneva.rand(n, r)
 Y = tt_approx.U
-Y = cross(func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
+Y = cross(wrapped_func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
     info=info, cache=cache)
-Y = teneva.truncate(Y, 1.E-4) # We round the result at the end
+tt_approx.U = Y
+#Y = teneva.truncate(Y, 1.E-4) # We round the result at the end
 t = tpc() - t
+tt_approx.build_fast_sampler(0, 100)
+
+create_plot(func, lbound, ubound, tt_approx, ground_truth, None,
+                name=f"cross_result.png", animate=None) 
 
 print(f'Build time           : {t:-10.2f}')
 print(f'Evals func           : {info["m"]:-10d}')

@@ -32,7 +32,9 @@ def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name,
 
     ax.plot(f_plot_x, f_plot_y, c='black')
     ax.plot(approx_x, approx_y, c='orange')
-    ax.scatter(eval_points[0], eval_points[1], marker='x', c='red')
+
+    if eval_points is not None:
+        ax.scatter(eval_points[0], eval_points[1], marker='x', c='red')
 
     # Set y limits of plot from -0.5 to 1
     ax.set_ylim([-0.5, 1])
@@ -57,13 +59,13 @@ def test_qtt_interpolation_points():
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
     subdivs = [n] * N
 
-    alg = 'iid_leverage'
-    J = 30
-    J2 = None
+    #alg = 'iid_leverage'
+    #J = 16
+    #J2 = None
 
-    #alg = 'reverse_iterative_volume'
-    #J = 100
-    #J2 = 30
+    alg = 'reverse_iterative_volume'
+    J = 100
+    J2 = 16
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
