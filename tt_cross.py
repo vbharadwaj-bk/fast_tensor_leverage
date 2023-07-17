@@ -170,16 +170,28 @@ def _iter(Z, Ig, I, tau=1.1, dr_min=0, dr_max=0, tau0=1.05, k0=100, ltr=True):
     return G, R, I_new[ind, :]
 
 
-d = 5                           # Dimension of the function
-a = [-5., -4., -3., -2., -1.]   # Lower bounds for spatial grid
-b = [+6., +3., +3., +1., +2.]   # Upper bounds for spatial grid
-n = [ 20,  18,  16,  14,  12]   # Shape of the tensor
+from function_tensor import *
+from tensor_train import TensorTrain
 
+def sin_test(idxs):
+    return np.sin(idxs[:, 0]) / idxs[:, 0]
 
-from scipy.optimize import rosen
-def func(I):
-    X = teneva.ind_to_poi(I, a, b, n)
-    return rosen(X.T)
+lbound = 0.001
+ubound = 25
+func = sin_test
+tt_rank = 4
+N = 1
+grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
+subdivs = [2 ** 10] * N
+
+quantization = Power2Quantization(subdivs, ordering="canonical")
+ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
+tt_approx = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
+
+n = quantization.qdim_sizes
+
+def wrapped_func(I):
+    return ground_truth.evaluate(I)
 
 # Number of test points:
 m_tst = int(1.E+4)
@@ -193,13 +205,14 @@ y_tst = func(I_tst)
 m         = 8.E+3  # Number of calls to target function
 e         = None   # Desired accuracy
 nswp      = None   # Sweep number
-r         = 1      # TT-rank of the initial tensor
-dr_min    = 1      # Cross parameter (minimum number of added rows)
-dr_max    = 3      # Cross parameter (maximum number of added rows)
+r         = 4      # TT-rank of the initial tensor
+dr_min    = 0      # Cross parameter (minimum number of added rows)
+dr_max    = 0      # Cross parameter (maximum number of added rows)
 
 t = tpc()
 info, cache = {}, {}
-Y = teneva.rand(n, r)
+#Y = teneva.rand(n, r)
+Y = tt_approx.U
 Y = cross(func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
     info=info, cache=cache)
 Y = teneva.truncate(Y, 1.E-4) # We round the result at the end

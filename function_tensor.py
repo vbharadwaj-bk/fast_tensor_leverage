@@ -63,6 +63,16 @@ class FunctionTensor:
 
         return result
 
+    def evaluate(self, samples):
+        idxs = None
+        if self.quantization is not None:
+            idxs_unquant = self.quantization.unquantize_indices(samples) 
+            idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0] 
+        else:
+            idxs = samples.astype(np.double) * self.dx + self.grid_bounds[:, 0] 
+
+        return self.func(idxs)
+
     def execute_sampled_spmm(self, samples, design, j, result):
         observation = self.compute_observation_matrix(samples, j)
         result[:] = observation.T @ design  
