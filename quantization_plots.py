@@ -52,7 +52,7 @@ def test_qtt_interpolation_points():
     lbound = 0.001
     ubound = 25
     func = sin_test
-    num_sweeps = 2
+    num_sweeps = 1
     tt_rank = 4
     n = 2 ** 10
     N = 1
@@ -63,8 +63,12 @@ def test_qtt_interpolation_points():
     #J = 16
     #J2 = None
 
-    alg = 'reverse_iterative_volume'
-    J = 100
+    #alg = 'reverse_iterative_volume'
+    #J = 100
+    #J2 = 16
+
+    alg = 'teneva_rect_maxvol'
+    J = 200
     J2 = 16
 
     quantization = Power2Quantization(subdivs, ordering="canonical")

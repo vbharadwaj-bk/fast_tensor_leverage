@@ -180,7 +180,7 @@ def sin_test(idxs):
 lbound = 0.001
 ubound = 25
 func = sin_test
-tt_rank = 4
+tt_rank = 2
 N = 1
 grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
 subdivs = [2 ** 10] * N
@@ -206,13 +206,13 @@ y_tst = wrapped_func(I_tst)
 m         = 8.E+3  # Number of calls to target function
 e         = None   # Desired accuracy
 nswp      = 1      # Sweep number
-r         = 4      # TT-rank of the initial tensor
+r         = 2      # TT-rank of the initial tensor
 dr_min    = 0      # Cross parameter (minimum number of added rows)
 dr_max    = 0      # Cross parameter (maximum number of added rows)
 
 t = tpc()
 info, cache = {}, {}
-Y = teneva.rand(n, r)
+#Y = teneva.rand(n, r)
 Y = tt_approx.U
 Y = cross(wrapped_func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
     info=info, cache=cache)

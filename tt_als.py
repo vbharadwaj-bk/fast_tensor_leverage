@@ -3,7 +3,7 @@ from dense_tensor import *
 from sparse_tensor import *
 from function_tensor import *
 from volume import * 
-
+from teneva.maxvol import maxvol_rect
 import time
 
 class TensorTrainALS:
@@ -153,6 +153,19 @@ class TensorTrainALS:
                 design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
 
             filtered_idxs = r_iter_volume_sample(design, J2)
+            design = design[filtered_idxs, :]
+            samples_to_spmm = samples[filtered_idxs, :]
+            design_gram = design.T @ design 
+        elif alg=='teneva_rect_maxvol':
+            if left_rows is None:
+                design = right_rows
+            elif right_rows is None:
+                design = left_rows
+            else:
+                design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
+
+            cols = design.shape[1]
+            filtered_idxs, _ = maxvol_rect(design, dr_max=min(0, J2 - cols))
             design = design[filtered_idxs, :]
             samples_to_spmm = samples[filtered_idxs, :]
             design_gram = design.T @ design 
