@@ -1,10 +1,13 @@
 import teneva
 import numpy as np
+import matplotlib.pyplot as plt
+
 from time import perf_counter as tpc
+from celluloid import Camera
 
 def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
           tau0=1.05, k0=100, info={}, cache=None, I_vld=None, y_vld=None,
-          e_vld=None, cb=None, func=None, log=False):
+          e_vld=None, cb=None, func=None, log=False, step_cb=None):
     """
     This is a modified version of the TT-cross algorithm,
     lifted directly from the Teneva package: 
@@ -35,13 +38,17 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
     for i in range(d):
         G = np.tensordot(R, Y[i], 1)
         Y[i], R, Ir[i+1] = _iter(G, Ig[i], Ir[i], tau0=tau0, k0=k0, ltr=True)
+        step_cb(Y, i, R, direction="left")
     Y[d-1] = np.tensordot(Y[d-1], R, 1)
+    step_cb(Y, d-1, R, direction="right", animation_frame=False)
 
     R = np.ones((1, 1))
     for i in range(d-1, -1, -1):
         G = np.tensordot(Y[i], R, 1)
-        Y[i], R, Ic[i] = _iter(G, Ig[i], Ic[i+1], tau0=tau0, k0=k0, ltr=False)
+        Y[i], R, Ic[i] = _iter(G, Ig[i], Ic[i+1], tau0=tau0, k0=k0, ltr=False)        
+        step_cb(Y, i, R, direction="right")
     Y[0] = np.tensordot(R, Y[0], 1)
+    step_cb(Y, 0, R, direction="right", animation_frame=False)
 
     info['e_vld'] = teneva.accuracy_on_data(Y, I_vld, y_vld)
     teneva._info_appr(info, _time, nswp, e, e_vld, log)
@@ -61,8 +68,11 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
                 teneva._info_appr(info, _time, nswp, e, e_vld, log)
                 return Y
             Y[i], R, Ir[i+1] = _iter(Z, Ig[i], Ir[i],
-                tau, dr_min, dr_max, tau0, k0, ltr=True)
+                tau, dr_min, dr_max, tau0, k0, ltr=True) 
+            step_cb(Y, i, R, direction="left")
+
         Y[d-1] = np.tensordot(Y[d-1], R, 1)
+        step_cb(Y, d-1, R, direction="right")
 
         R = np.ones((1, 1))
         for i in range(d-1, -1, -1):
@@ -76,8 +86,11 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
                 teneva._info_appr(info, _time, nswp, e, e_vld, log)
                 return Y
             Y[i], R, Ic[i] = _iter(Z, Ig[i], Ic[i+1],
-                tau, dr_min, dr_max, tau0, k0, ltr=False)
+                tau, dr_min, dr_max, tau0, k0, ltr=False) 
+            step_cb(Y, i, R, direction="right")
+
         Y[0] = np.tensordot(R, Y[0], 1)
+        step_cb(Y, 0, R, direction="right")
 
         info['nswp'] += 1
         info['r'] = teneva.erank(Y)
@@ -206,20 +219,43 @@ y_tst = wrapped_func(I_tst)
 m         = 8.E+3  # Number of calls to target function
 e         = None   # Desired accuracy
 nswp      = 1      # Sweep number
-r         = 2      # TT-rank of the initial tensor
+r         = 3      # TT-rank of the initial tensor
 dr_min    = 0      # Cross parameter (minimum number of added rows)
 dr_max    = 0      # Cross parameter (maximum number of added rows)
+
+fig, ax = plt.subplots()
+camera = Camera(fig)
+
+def step_callback(Y, i, R, direction, animation_frame=True):
+    if direction == "left":
+        #tt_approx.U[i] = np.tensordot(Y[i], R, 1)
+        tt_approx.U[i] = Y[i].copy()
+        tt_approx.update_internal_sampler(i, direction, False)
+
+    elif direction == "right":
+        #tt_approx.U[i] = np.tensordot(R, Y[i], 1)
+        tt_approx.U[i] = Y[i].copy()
+        tt_approx.update_internal_sampler(i, direction, False)
+
+    if animation_frame:
+        create_plot(func, lbound, ubound, tt_approx, ground_truth, None,
+                name=None, animate=(ax, camera)) 
 
 t = tpc()
 info, cache = {}, {}
 #Y = teneva.rand(n, r)
 Y = tt_approx.U
+tt_approx.build_fast_sampler(0, 100)
 Y = cross(wrapped_func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
-    info=info, cache=cache)
-tt_approx.U = Y
+    info=info, cache=cache, step_cb=step_callback)
+
+animation = camera.animate()  
+animation.save('plotting/quantization_experiments/cross_animated.gif', writer = 'pillow')
+
+#tt_approx.U = Y
+#tt_approx.build_fast_sampler(0, 100)
 #Y = teneva.truncate(Y, 1.E-4) # We round the result at the end
 t = tpc() - t
-tt_approx.build_fast_sampler(0, 100)
 
 create_plot(func, lbound, ubound, tt_approx, ground_truth, None,
                 name=f"cross_result.png", animate=None) 

@@ -165,7 +165,9 @@ class TensorTrainALS:
                 design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
 
             cols = design.shape[1]
+            print("Starting maxvol!")
             filtered_idxs, _ = maxvol_rect(design, dr_max=min(0, J2 - cols))
+            print("Finished maxvol!")
             design = design[filtered_idxs, :]
             samples_to_spmm = samples[filtered_idxs, :]
             design_gram = design.T @ design 
