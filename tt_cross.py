@@ -193,10 +193,16 @@ def sin_test(idxs):
 lbound = 0.001
 ubound = 25
 func = sin_test
-tt_rank = 2
 N = 1
 grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
 subdivs = [2 ** 10] * N
+
+m         = 8.E+3  # Number of calls to target function
+e         = None   # Desired accuracy
+nswp      = 2      # Sweep number
+tt_rank   = 4      # TT-rank of the initial tensor
+dr_min    = 0      # Cross parameter (minimum number of added rows)
+dr_max    = 0      # Cross parameter (maximum number of added rows)
 
 quantization = Power2Quantization(subdivs, ordering="canonical")
 ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
@@ -216,15 +222,11 @@ I_tst = np.vstack([np.random.choice(k, m_tst) for k in n]).T
 # Function values for the test points:
 y_tst = wrapped_func(I_tst)
 
-m         = 8.E+3  # Number of calls to target function
-e         = None   # Desired accuracy
-nswp      = 1      # Sweep number
-r         = 3      # TT-rank of the initial tensor
-dr_min    = 0      # Cross parameter (minimum number of added rows)
-dr_max    = 0      # Cross parameter (maximum number of added rows)
-
 fig, ax = plt.subplots()
 camera = Camera(fig)
+
+ground_truth.initialize_accuracy_estimation(method="randomized", 
+                                            rsample_count=10000)
 
 def step_callback(Y, i, R, direction, animation_frame=True):
     if direction == "left":
@@ -240,6 +242,10 @@ def step_callback(Y, i, R, direction, animation_frame=True):
     if animation_frame:
         create_plot(func, lbound, ubound, tt_approx, ground_truth, None,
                 name=None, animate=(ax, camera)) 
+
+        approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
+        print(f'Fit: {approx_fit}') 
+
 
 t = tpc()
 info, cache = {}, {}
@@ -269,5 +275,5 @@ print(f'Stop condition       : {info["stop"]:>10}')
 print(f'TT-rank of pure res  : {info["r"]:-10.1f}')
 print(f'TT-rank of trunc res : {teneva.erank(Y):-10.1f}')
 
-e_tst = teneva.accuracy_on_data(Y, I_tst, y_tst)
-print(f'Error on test        : {e_tst:-10.2e}')
+approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
+print(f'Fit: {approx_fit}') 
