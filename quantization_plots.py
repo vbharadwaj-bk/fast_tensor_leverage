@@ -10,6 +10,7 @@ import cppimport.import_hook
 from tensor_train import *
 from tt_als import *
 from function_tensor import *
+from functions import *
 
 def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name, animate=None):
     f_plot_x = np.linspace(lbound, ubound, 1000)
@@ -46,12 +47,9 @@ def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name,
         camera.snap()
 
 def test_qtt_interpolation_points():
-    def sin_test(idxs):
-        return np.sin(idxs[:, 0]) / idxs[:, 0]
-
     lbound = 0.001
     ubound = 25
-    func = sin_test
+    func = sin2_test
     num_sweeps = 1
     tt_rank = 4
     n = 2 ** 10

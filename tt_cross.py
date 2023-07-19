@@ -193,13 +193,11 @@ def _iter(Z, Ig, I, tau=1.1, dr_min=0, dr_max=0, tau0=1.05, k0=100, ltr=True):
 from function_tensor import *
 from tensor_train import TensorTrain
 from quantization_plots import create_plot
-
-def sin_test(idxs):
-    return np.sin(idxs[:, 0]) / idxs[:, 0]
+from functions import *
 
 lbound = 0.001
 ubound = 25
-func = sin_test
+func = sin2_test
 N = 1
 grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
 subdivs = [2 ** 10] * N

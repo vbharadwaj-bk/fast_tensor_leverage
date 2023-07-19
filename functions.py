@@ -32,3 +32,10 @@ class Functions:
     #     """#Hilbert tensor"""
     #     X = teneva.ind_to_poi(I, a, b, n)
     #     return 1/np.sum(X, axis=1)
+
+
+def sin_test(idxs):
+    return np.sin(idxs[:, 0]) / idxs[:, 0]
+
+def sin2_test(idxs):
+    return np.sin(idxs[:, 0]) + 0.1 * np.sin(idxs[:, 0] * 5 + 3)
