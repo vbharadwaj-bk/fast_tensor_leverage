@@ -60,7 +60,7 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
         for i in range(d):
             Z = (func or _func)(f, Ig[i], Ir[i], Ic[i+1], info, cache)
             if Z is None:
-                Y[i] = np.tensordot(R, Y[i], 1)
+                #Y[i] = np.tensordot(R, Y[i], 1)
                 info['r'] = teneva.erank(Y)
                 info['e'] = teneva.accuracy(Y, Yold)
                 info['e_vld'] = teneva.accuracy_on_data(Y, I_vld, y_vld)
@@ -68,7 +68,11 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
                 teneva._info_appr(info, _time, nswp, e, e_vld, log)
                 return Y
             Y[i], R, Ir[i+1] = _iter(Z, Ig[i], Ir[i],
-                tau, dr_min, dr_max, tau0, k0, ltr=True) 
+                tau, dr_min, dr_max, tau0, k0, ltr=True)
+            
+            if i < d - 1:
+                Y[i+1] = np.tensordot(R, Y[i+1], 1)
+
             step_cb(Y, i, R, direction="left")
 
         Y[d-1] = np.tensordot(Y[d-1], R, 1)
@@ -87,6 +91,10 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
                 return Y
             Y[i], R, Ic[i] = _iter(Z, Ig[i], Ic[i+1],
                 tau, dr_min, dr_max, tau0, k0, ltr=False) 
+
+            if i > 0:
+                Y[i-1] = np.tensordot(Y[i-1], R, 1)
+
             step_cb(Y, i, R, direction="right")
 
         Y[0] = np.tensordot(R, Y[0], 1)
@@ -107,7 +115,6 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
 
         if teneva._info_appr(info, _time, nswp, e, e_vld, log):
             return Y
-
 
 
 def _func(f, Ig, Ir, Ic, info, cache=None):
@@ -229,15 +236,23 @@ ground_truth.initialize_accuracy_estimation(method="randomized",
                                             rsample_count=10000)
 
 def step_callback(Y, i, R, direction, animation_frame=True):
+    # Note - I switched the order of tensordot
     if direction == "left":
         #tt_approx.U[i] = np.tensordot(Y[i], R, 1)
         tt_approx.U[i] = Y[i].copy()
         tt_approx.update_internal_sampler(i, direction, False)
+        if i < len(Y) - 1:
+            tt_approx.U[i+1] = Y[i+1].copy()
+            tt_approx.update_internal_sampler(i+1, direction, False)
 
     elif direction == "right":
         #tt_approx.U[i] = np.tensordot(R, Y[i], 1)
         tt_approx.U[i] = Y[i].copy()
         tt_approx.update_internal_sampler(i, direction, False)
+
+        if i > 0: 
+            tt_approx.U[i-1] = Y[i-1].copy()
+            tt_approx.update_internal_sampler(i-1, direction, False)
 
     if animation_frame:
         create_plot(func, lbound, ubound, tt_approx, ground_truth, None,
