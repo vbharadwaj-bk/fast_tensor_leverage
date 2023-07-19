@@ -206,7 +206,7 @@ subdivs = [2 ** 10] * N
 
 m         = 8.E+3  # Number of calls to target function
 e         = None   # Desired accuracy
-nswp      = 2      # Sweep number
+nswp      = 1      # Sweep number
 tt_rank   = 4      # TT-rank of the initial tensor
 dr_min    = 0      # Cross parameter (minimum number of added rows)
 dr_max    = 0      # Cross parameter (maximum number of added rows)

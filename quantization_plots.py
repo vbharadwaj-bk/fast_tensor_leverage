@@ -64,8 +64,8 @@ def test_qtt_interpolation_points():
     #J2 = None
 
     #alg = 'reverse_iterative_volume'
-    #J = 100
-    #J2 = 16
+    #J = 200
+    #J2 = 32
 
     alg = 'teneva_rect_maxvol'
     J = 200

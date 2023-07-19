@@ -68,12 +68,6 @@ class FunctionTensor:
         if self.quantization is not None:
             idxs_unquant = self.quantization.unquantize_indices(samples) 
             idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
-
-            #for i in range(idxs.shape[0]):
-            #    if idxs[i, 0] == 0:
-            #        print(idxs_unquant[i, :])
-
-
         else:
             idxs = samples.astype(np.double) * self.dx + self.grid_bounds[:, 0] 
 
