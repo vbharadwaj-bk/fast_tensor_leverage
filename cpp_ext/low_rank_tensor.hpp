@@ -178,11 +178,6 @@ public:
             R_L);
     }
 
-    /*
-    * Returns the product of all column norms, except for the
-    * one specified by the parameter. If the parameter is -1,
-    * the product of all column norms is returned. 
-    */
     void get_sigma(Buffer<double> &sigma_out, int j) {
         std::copy(sigma(), sigma(R), sigma_out());
     }
@@ -190,6 +185,11 @@ public:
     void get_sigma_py(py::array_t<double> sigma_py_out, int j) {
         Buffer<double> sigma_py(sigma_py_out);
         get_sigma(sigma_py, j);
+    }
+
+    void set_sigma_py(py::array_t<double> sigma_py_in) {
+        Buffer<double> sigma_in(sigma_py_in);
+        std::copy(sigma_in(), sigma_in(R), sigma());
     }
 
     /*void multiply_by_random_entries() {

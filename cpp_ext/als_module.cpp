@@ -91,6 +91,7 @@ PYBIND11_MODULE(als_module, m) {
         .def(py::init<uint64_t, uint64_t, py::list>()) 
         .def(py::init<uint64_t, py::list>())
         .def("get_sigma", &LowRankTensor::get_sigma_py)
+        .def("set_sigma", &LowRankTensor::set_sigma_py)
         .def("renormalize_columns", &LowRankTensor::renormalize_columns)
         .def("multiply_random_factor_entries", &LowRankTensor::multiply_random_factor_entries)
         .def("materialize_rhs", &LowRankTensor::materialize_rhs_py);
