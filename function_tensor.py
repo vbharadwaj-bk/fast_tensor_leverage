@@ -96,7 +96,6 @@ class FunctionTensor:
 
         return result
 
-
     def execute_sampled_spmm(self, samples, design, j, result):
         observation = self.compute_observation_matrix(samples, j)
         result[:] = observation.T @ design  
