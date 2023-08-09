@@ -2,9 +2,10 @@ import numpy as np
 import numpy.linalg as la
 
 from quantization import *
+from cpp_ext.tt_module import reproducible_noise 
 
 class FunctionTensor:
-    def __init__(self, grid_bounds, dims, func, quantization=None, track_evals=False): 
+    def __init__(self, grid_bounds, dims, func, quantization=None, track_evals=False, noise_params=None): 
         self.grid_bounds = np.array(grid_bounds, dtype=np.double)
         self.dims = np.array(dims, dtype=np.uint64)
         self.func = func
@@ -19,6 +20,26 @@ class FunctionTensor:
 
         if self.track_evals:
             self.evals = []
+
+        # Noise param is a tuple (type, param1,...). If type is "gaussian",
+        # Then param1 is the standard deviation of the noise. 
+        self.noise_params = noise_params
+
+        if noise_params is not None:
+            # Generate a random unsigned int
+            self.noise_seed1 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
+            self.noise_seed2 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
+
+    def generate_reproducible_noise(indices):
+        if noise_params[0] is not "gaussian":
+            raise NotImplementedError("Only gaussian noise is supported")
+        else:
+            noise_vector = np.zeros((indices.shape[0]), dtype=np.double)
+            reproducible_noise(
+                    indices,
+                    noise_vector,
+                    self.noise_seed1,
+                    self.noise_seed2)
 
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):
         if method != "randomized":
@@ -43,7 +64,6 @@ class FunctionTensor:
         of the observation matrix. This function is specific to the one-site
         version of the code. 
         '''
-        ncol = None
         if self.quantization is not None:
             dims = self.quantization.qdim_sizes
         else:
@@ -62,6 +82,20 @@ class FunctionTensor:
                 self.evals.append(idxs_unquant.copy())
 
         return result
+
+    def evaluate_indices(self, idxs_int, input_quantized=False):
+        result = np.zeros(idxs_int.shape[0], dtype=np.double)
+        idxs_unquant = None 
+        if input_quantized:
+            idxs_unquant = self.quantization.unquantize_indices(idxs_int) 
+        else:
+            idxs_unquant = idxs_int
+
+        idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
+        result = self.func(idxs)
+
+        return result
+
 
     def execute_sampled_spmm(self, samples, design, j, result):
         observation = self.compute_observation_matrix(samples, j)

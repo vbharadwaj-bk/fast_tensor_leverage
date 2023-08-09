@@ -12,8 +12,9 @@ from tt_als import *
 from function_tensor import *
 
 def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name, animate=None):
-    f_plot_x = np.linspace(lbound, ubound, 1000)
-    f_plot_y = func(np.array([f_plot_x]).T).squeeze()
+    eval_points = np.arange(0, func_tensor.dims[0], 1, dtype=np.uint64)
+    f_plot_x = eval_points.astype(np.double) * func_tensor.dx[0] + func_tensor.grid_bounds[0, 0] 
+    f_plot_y = func_tensor.evaluate_indices(eval_points.reshape(eval_points.shape[0], 1)).squeeze()
 
     num_points = func_tensor.dims[0]
     idxs = np.zeros((num_points, 1), dtype=np.uint64)
