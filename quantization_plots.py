@@ -16,6 +16,11 @@ def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name,
     f_plot_x = eval_points.astype(np.double) * func_tensor.dx[0] + func_tensor.grid_bounds[0, 0] 
     f_plot_y = func_tensor.evaluate_indices(eval_points.reshape(eval_points.shape[0], 1)).squeeze()
 
+    noise = function_tensor.generate_reproducible_noise()
+    print(noise)
+
+    exit(1)
+
     num_points = func_tensor.dims[0]
     idxs = np.zeros((num_points, 1), dtype=np.uint64)
     idxs[:, 0] = np.arange(num_points)
@@ -66,7 +71,7 @@ def test_qtt_interpolation_points():
 
     alg = 'reverse_iterative_volume'
     J = 100
-    J2 = 16
+    J2 = 30
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)

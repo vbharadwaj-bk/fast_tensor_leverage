@@ -25,10 +25,10 @@ class FunctionTensor:
         # Then param1 is the standard deviation of the noise. 
         self.noise_params = noise_params
 
-        if noise_params is not None:
+        #if noise_params is not None:
             # Generate a random unsigned int
-            self.noise_seed1 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
-            self.noise_seed2 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
+        self.noise_seed1 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
+        self.noise_seed2 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
 
     def generate_reproducible_noise(indices):
         if noise_params[0] is not "gaussian":
@@ -40,6 +40,8 @@ class FunctionTensor:
                     noise_vector,
                     self.noise_seed1,
                     self.noise_seed2)
+            
+            return noise_vector
 
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):
         if method != "randomized":
