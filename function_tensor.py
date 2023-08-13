@@ -27,21 +27,23 @@ class FunctionTensor:
 
         #if noise_params is not None:
             # Generate a random unsigned int
-        self.noise_seed1 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
-        self.noise_seed2 = np.random.randint(0, 2**32 - 1, dtype=np.uint64)
+        self.noise_seed1 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
+        self.noise_seed2 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
+        print(f"Noise Seed: {self.noise_seed1}, {self.noise_seed2}")
 
-    def generate_reproducible_noise(indices):
-        if noise_params[0] is not "gaussian":
-            raise NotImplementedError("Only gaussian noise is supported")
-        else:
-            noise_vector = np.zeros((indices.shape[0]), dtype=np.double)
-            reproducible_noise(
-                    indices,
-                    noise_vector,
-                    self.noise_seed1,
-                    self.noise_seed2)
-            
-            return noise_vector
+    def generate_reproducible_noise(self, indices):
+        #if noise_params[0] is not "gaussian":
+        #    raise NotImplementedError("Only gaussian noise is supported")
+        #else:
+
+        noise_vector = np.zeros((indices.shape[0]), dtype=np.double)
+        reproducible_noise(
+                indices,
+                noise_vector,
+                self.noise_seed1,
+                self.noise_seed2)
+        
+        return noise_vector * 0.3
 
     def initialize_accuracy_estimation(self, method="randomized", rsample_count=10000):
         if method != "randomized":
@@ -78,7 +80,7 @@ class FunctionTensor:
             idxs_int[:, j] = i
             idxs_unquant = self.quantization.unquantize_indices(idxs_int) 
             idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
-            result[:, i] = self.func(idxs)
+            result[:, i] = self.func(idxs) + self.generate_reproducible_noise(idxs_int)
 
             if self.track_evals:
                 self.evals.append(idxs_unquant.copy())

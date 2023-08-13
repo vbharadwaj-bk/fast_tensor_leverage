@@ -14,12 +14,20 @@ from function_tensor import *
 def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name, animate=None):
     eval_points = np.arange(0, func_tensor.dims[0], 1, dtype=np.uint64)
     f_plot_x = eval_points.astype(np.double) * func_tensor.dx[0] + func_tensor.grid_bounds[0, 0] 
-    f_plot_y = func_tensor.evaluate_indices(eval_points.reshape(eval_points.shape[0], 1)).squeeze()
 
-    noise = function_tensor.generate_reproducible_noise()
-    print(noise)
+    eval_points_mat = eval_points.reshape(eval_points.shape[0], 1) 
+    f_plot_y = func_tensor.evaluate_indices(eval_points_mat).squeeze()
+
+    noise_magnitude = 0.1
+    noise = func_tensor.generate_reproducible_noise(eval_points_mat) * noise_magnitude 
+
+    print(noise[8])
+    noise2 = func_tensor.generate_reproducible_noise(np.array([[8]])) * noise_magnitude 
+    print(noise2[0])
 
     exit(1)
+
+    f_plot_y += noise
 
     num_points = func_tensor.dims[0]
     idxs = np.zeros((num_points, 1), dtype=np.uint64)
@@ -58,20 +66,20 @@ def test_qtt_interpolation_points():
     lbound = 0.001
     ubound = 25
     func = sin_test
-    num_sweeps = 2
-    tt_rank = 4
+    num_sweeps = 10
+    tt_rank = 2
     n = 2 ** 10
     N = 1
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
     subdivs = [n] * N
 
-    #alg = 'iid_leverage'
-    #J = 16
-    #J2 = None
+    alg = 'iid_leverage'
+    J = 30000
+    J2 = None
 
-    alg = 'reverse_iterative_volume'
-    J = 100
-    J2 = 30
+    #alg = 'reverse_iterative_volume'
+    #J = 100
+    #J2 = 30
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)

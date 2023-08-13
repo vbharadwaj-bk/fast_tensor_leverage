@@ -26,6 +26,7 @@ void reproducible_noise(py::array_t<uint64_t> &indices_py,
                                 cols * sizeof(uint64_t),
                                 0x9747b28c, hash_buffer());
 
+
         // Can use Random123 package instead of this.
         hash_buffer[0] ^= seed1;
         hash_buffer[1] ^= seed2;
