@@ -279,6 +279,11 @@ public:
         } 
     }
 
+    void evaluate_indices_py(py::array_t<uint32_t> indices_py, py::array_t<double> result_py) {
+        Buffer<uint32_t> indices(indices_py);
+        Buffer<double> result(result_py);
+        evaluate_indices(indices, result);
+    }
 
     // This function is just for testing purposes
     void multiply_random_factor_entries(double rho, double A) {
