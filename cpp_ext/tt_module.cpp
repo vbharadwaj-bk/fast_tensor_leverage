@@ -13,6 +13,7 @@
 #include "dense_tensor.hpp"
 #include "sparse_tensor.hpp"
 #include "function_tensor.hpp"
+#include "reproducible_noise.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -23,6 +24,7 @@ namespace py = pybind11;
 PYBIND11_MODULE(tt_module, m) {
     m.def("quantize_indices", &quantize_indices);
     m.def("unquantize_indices", &unquantize_indices);
+    m.def("reproducible_noise", &reproducible_noise);
     py::class_<TTSampler>(m, "TTSampler")
         .def(py::init<uint64_t, uint64_t, uint64_t, py::array_t<uint64_t>>())
         .def("update_matricization", &TTSampler::update_matricization)
@@ -94,6 +96,8 @@ cfg['dependencies'] = [ 'common.h',
                         'black_box_tensor.hpp',
                         'dense_tensor.hpp',
                         'function_tensor.hpp',
+                        'hashing.hpp',
+                        'reproducible_noise.hpp',
                         '../config.json'
                         ] 
 %>
