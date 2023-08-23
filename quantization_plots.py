@@ -10,6 +10,7 @@ import cppimport.import_hook
 from tensor_train import *
 from tt_als import *
 from function_tensor import *
+from functions import *
 
 def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name, animate=None):
     eval_points = np.arange(0, func_tensor.dims[0], 1, dtype=np.uint64)
@@ -60,14 +61,11 @@ def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name,
         camera.snap()
 
 def test_qtt_interpolation_points():
-    def sin_test(idxs):
-        return np.sin(idxs[:, 0]) / idxs[:, 0]
-
     lbound = 0.001
     ubound = 25
-    func = sin_test
-    num_sweeps = 10
-    tt_rank = 2
+    func = sin2_test
+    num_sweeps = 1
+    tt_rank = 4
     n = 2 ** 10
     N = 1
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
@@ -78,8 +76,12 @@ def test_qtt_interpolation_points():
     J2 = None
 
     #alg = 'reverse_iterative_volume'
-    #J = 100
-    #J2 = 30
+    #J = 200
+    #J2 = 32
+
+    alg = 'teneva_rect_maxvol'
+    J = 200
+    J2 = 16
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
