@@ -40,7 +40,11 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
         Y[i], R, Ir[i+1] = _iter(G, Ig[i], Ir[i], tau0=tau0, k0=k0, ltr=True)
         step_cb(Y, i, R, direction="left")
     Y[d-1] = np.tensordot(Y[d-1], R, 1)
+<<<<<<< HEAD
     step_cb(Y, d-1, R, direction="right")
+=======
+    step_cb(Y, d-1, R, direction="right", animation_frame=False)
+>>>>>>> refs/remotes/origin/tensor_train
 
     R = np.ones((1, 1))
     for i in range(d-1, -1, -1):
@@ -48,7 +52,11 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
         Y[i], R, Ic[i] = _iter(G, Ig[i], Ic[i+1], tau0=tau0, k0=k0, ltr=False)        
         step_cb(Y, i, R, direction="right")
     Y[0] = np.tensordot(R, Y[0], 1)
+<<<<<<< HEAD
     step_cb(Y, 0, R, direction="right")
+=======
+    step_cb(Y, 0, R, direction="right", animation_frame=False)
+>>>>>>> refs/remotes/origin/tensor_train
 
     info['e_vld'] = teneva.accuracy_on_data(Y, I_vld, y_vld)
     teneva._info_appr(info, _time, nswp, e, e_vld, log)
@@ -190,6 +198,7 @@ def _iter(Z, Ig, I, tau=1.1, dr_min=0, dr_max=0, tau0=1.05, k0=100, ltr=True):
     return G, R, I_new[ind, :]
 
 
+<<<<<<< HEAD
 
 if __name__=='__main__':
     from function_tensor import *
@@ -210,6 +219,30 @@ if __name__=='__main__':
     tt_rank   = 4      # TT-rank of the initial tensor
     dr_min    = 0      # Cross parameter (minimum number of added rows)
     dr_max    = 0      # Cross parameter (maximum number of added rows)
+=======
+from function_tensor import *
+from tensor_train import TensorTrain
+from quantization_plots import create_plot
+from functions import *
+
+lbound = 0.001
+ubound = 25
+func = sin2_test
+N = 1
+grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
+subdivs = [2 ** 10] * N
+
+m         = 8.E+3  # Number of calls to target function
+e         = None   # Desired accuracy
+nswp      = 1      # Sweep number
+tt_rank   = 4      # TT-rank of the initial tensor
+dr_min    = 0      # Cross parameter (minimum number of added rows)
+dr_max    = 0      # Cross parameter (maximum number of added rows)
+
+quantization = Power2Quantization(subdivs, ordering="canonical")
+ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
+tt_approx = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
+>>>>>>> refs/remotes/origin/tensor_train
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
@@ -226,11 +259,62 @@ if __name__=='__main__':
     # Random multi-indices for the test points:
     I_tst = np.vstack([np.random.choice(k, m_tst) for k in n]).T
 
+<<<<<<< HEAD
     # Function values for the test points:
     y_tst = wrapped_func(I_tst)
 
     fig, ax = plt.subplots()
     camera = Camera(fig)
+=======
+fig, ax = plt.subplots()
+camera = Camera(fig)
+
+ground_truth.initialize_accuracy_estimation(method="randomized", 
+                                            rsample_count=10000)
+
+def step_callback(Y, i, R, direction, animation_frame=True):
+    # Note - I switched the order of tensordot
+    if direction == "left":
+        #tt_approx.U[i] = np.tensordot(Y[i], R, 1)
+        tt_approx.U[i] = Y[i].copy()
+        tt_approx.update_internal_sampler(i, direction, False)
+        if i < len(Y) - 1:
+            tt_approx.U[i+1] = Y[i+1].copy()
+            tt_approx.update_internal_sampler(i+1, direction, False)
+
+    elif direction == "right":
+        #tt_approx.U[i] = np.tensordot(R, Y[i], 1)
+        tt_approx.U[i] = Y[i].copy()
+        tt_approx.update_internal_sampler(i, direction, False)
+
+        if i > 0: 
+            tt_approx.U[i-1] = Y[i-1].copy()
+            tt_approx.update_internal_sampler(i-1, direction, False)
+
+    if animation_frame:
+        create_plot(func, lbound, ubound, tt_approx, ground_truth, None,
+                name=None, animate=(ax, camera)) 
+
+        approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
+        print(f'Fit: {approx_fit}') 
+
+
+t = tpc()
+info, cache = {}, {}
+#Y = teneva.rand(n, r)
+Y = tt_approx.U
+tt_approx.build_fast_sampler(0, 100)
+Y = cross(wrapped_func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
+    info=info, cache=cache, step_cb=step_callback)
+
+animation = camera.animate()  
+animation.save('plotting/quantization_experiments/cross_animated.gif', writer = 'pillow')
+
+#tt_approx.U = Y
+#tt_approx.build_fast_sampler(0, 100)
+#Y = teneva.truncate(Y, 1.E-4) # We round the result at the end
+t = tpc() - t
+>>>>>>> refs/remotes/origin/tensor_train
 
     ground_truth.initialize_accuracy_estimation(method="randomized", 
                                                 rsample_count=10000)
@@ -245,6 +329,7 @@ if __name__=='__main__':
                 tt_approx.U[i+1] = Y[i+1].copy()
                 tt_approx.update_internal_sampler(i+1, direction, False)
 
+<<<<<<< HEAD
         elif direction == "right":
             #tt_approx.U[i] = np.tensordot(R, Y[i], 1)
             tt_approx.U[i] = Y[i].copy()
@@ -292,3 +377,7 @@ if __name__=='__main__':
 
     approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
     print(f'Fit: {approx_fit}') 
+=======
+approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
+print(f'Fit: {approx_fit}') 
+>>>>>>> refs/remotes/origin/tensor_train

@@ -11,6 +11,7 @@ from tensor_train import *
 from tt_als import *
 from function_tensor import *
 from functions import *
+from functions import *
 
 def create_plot(func, lbound, ubound, tt_approx, func_tensor, eval_points, name, animate=None):
     eval_points = np.arange(0, func_tensor.dims[0], 1, dtype=np.uint64)
@@ -74,6 +75,11 @@ def test_qtt_interpolation_points():
     alg = 'iid_leverage'
     J = 30000
     J2 = None
+
+    #alg = 'reverse_iterative_volume'
+    #J = 200
+    #J2 = 32
+
 
     #alg = 'reverse_iterative_volume'
     #J = 200
