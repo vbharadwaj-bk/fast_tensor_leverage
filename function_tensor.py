@@ -99,6 +99,9 @@ class FunctionTensor:
         idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
         result = self.func(idxs)
 
+        if self.track_evals:
+            self.evals.append(idxs_unquant.copy())
+            
         return result
 
     def execute_sampled_spmm(self, samples, design, j, result):

@@ -9,25 +9,37 @@ from tensor_train import TensorTrain
 from functions import *
 import time
 
+def deduplicate_and_add_evaluations(existing_evals, new_eval_list):
+    if existing_evals is not None:
+        new_eval_list.append(existing_evals)
+
+    if len(new_eval_list) > 0:
+        stacked = np.vstack(new_eval_list)
+        return np.unique(stacked, axis=0)
+    else:
+        return existing_evals
+
 def produce_trace_tt_cross(ground_truth, tt_approx, sweep_count):
     info, cache = {}, {}
 
-    m         = 8.E+3  # Number of calls to target function
+    m         = None # Number of calls to target function
     e         = None   # Desired accuracy
     dr_min    = 0      # Cross parameter (minimum number of added rows)
     dr_max    = 0      # Cross parameter (maximum number of added rows)
 
     lstsq_problem_numbers = []
-    lstsq_fits    = []
-    lstsq_sample_counts = []
-
+    fits = []
+    unique_eval_counts = []
     lstsq_problem_number = 1
+
+    evaluations = None 
 
     def wrapped_func(I):
         return ground_truth.evaluate(I)
 
-    def step_callback(Y, i, R, direction):
+    def step_callback(Y, i, R, direction, is_lstq_problem=True):
         nonlocal lstsq_problem_number
+        nonlocal evaluations
 
         # Note - I switched the order of tensordot
         if direction == "left":
@@ -47,18 +59,26 @@ def produce_trace_tt_cross(ground_truth, tt_approx, sweep_count):
                 tt_approx.U[i-1] = Y[i-1].copy()
                 tt_approx.update_internal_sampler(i-1, direction, False)
 
-        approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
-        lstsq_problem_number += 1
+        if is_lstq_problem:
+            approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
 
-        lstsq_problem_numbers.append(lstsq_problem_number)
-        lstsq_fits.append(approx_fit)
+            lstsq_problem_numbers.append(lstsq_problem_number)
+            fits.append(approx_fit)
+
+            evaluations = deduplicate_and_add_evaluations(evaluations, ground_truth.evals)
+            if evaluations is None:
+                unique_eval_counts.append(0)
+            else:
+                unique_eval_counts.append(evaluations.shape[0])
+            ground_truth.evals = []
+            lstsq_problem_number += 1
 
     Y = tt_approx.U
     tt_approx.build_fast_sampler(0, 100)
-    Y = cross(wrapped_func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
+    Y = cross(wrapped_func, Y, m, e, sweep_count, dr_min=dr_min, dr_max=dr_max,
         info=info, cache=cache, step_cb=step_callback)
 
-    return lstsq_problem_numbers, lstsq_fits, lstsq_sample_counts
+    return lstsq_problem_numbers, fits, unique_eval_counts 
 
 
 if __name__=='__main__':
@@ -70,12 +90,12 @@ if __name__=='__main__':
     subdivs = [2 ** 10] * N
 
     tt_rank   = 4      # TT-rank of the initial tensor
-    nswp      = 1      # Sweep number
+    nswp      = 3      # Sweep number
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
     tt_approx = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
 
-    ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=False)
+    ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
     ground_truth.initialize_accuracy_estimation(method="randomized", 
                                                 rsample_count=10000)
 

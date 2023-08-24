@@ -36,17 +36,17 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
     for i in range(d):
         G = np.tensordot(R, Y[i], 1)
         Y[i], R, Ir[i+1] = _iter(G, Ig[i], Ir[i], tau0=tau0, k0=k0, ltr=True)
-        step_cb(Y, i, R, direction="left")
+        step_cb(Y, i, R, direction="left", is_lstq_problem=False)
     Y[d-1] = np.tensordot(Y[d-1], R, 1)
-    step_cb(Y, d-1, R, direction="right")
+    step_cb(Y, d-1, R, direction="right", is_lstq_problem=False)
 
     R = np.ones((1, 1))
     for i in range(d-1, -1, -1):
         G = np.tensordot(Y[i], R, 1)
         Y[i], R, Ic[i] = _iter(G, Ig[i], Ic[i+1], tau0=tau0, k0=k0, ltr=False)        
-        step_cb(Y, i, R, direction="right")
+        step_cb(Y, i, R, direction="right", is_lstq_problem=False)
     Y[0] = np.tensordot(R, Y[0], 1)
-    step_cb(Y, 0, R, direction="right")
+    step_cb(Y, 0, R, direction="right", is_lstq_problem=False)
 
     info['e_vld'] = teneva.accuracy_on_data(Y, I_vld, y_vld)
     teneva._info_appr(info, _time, nswp, e, e_vld, log)
@@ -74,7 +74,7 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
             step_cb(Y, i, R, direction="left")
 
         Y[d-1] = np.tensordot(Y[d-1], R, 1)
-        step_cb(Y, d-1, R, direction="right")
+        step_cb(Y, d-1, R, direction="right", is_lstq_problem=False)
 
         R = np.ones((1, 1))
         for i in range(d-1, -1, -1):
@@ -96,7 +96,7 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
             step_cb(Y, i, R, direction="right")
 
         Y[0] = np.tensordot(R, Y[0], 1)
-        step_cb(Y, 0, R, direction="right")
+        step_cb(Y, 0, R, direction="right", is_lstq_problem=False)
 
         info['nswp'] += 1
         info['r'] = teneva.erank(Y)
@@ -134,7 +134,6 @@ def _func(f, Ig, Ir, Ic, info, cache=None):
 
     if y is not None:
         return teneva._reshape(y, (r1, n, r2))
-
 
 def _func_eval(f, I, info, cache=None):
     if cache is None:
