@@ -5,7 +5,7 @@ from quantization import *
 from cpp_ext.tt_module import reproducible_noise 
 
 class FunctionTensor:
-    def __init__(self, grid_bounds, dims, func, quantization=None, track_evals=False, noise_params=None): 
+    def __init__(self, grid_bounds, dims, func, quantization=None, track_evals=False, noise_params=None, noisy=False): 
         self.grid_bounds = np.array(grid_bounds, dtype=np.double)
         self.dims = np.array(dims, dtype=np.uint64)
         self.func = func
@@ -25,11 +25,9 @@ class FunctionTensor:
         # Then param1 is the standard deviation of the noise. 
         self.noise_params = noise_params
 
-        #if noise_params is not None:
-            # Generate a random unsigned int
-        self.noise_seed1 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
-        self.noise_seed2 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
-        print(f"Noise Seed: {self.noise_seed1}, {self.noise_seed2}")
+        if noisy:
+            self.noise_seed1 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
+            self.noise_seed2 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
 
     def generate_reproducible_noise(self, indices):
         #if noise_params[0] is not "gaussian":
@@ -80,7 +78,10 @@ class FunctionTensor:
             idxs_int[:, j] = i
             idxs_unquant = self.quantization.unquantize_indices(idxs_int) 
             idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
-            result[:, i] = self.func(idxs) + self.generate_reproducible_noise(idxs_int)
+            result[:, i] = self.func(idxs) 
+            
+            if noisy:
+                result[:, i] += self.generate_reproducible_noise(idxs_int)
 
             if self.track_evals:
                 self.evals.append(idxs_unquant.copy())
