@@ -88,19 +88,11 @@ class FunctionTensor:
 
         return result
 
-<<<<<<< HEAD
     def evaluate(self, samples):
         idxs = None
         if self.quantization is not None:
             idxs_unquant = self.quantization.unquantize_indices(samples) 
             idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
-=======
-    def evaluate_indices(self, idxs_int, input_quantized=False):
-        result = np.zeros(idxs_int.shape[0], dtype=np.double)
-        idxs_unquant = None 
-        if input_quantized:
-            idxs_unquant = self.quantization.unquantize_indices(idxs_int) 
->>>>>>> a06b09d8497bb146a4088214cbc73343b80e993a
         else:
             idxs_unquant = idxs_int
 

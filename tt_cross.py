@@ -1,9 +1,7 @@
 import teneva
 import numpy as np
-import matplotlib.pyplot as plt
 
 from time import perf_counter as tpc
-from celluloid import Camera
 
 def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
           tau0=1.05, k0=100, info={}, cache=None, I_vld=None, y_vld=None,
@@ -40,11 +38,7 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
         Y[i], R, Ir[i+1] = _iter(G, Ig[i], Ir[i], tau0=tau0, k0=k0, ltr=True)
         step_cb(Y, i, R, direction="left")
     Y[d-1] = np.tensordot(Y[d-1], R, 1)
-<<<<<<< HEAD
     step_cb(Y, d-1, R, direction="right")
-=======
-    step_cb(Y, d-1, R, direction="right", animation_frame=False)
->>>>>>> refs/remotes/origin/tensor_train
 
     R = np.ones((1, 1))
     for i in range(d-1, -1, -1):
@@ -52,11 +46,7 @@ def cross(f, Y0, m=None, e=None, nswp=None, tau=1.1, dr_min=1, dr_max=1,
         Y[i], R, Ic[i] = _iter(G, Ig[i], Ic[i+1], tau0=tau0, k0=k0, ltr=False)        
         step_cb(Y, i, R, direction="right")
     Y[0] = np.tensordot(R, Y[0], 1)
-<<<<<<< HEAD
     step_cb(Y, 0, R, direction="right")
-=======
-    step_cb(Y, 0, R, direction="right", animation_frame=False)
->>>>>>> refs/remotes/origin/tensor_train
 
     info['e_vld'] = teneva.accuracy_on_data(Y, I_vld, y_vld)
     teneva._info_appr(info, _time, nswp, e, e_vld, log)

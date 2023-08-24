@@ -24,7 +24,7 @@ def produce_trace_tt_cross(ground_truth, tt_approx, sweep_count):
     lstsq_problem_number = 1
 
     def wrapped_func(I):
-        return ground_truth.evaluate_indices(I)
+        return ground_truth.evaluate(I)
 
     def step_callback(Y, i, R, direction):
         nonlocal lstsq_problem_number
@@ -52,7 +52,6 @@ def produce_trace_tt_cross(ground_truth, tt_approx, sweep_count):
 
         lstsq_problem_numbers.append(lstsq_problem_number)
         lstsq_fits.append(approx_fit)
-        print(approx_fit)
 
     Y = tt_approx.U
     tt_approx.build_fast_sampler(0, 100)
