@@ -48,6 +48,14 @@ class TensorTrain:
         self.matricizations = [None] * self.N
         self.internal_sampler = None
 
+    def clone(self):
+        clone = TensorTrain(self.dims, list(self.ranks[1:-1]))
+
+        for i in range(self.N):
+            clone.U[i][:] = self.U[i]
+
+        return clone
+
     def evaluate_left(self, idxs, upto=-1):
         left = np.ones((1, 1), dtype=np.double)
  

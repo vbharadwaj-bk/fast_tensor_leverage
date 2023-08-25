@@ -184,8 +184,7 @@ class TensorTrainALS:
 
         tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
-    def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5, accuracy_method="exact",
-                                      alg='iid_leverage', J2=None):
+    def execute_randomized_als_sweeps(self, num_sweeps, J, alg='iid_leverage', J2=None, cb=None):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
         N = tt_approx.N
@@ -197,15 +196,23 @@ class TensorTrainALS:
                 tt_approx.orthogonalize_push_right(j)
                 tt_approx.update_internal_sampler(j, "left", True)
 
+                if cb is not None:
+                    tt_approx.update_internal_sampler(j+1, "left", False)
+                    cb(i, "left")
+
             for j in range(N - 1, 0, -1):
                 self.optimize_core_approx(j, J, alg, J2)
                 tt_approx.orthogonalize_push_left(j)
                 tt_approx.update_internal_sampler(j, "right", True)
 
+                if cb is not None:
+                    tt_approx.update_internal_sampler(j-1, "left", False)
+                    cb(i, "right")
+
             tt_approx.update_internal_sampler(0, "left", False)
 
-            if i % epoch_interval == 0:
-                if accuracy_method == "approx":
-                    print(self.compute_approx_fit())
-                elif accuracy_method == "exact":
-                    print(self.compute_exact_fit())
+            #if i % epoch_interval == 0:
+            #    if accuracy_method == "approx":
+            #        print(self.compute_approx_fit())
+            #    elif accuracy_method == "exact":
+            #        print(self.compute_exact_fit())

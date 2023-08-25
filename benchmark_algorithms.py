@@ -1,6 +1,7 @@
 import numpy as np
 import json
 
+from tt_als import *
 from tt_cross import *
 from quantization import *
 
@@ -19,7 +20,7 @@ def deduplicate_and_add_evaluations(existing_evals, new_eval_list):
     else:
         return existing_evals
 
-def produce_trace_tt_cross(ground_truth, tt_approx, nswp, outfle):
+def produce_trace_tt_cross(ground_truth, tt_approx, nswp, outifle, test_name):
     info, cache = {}, {}
 
     m         = None # Number of calls to target function
@@ -79,13 +80,67 @@ def produce_trace_tt_cross(ground_truth, tt_approx, nswp, outfle):
         info=info, cache=cache, step_cb=step_callback)
 
     result = {
+        "alg": "tt_cross",
+        "label": "TT-Cross",
+        "test_name": test_name,
         "lstsq_problem_numbers": lstsq_problem_numbers,
         "fits": fits,
         "unique_eval_counts": unique_eval_counts
     }
 
-    with open(outfle, 'w') as f:
+    with open(outfile, 'w') as f:
         json.dump(result, f)
+
+
+def produce_trace_ours(ground_truth, tt_approx, alg, J, J2, nswp, outfile, test_name):
+    lstsq_problem_numbers = []
+    fits = []
+    unique_eval_counts = []
+    lstsq_problem_number = 1
+
+    evaluations = None 
+
+    def callback(i, direction):
+        nonlocal lstsq_problem_number
+        nonlocal evaluations
+
+        approx_fit = ground_truth.compute_approx_tt_fit(tt_approx)
+
+        lstsq_problem_numbers.append(lstsq_problem_number)
+        fits.append(approx_fit)
+
+        evaluations = deduplicate_and_add_evaluations(evaluations, ground_truth.evals)
+        if evaluations is None:
+            unique_eval_counts.append(0)
+        else:
+            unique_eval_counts.append(evaluations.shape[0])
+        ground_truth.evals = []
+        lstsq_problem_number += 1
+
+    tt_approx.place_into_canonical_form(0)
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+    ground_truth.initialize_accuracy_estimation()
+
+    tt_als.execute_randomized_als_sweeps(nswp, J, alg, J2, cb=callback)
+
+    if alg=='iid_leverage':
+        label = f"{alg}, J={J}"
+
+    result = {
+        "alg": alg,
+        "J": J,
+        "J2": J2,
+        "test_name": test_name,
+        "lstsq_problem_numbers": lstsq_problem_numbers,
+        "label": label,
+        "fits": fits,
+        "unique_eval_counts": unique_eval_counts
+    }
+
+    with open(outfile, 'w') as f:
+        json.dump(result, f)
+
 
 if __name__=='__main__':
     lbound = 0.001
@@ -98,14 +153,25 @@ if __name__=='__main__':
     subdivs = [2 ** 10] * N
 
     tt_rank   = 4      # TT-rank of the initial tensor
-    nswp      = 3      # Sweep number
+    nswp      = 2      # Sweep number
 
     quantization = Power2Quantization(subdivs, ordering="canonical")
-    tt_approx = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
+    common_start = TensorTrain(quantization.qdim_sizes, [tt_rank] * (quantization.qdim - 1))
+
 
     ground_truth = FunctionTensor(grid_bounds, subdivs, func, quantization=quantization, track_evals=True)
     ground_truth.initialize_accuracy_estimation(method="randomized", 
                                                 rsample_count=10000)
-
+    
+    print("Starting TT-Cross Benchmark!")
+    start = common_start.clone()
     outfile = f'outputs/tt_benchmarks/cross_{test_name}.json'
-    produce_trace_tt_cross(ground_truth, tt_approx, nswp, outfile)
+    produce_trace_tt_cross(ground_truth, start, nswp, outfile, test_name)
+
+    for J in [40, 80, 160, 320, 640, 1280]:
+        print("Starting IID Leverage Score Benchmark!")
+        J = 1000
+        J2 = None
+        start = common_start.clone()
+        outfile = f'outputs/tt_benchmarks/iid_leverage_{test_name}_J_{J}_J2_{J2}.json'
+        produce_trace_ours(ground_truth, start, 'iid_leverage', J, J2, nswp, outfile, test_name)

@@ -17,6 +17,7 @@ class FunctionTensor:
         self.validation_values = None
         self.quantization = quantization
         self.track_evals = track_evals
+        self.noisy = noisy
 
         if self.track_evals:
             self.evals = []
@@ -25,7 +26,7 @@ class FunctionTensor:
         # Then param1 is the standard deviation of the noise. 
         self.noise_params = noise_params
 
-        if noisy:
+        if self.noisy:
             self.noise_seed1 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
             self.noise_seed2 = np.random.randint(0, 2**64 - 1, dtype=np.uint64)
 
@@ -80,7 +81,7 @@ class FunctionTensor:
             idxs = idxs_unquant.astype(np.double) * self.dx + self.grid_bounds[:, 0]
             result[:, i] = self.func(idxs) 
             
-            if noisy:
+            if self.noisy:
                 result[:, i] += self.generate_reproducible_noise(idxs_int)
 
             if self.track_evals:
