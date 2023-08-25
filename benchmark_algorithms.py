@@ -19,7 +19,7 @@ def deduplicate_and_add_evaluations(existing_evals, new_eval_list):
     else:
         return existing_evals
 
-def produce_trace_tt_cross(ground_truth, tt_approx, sweep_count):
+def produce_trace_tt_cross(ground_truth, tt_approx, nswp, outfle):
     info, cache = {}, {}
 
     m         = None # Number of calls to target function
@@ -75,15 +75,23 @@ def produce_trace_tt_cross(ground_truth, tt_approx, sweep_count):
 
     Y = tt_approx.U
     tt_approx.build_fast_sampler(0, 100)
-    Y = cross(wrapped_func, Y, m, e, sweep_count, dr_min=dr_min, dr_max=dr_max,
+    Y = cross(wrapped_func, Y, m, e, nswp, dr_min=dr_min, dr_max=dr_max,
         info=info, cache=cache, step_cb=step_callback)
 
-    return lstsq_problem_numbers, fits, unique_eval_counts 
+    result = {
+        "lstsq_problem_numbers": lstsq_problem_numbers,
+        "fits": fits,
+        "unique_eval_counts": unique_eval_counts
+    }
 
+    with open(outfle, 'w') as f:
+        json.dump(result, f)
 
 if __name__=='__main__':
     lbound = 0.001
     ubound = 25
+
+    test_name = "sin1"
     func = sin_test
     N = 1
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
@@ -99,5 +107,5 @@ if __name__=='__main__':
     ground_truth.initialize_accuracy_estimation(method="randomized", 
                                                 rsample_count=10000)
 
-    result = produce_trace_tt_cross(ground_truth, tt_approx, 1)
-    print(result)
+    outfile = f'outputs/tt_benchmarks/cross_{test_name}.json'
+    produce_trace_tt_cross(ground_truth, tt_approx, nswp, outfile)
