@@ -80,7 +80,7 @@ def produce_trace_tt_cross(ground_truth, tt_approx, nswp, outifle, test_name):
         info=info, cache=cache, step_cb=step_callback)
 
     result = {
-        "alg": "tt_cross",
+        "alg": "tt-cross",
         "label": "TT-Cross",
         "test_name": test_name,
         "lstsq_problem_numbers": lstsq_problem_numbers,
@@ -125,7 +125,11 @@ def produce_trace_ours(ground_truth, tt_approx, alg, J, J2, nswp, outfile, test_
     tt_als.execute_randomized_als_sweeps(nswp, J, alg, J2, cb=callback)
 
     if alg=='iid_leverage':
-        label = f"{alg}, J={J}"
+        label = f"IID Leverage, J={J}"
+    elif alg=='reverse_iterative_volume':
+        label = f"Volume Sample, J={J}, J2={J2}"
+    elif alg=='teneva_rect_maxvol':
+        label = f"Lev+Maxvol, J={J}"
 
     result = {
         "alg": alg,
@@ -168,10 +172,22 @@ if __name__=='__main__':
     outfile = f'outputs/tt_benchmarks/cross_{test_name}.json'
     produce_trace_tt_cross(ground_truth, start, nswp, outfile, test_name)
 
-    for J in [40, 80, 160, 320, 640, 1280]:
-        print("Starting IID Leverage Score Benchmark!")
-        J = 1000
-        J2 = None
+    #for J in [40, 80, 160, 320, 640, 1280]:
+    #    J2 = None
+    #    start = common_start.clone()
+    #    outfile = f'outputs/tt_benchmarks/iid_leverage_{test_name}_J_{J}_J2_{J2}.json'
+    #    produce_trace_ours(ground_truth, start, 'iid_leverage', J, J2, nswp, outfile, test_name)
+
+    #for J in [64, 128, 256, 512]:
+    #    alg = 'reverse_iterative_volume'
+    #    J2 = 32
+    #    start = common_start.clone()
+    #    outfile = f'outputs/tt_benchmarks/{alg}_{test_name}_J_{J}_J2_{J2}.json'
+    #    produce_trace_ours(ground_truth, start, alg, J, J2, nswp, outfile, test_name)
+
+    for J in [64, 128, 256, 512]:
+        alg = 'teneva_rect_maxvol'
+        J2 = 16
         start = common_start.clone()
-        outfile = f'outputs/tt_benchmarks/iid_leverage_{test_name}_J_{J}_J2_{J2}.json'
-        produce_trace_ours(ground_truth, start, 'iid_leverage', J, J2, nswp, outfile, test_name)
+        outfile = f'outputs/tt_benchmarks/{alg}_{test_name}_J_{J}_J2_{J2}.json'
+        produce_trace_ours(ground_truth, start, alg, J, J2, nswp, outfile, test_name)
