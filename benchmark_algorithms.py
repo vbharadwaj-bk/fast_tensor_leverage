@@ -150,8 +150,8 @@ if __name__=='__main__':
     lbound = 0.001
     ubound = 25
 
-    test_name = "sin1"
-    func = sin_test
+    test_name = "sin2"
+    func = sin2_test
     N = 1
     grid_bounds = np.array([[lbound, ubound] for _ in range(N)], dtype=np.double)
     subdivs = [2 ** 10] * N
@@ -172,18 +172,18 @@ if __name__=='__main__':
     outfile = f'outputs/tt_benchmarks/cross_{test_name}.json'
     produce_trace_tt_cross(ground_truth, start, nswp, outfile, test_name)
 
-    #for J in [40, 80, 160, 320, 640, 1280]:
-    #    J2 = None
-    #    start = common_start.clone()
-    #    outfile = f'outputs/tt_benchmarks/iid_leverage_{test_name}_J_{J}_J2_{J2}.json'
-    #    produce_trace_ours(ground_truth, start, 'iid_leverage', J, J2, nswp, outfile, test_name)
+    for J in [40, 80, 160, 320, 640, 1280]:
+        J2 = None
+        start = common_start.clone()
+        outfile = f'outputs/tt_benchmarks/iid_leverage_{test_name}_J_{J}_J2_{J2}.json'
+        produce_trace_ours(ground_truth, start, 'iid_leverage', J, J2, nswp, outfile, test_name)
 
-    #for J in [64, 128, 256, 512]:
-    #    alg = 'reverse_iterative_volume'
-    #    J2 = 32
-    #    start = common_start.clone()
-    #    outfile = f'outputs/tt_benchmarks/{alg}_{test_name}_J_{J}_J2_{J2}.json'
-    #    produce_trace_ours(ground_truth, start, alg, J, J2, nswp, outfile, test_name)
+    for J in [64, 128, 256, 512]:
+        alg = 'reverse_iterative_volume'
+        J2 = 32
+        start = common_start.clone()
+        outfile = f'outputs/tt_benchmarks/{alg}_{test_name}_J_{J}_J2_{J2}.json'
+        produce_trace_ours(ground_truth, start, alg, J, J2, nswp, outfile, test_name)
 
     for J in [64, 128, 256, 512]:
         alg = 'teneva_rect_maxvol'
