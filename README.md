@@ -2,7 +2,7 @@
 This repository contains the code for
 the paper [Fast Exact Leverage Score Sampling
 from Khatri-Rao Products](https://arxiv.org/pdf/2301.12584),
-to appear at Neurips 2023 (Main conference, poster).
+to appear at Neurips 2023 (main conference, poster).
 
 ## What can I do with it?
 You can draw samples from the Khatri-Rao product of matrices
@@ -33,13 +33,36 @@ if __name__=='__main__':
     sampler.KRPDrawSamples(N+1, samples)
 ```
 
+## How do I reproduce the figures in the paper from the data?
+The raw data is stored in `json` format in the folder
+`submission_data`. These files were output directly by the
+scripts in the `benchmarks` folder. You can reproduce the
+figures using the material in the `plotting` folder. From
+within the folder, run 
+
+```
+python generate_image.py
+```
+which will output all figures in PDF format to 
+`plotting/paper_images`. This script will also print tables
+used in the work to `STDOUT`. Alternatively, 
+use the Jupyter file `generate_images.ipynb` to generate
+the plots inside a notebook.
+
+If you would like to generate the data yourself, use the
+scripts in the `benchmarks` folder. The accuracy and runtime
+benchmarks are easy to reproduce, but you may need a machine
+with several hundred gigabytes of RAM to reproduce 
+experiments involving the largest sparse tensors 
+(on our benchmark platform, each LBNL Perlmutter 
+node has 512GB of RAM). 
+
 ## Details
-This repository contains two implementations of the
-data structure in the paper. The first,
-available in the folder `reference_implementation`,
-is written entirely in Python with Numpy. It is
-slow, but the structure of the code matches
-the pseudocode in our paper almost line-for-line. You
+This repository contains two implementations of the data 
+structure in the paper. The first, available in the 
+folder `reference_implementation`, is written entirely in 
+Python with Numpy. It is slow, but the structure of the 
+code matches the pseudocode in our paper closely. You 
 can use it to verify the correctness of our algorithm
 or pick apart how the data structure works. You only need
 Python, Numpy, and Matplotlib to test the reference
