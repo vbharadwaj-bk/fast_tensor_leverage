@@ -15,8 +15,10 @@ env.sh
 !outputs/.empty
 plotting/*
 !plotting/distribution_comparison.png
-!plotting/chart_generator.py
-!plotting/paper_images/
+!plotting/generate_images.py
+!plotting/generate_images.ipynb
+!plotting/generate_images_expanded.ipynb
+!plotting/paper_images/.empty
 splatt/*
 slurm*
 

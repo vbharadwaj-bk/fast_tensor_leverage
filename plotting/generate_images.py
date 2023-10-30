@@ -55,8 +55,6 @@ ax.set_yscale("log")
 ax.grid(True)
 ax.errorbar(I_values, I_con_times, 3 * I_con_errs, fmt='-o', label="Construction", markersize=3)
 ax.errorbar(I_values, I_sampling_times, 3 * I_sampling_errs, fmt='-o', label="Sampling", markersize=3)
-print(I_values)
-print(I_sampling_times)
 props = dict(boxstyle='square', facecolor='white', alpha=1.0)
 ax.text(0.05, 0.95, '$\mathregular{R=32, N=3}$', transform=ax.transAxes, fontsize=11,
         verticalalignment='top',bbox=props)
@@ -89,6 +87,7 @@ for i in range(2):
 fig.align_labels()
 fig.legend(bbox_to_anchor=(0.8085, 0.04), ncol=5)
 fig.savefig("paper_images/runtime_benchmark.pdf", bbox_inches='tight')
+plt.show()
 
 
 # In[39]:
@@ -231,77 +230,7 @@ ax2.set_title("Uber")
 ax2.set_yscale("log")
 fig.legend(bbox_to_anchor=(0.875, 0.04), ncol=5)
 fig.savefig("paper_images/epsilon_progression.pdf",bbox_inches='tight')
-
-
-# In[41]:
-
-
-def generate_frequency_plot(ax, filename, label_fig=False):
-    traces = {}
-
-    samplers = ["larsen_kolda_hybrid", "efficient"]
-    plot_map = {"larsen_kolda_hybrid": ("CP-ARLS-LEV hybrid", "orange"), "efficient": ("STS-CP (ours)", "green")}
-
-    with open(filename, 'r') as f:
-        data = json.load(f)
-
-        for sampler in samplers:
-            traces[sampler] =  [[measurement["ratio"] for measurement in trace] for trace in data[sampler]]
-
-    x_axis = [el + 1 for el in list(range(len(traces[samplers[0]][0])))]
-    
-    for sampler in samplers:
-        trace_array = np.array(traces[sampler])
-        mean_trace = np.mean(trace_array, axis=0)
-        traces[sampler] = [mean_trace]
-    
-    for sampler in samplers:
-        first=True
-        for el in traces[sampler]:
-            label="_" + plot_map[sampler][0]
-            if first:
-                first = False
-                label = label[1:]
-            color = plot_map[sampler][1]
-            if not label_fig:
-                label = '_' + label
-                
-            original_data = np.array(el) - 1
-            
-            n_interp = 100
-            x_interp = np.linspace(0, x_axis[-1], n_interp)
-            interp = np.interp(x_interp, x_axis, original_data)
-            
-            N = len(x_interp)
-            rescaled_data = interp - np.mean(interp)
-            rescaled_data /= np.max(np.abs(rescaled_data))
-            
-            freq = x_interp
-            signal = np.abs(np.fft.fft(rescaled_data))
-            ax.plot(freq[:N//2] * n_interp / 100, signal[:N//2], '-o', c=color,label=label, markersize=4.0)
-            ax.set_xlim([0, 8])
-            
-filename = f'{DATA}/amazon-reviews_exact_solve_comp_1_extended.json'
-
-fig = plt.figure(tight_layout=True, figsize=(6,3))
-gs = gridspec.GridSpec(1,2)
-ax1 = fig.add_subplot(gs[0, 1])
-generate_frequency_plot(ax1, filename)
-
-ax1.set_title("Amazon")
-ax1.grid(True)
-ax1.set_xlabel("Frequency (1 / iteration)")
-
-filename = f'{DATA}/uber_exact_solve_comp_1.json'
-ax2 = fig.add_subplot(gs[0, 0])
-generate_frequency_plot(ax2, filename, label_fig=True)
-
-ax2.grid(True)
-ax2.set_xlabel("Frequency (1 / iteration)")
-ax2.set_ylabel(r"FFT Amplitude of $\mathregular{\varepsilon}$", fontsize=11)
-ax2.set_title("Uber")
-fig.legend(bbox_to_anchor=(0.875, 0.04), ncol=5)
-fig.savefig("paper_images/epsilon_fft.pdf",bbox_inches='tight')
+plt.show()
 
 
 # In[42]:
@@ -402,6 +331,7 @@ lk_c = 'blue'
 our_c = 'green'
 
 with open(f"{DATA}/accuracy_bench.json", "r") as infile:
+#with open("/pscratch/sd/v/vbharadw/fast_tensor_leverage/outputs/accuracy_bench3.json", "r") as infile:
     data = json.load(infile)
     N_values = [int(key) + 1 for key in data['N_trace'].keys()]
     N_eps_lk = [np.array(data['N_trace'][key]["larsen_kolda"])-1 for key in data['N_trace'].keys()]
@@ -508,6 +438,7 @@ for ax in [ax1, ax2, ax3, ax4]:
 ax1.set_xlabel("N")
 ax2.set_xlabel("R")
     
+fig.show()
 fig.legend([plot1["boxes"][0], plot2["boxes"][0]], ['Product Approximation', 'Our Sampler'], bbox_to_anchor=(0.965, 0.20), ncol=1, fontsize=15)
 fig.savefig("paper_images/distortion.pdf",bbox_inches='tight')
 
@@ -534,6 +465,7 @@ with open(f"{DATA}/distribution_comparison.json", "r") as infile:
     ax.set_xlabel("Row Index from KRP")
     ax.set_ylabel("Density")
     ax.legend()
+    fig.show()
     fig.savefig("paper_images/distribution_comparison.pdf",bbox_inches='tight')
 
 
@@ -829,6 +761,7 @@ axs[4].set_title("Reddit* (~4.7e9 nz)")
 
 fig.legend(bbox_to_anchor=(0.805, 0.453), ncol=1)
 fig.savefig("paper_images/spten_accuracies_presentation.pdf", bbox_inches='tight')
+plt.show()
 
 
 # In[53]:
@@ -982,6 +915,7 @@ for ax in [ax1, ax2]:
 thresh=0.95
 process_folder(f'{DATA}/speedup_experiments/', 'amazon-reviews', thresh, ax1, 'Amazon')
 process_folder(f'{DATA}/speedup_experiments/', 'reddit-2015', thresh, ax2, 'Reddit')
+fig.show()
 
 #ax.set_xlabel("Rank")
 ax1.set_ylabel(f"Speedup over LK to attain {int(thresh * 100)}% of Exact")
@@ -1004,6 +938,7 @@ for ax in [ax1, ax2]:
 thresh=0.95    
 process_folder(f'{DATA}/speedup_experiments/', 'uber', thresh, ax1, 'Uber')
 process_folder(f'{DATA}/speedup_experiments/', 'nell-2', thresh, ax2, 'NELL-2')
+fig.show()
 
 ax1.set_ylim(0, 2)
 ax2.set_ylim(0, 2)
@@ -1027,9 +962,11 @@ for ax in [ax1]:
 thresh=0.85    
 process_folder(f'{DATA}/speedup_experiments/', 'enron', thresh, ax1, 'Enron')
 ax.set_ylim([0, 4])
+fig.show()
 
 #ax.set_xlabel("Rank")
 ax1.set_ylabel(f"Speedup over LK to attain {int(thresh * 100)}% of Exact")
+
 fig.savefig("paper_images/enron_tensor_speedup.pdf", bbox_inches='tight')
 
 
@@ -1077,73 +1014,3 @@ for tensor in ['uber', 'enron', 'nell-2', 'amazon-reviews', 'reddit-2015']:
     avg_times_per_iteration[tensor] = times[3] / iterations[3]
     
 avg_times_per_iteration
-
-
-# In[58]:
-
-
-data = None
-with open(f"{DATA}/runtime_bench.json") as f:
-    data = json.load(f)
-
-I_values = [el["I"] for el in data["I_trace"]]
-I_con_times = [np.mean(el["construction_times"]) for el in data["I_trace"]]
-I_sampling_times = [np.mean(el["sampling_times"]) for el in data["I_trace"]]
-I_con_errs = np.array([np.std(el["construction_times"]) for el in data["I_trace"]])
-I_sampling_errs = np.array([np.std(el["sampling_times"]) for el in data["I_trace"]])
-
-
-R_values = [el["R"] for el in data["R_trace"]]
-R_con_times = [np.mean(el["construction_times"]) for el in data["R_trace"]]
-R_sampling_times = [np.mean(el["sampling_times"]) for el in data["R_trace"]]
-R_con_errs = np.array([np.std(el["construction_times"]) for el in data["R_trace"]])
-R_sampling_errs = np.array([np.std(el["sampling_times"]) for el in data["R_trace"]])
-
-N_values = [el["N"] for el in data["N_trace"]]
-N_con_times = [np.mean(el["construction_times"]) for el in data["N_trace"]]
-N_sampling_times = [np.mean(el["sampling_times"]) for el in data["N_trace"]]
-N_con_errs = np.array([np.std(el["construction_times"]) for el in data["N_trace"]])
-N_sampling_errs = np.array([np.std(el["sampling_times"]) for el in data["N_trace"]])
-
-fig = plt.figure(tight_layout=True, figsize=(12, 3))
-gs = gridspec.GridSpec(1, 4)
-
-ax = fig.add_subplot(gs[:, 0:2])
-ax.set_xscale("log")
-ax.set_yscale("log")
-ax.grid(True)
-ax.errorbar(I_values, I_con_times, 3 * I_con_errs, fmt='-o', label="Construction", markersize=3)
-ax.errorbar(I_values, I_sampling_times, 3 * I_sampling_errs, fmt='-o', label="Sampling", markersize=3)
-props = dict(boxstyle='square', facecolor='white', alpha=1.0)
-ax.text(0.05, 0.95, '$\mathregular{R=32, N=3}$', transform=ax.transAxes, fontsize=11,
-        verticalalignment='top',bbox=props)
-
-ax.set_ylabel('Time (s)')
-ax.set_xlabel('I')
-
-for i in range(2):
-    ax = fig.add_subplot(gs[0, i+2])
-    ax.grid(True)
-    if i == 0:
-        ax.set_xscale('log')
-        ax.errorbar(R_values, R_con_times, 3 * R_con_errs, fmt='-o', markersize=3)
-        ax.errorbar(R_values, R_sampling_times, 3 * R_sampling_errs, fmt='-o', markersize=3)
-        ax.set_xlabel('R')
-        ax.set_xticks(R_values)
-        ax.minorticks_off()
-        ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-        ax.text(0.05, 0.95, '$\mathregular{I=2^{22}}$, N=3', transform=ax.transAxes, fontsize=11,
-        verticalalignment='top',bbox=props)
-    if i == 1:
-        ax.text(0.05, 0.95, '$\mathregular{I=2^{22}}$, R=32', transform=ax.transAxes, fontsize=11,
-        verticalalignment='top',bbox=props)
-        ax.errorbar(N_values, N_con_times, 3 * N_con_errs, fmt='-o', markersize=3)
-        ax.errorbar(N_values, N_sampling_times, 3 * N_sampling_errs, fmt='-o', markersize=3)
-        ax.set_xticks([2, 4, 6, 8])
-        ax.set_xlabel('N')
-        
-fig.align_labels()
-fig.legend(bbox_to_anchor=(0.6585, 0.04), ncol=5)
-fig.savefig("paper_images/runtime_benchmark_horizontal.pdf", bbox_inches='tight')
-
-
