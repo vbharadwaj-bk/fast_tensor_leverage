@@ -41,7 +41,7 @@ figures using the material in the `plotting` folder. From
 within the folder, run 
 
 ```
-python generate_image.py
+python generate_images.py
 ```
 which will output all figures in PDF format to 
 `plotting/paper_images`. This script will also print tables
