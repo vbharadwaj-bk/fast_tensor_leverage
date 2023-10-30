@@ -1,9 +1,8 @@
-from tensor_train import *
-from dense_tensor import *
-from sparse_tensor import *
-from function_tensor import *
-from volume import * 
-from teneva.maxvol import maxvol_rect
+from tensors.tensor_train import *
+from tensors.dense_tensor import *
+from tensors.sparse_tensor import *
+from tensors.function_tensor import *
+#from teneva.maxvol import maxvol_rect
 import time
 
 class TensorTrainALS:

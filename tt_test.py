@@ -6,12 +6,11 @@ import logging, sys
 import cppimport
 import cppimport.import_hook
 
-from tensor_train import *
-from tt_als import *
-from sparse_tensor import *
-from function_tensor import *
+from tensors.tensor_train import *
+from tensors.sparse_tensor import *
+from tensors.function_tensor import *
+from algorithms.tt_als import *
 from tensor_io.torch_tensor_loader import get_torch_tensor
-from tensor_io.amrex_tensor_loader import get_amrex_single_plot_tensor
 
 def test_tt_sampling(I=20, R=4, N=3, J=10000, seed=20, test_direction="left"): 
     '''
@@ -75,7 +74,7 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
-def test_image_feature_extraction(dataset="mnist", R=10, J=10000):
+def test_image_feature_extraction(dataset="mnist", R=5, J=10000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
@@ -86,7 +85,8 @@ def test_image_feature_extraction(dataset="mnist", R=10, J=10000):
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    print(tt_als.compute_exact_fit())
 
 def test_norm_computation():
     I = 100
@@ -203,31 +203,6 @@ def test_function_tensor_decomposition():
     print(tt_als.compute_approx_fit())
     tt_als.execute_randomized_als_sweeps(num_sweeps=5, J=J, epoch_interval=1, accuracy_method="approx")
 
-
-def test_amrex_decomposition(
-        filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
-        J=65000,
-        R=30):
-    ground_truth = get_amrex_single_plot_tensor(filepath)
-    print("Loaded dataset...")
-    tt_approx = TensorTrain(ground_truth.shape, 
-        [R] * (ground_truth.N - 1))
-
-    tt_approx.place_into_canonical_form(0)
-    tt_als = TensorTrainALS(ground_truth, tt_approx)
-
-    print(tt_als.compute_exact_fit())
-    tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=30, J=J)
-
-    tt_full = tt_approx.materialize_dense() 
-    sl = tt_full[128, :, :]
-
-    # Plot sl and save to a png file
-    fig, ax = plt.subplots()
-    ax.imshow(sl)
-    fig.savefig('outputs/charge_tt_comparison.png')
-
 def test_quantization():
     quantization = Power2Quantization([2 ** 3] * 3, ordering="canonical")
     indices = np.array([[3, 4, 7]], dtype=np.uint64)
@@ -243,12 +218,9 @@ if __name__=='__main__':
 
     #print_tensor_param_counts([60000, 28, 28], 
     #    rank_cp=25, rank_tt=21)
-    #test_image_feature_extraction()
 
     #test_function_tensor_decomposition()
     #test_quantization()
     #test_qtt_interpolation_points()
 
-    test_amrex_decomposition(
-        filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
-        J=10000)
+    test_image_feature_extraction()

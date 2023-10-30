@@ -1,5 +1,5 @@
 import numpy as np
-from dense_tensor import *
+from tensors.dense_tensor import *
 
 import os
 
