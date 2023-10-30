@@ -1,0 +1,362 @@
+[
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38172
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38145
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38178
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38218
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38194
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38182
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38195
+            ]
+        }
+    },
+    {
+        "R": 75,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.38188
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39281
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39236
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39265
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39252
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39229
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.3926
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39282
+            ]
+        }
+    },
+    {
+        "R": 100,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.39276
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40073
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40086
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40066
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40054
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40073
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40069
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40081
+            ]
+        }
+    },
+    {
+        "R": 125,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.40048
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.34043
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.3404
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.34046
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.33989
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.3401
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.3404
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.34045
+            ]
+        }
+    },
+    {
+        "R": 25,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.34037
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36589
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36613
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36512
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36615
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36626
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36584
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36586
+            ]
+        }
+    },
+    {
+        "R": 50,
+        "sampler": "exact",
+        "trace": {
+            "fits": [
+                0.36614
+            ]
+        }
+    }
+]
