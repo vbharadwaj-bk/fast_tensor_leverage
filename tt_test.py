@@ -246,10 +246,9 @@ if __name__=='__main__':
     #test_image_feature_extraction()
 
     #test_function_tensor_decomposition()
-
-    #test_amrex_decomposition(
-    #    filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
-    #    J=10000)
     #test_quantization()
+    #test_qtt_interpolation_points()
 
-    test_qtt_interpolation_points()
+    test_amrex_decomposition(
+        filepath="/pscratch/sd/a/ajnonaka/rtil/data/plt0004600",
+        J=10000)
