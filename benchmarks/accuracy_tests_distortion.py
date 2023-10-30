@@ -68,9 +68,9 @@ def kronecker_product_test(I, R, N, J, methods, trial_count):
             sampler.KRPDrawSamples_materialize(N+1, samples, A_downsampled, weights) 
             A_ds_reweighted = np.einsum('i,ir->ir', np.sqrt(weights), A_downsampled)
             SU = A_ds_reweighted @ V @ np.diag(np.sqrt(1 / eigvals)) 
-            epsilon = la.cond(SU)
+            distortion = la.cond(SU)
 
-            results[method].append(epsilon)
+            results[method].append(distortion)
 
     for method in results:
         print(method, np.mean(results[method]), np.std(results[method]))
