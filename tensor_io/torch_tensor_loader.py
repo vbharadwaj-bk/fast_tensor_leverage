@@ -34,6 +34,7 @@ def get_torch_tensor(dataset_name):
     N = len(tensor_dims)
 
     print(f"Loaded dataset {dataset_name}...") 
+    print(f"Input Tensor Dimensions: {tensor_dims}")
     tensor = PyDenseTensor(images_np)
     print("Initialized dense tensor...")
 

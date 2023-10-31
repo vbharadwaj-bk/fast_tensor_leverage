@@ -2,6 +2,7 @@ import numpy as np
 import numpy.linalg as la
 
 import logging, sys
+import time
 
 import cppimport
 import cppimport.import_hook
@@ -74,7 +75,7 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
-def test_image_feature_extraction(dataset="mnist", R=5, J=10000):
+def test_image_feature_extraction(dataset="mnist", R=5, J=5000):
     ground_truth = get_torch_tensor(dataset)
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
@@ -211,6 +212,33 @@ def test_quantization():
     recovered_indices = quantization.unquantize_indices(q_indices)
     print(recovered_indices)
 
+def test_tt_svd(dataset="mnist", R=5, J=5000):
+    ground_truth = get_torch_tensor(dataset)
+    print("Loaded dataset...")
+    gt_reshaped = ground_truth.data.reshape((60000, 28*28))
+    print("Starting SVD...")
+    start = time.time()
+    from sklearn.utils.extmath import randomized_svd
+    #result = la.svd(gt_reshaped)
+    result = randomized_svd(gt_reshaped, 30)
+    end = time.time()
+    print(f"Elapsed: {end-start}s")
+
+def (dataset="mnist", R=5, J=5000):
+    ground_truth = get_torch_tensor(dataset)
+    print("Loaded dataset...")
+    tt_approx = TensorTrain(ground_truth.shape, 
+        [R] * (ground_truth.N - 1))
+
+    tt_approx.place_into_canonical_form(0)
+    tt_als = TensorTrainALS(ground_truth, tt_approx)
+
+    print(tt_als.compute_exact_fit())
+    tt_approx.build_fast_sampler(0, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    print(tt_als.compute_exact_fit())
+
+
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
     #test_dense_recovery()
@@ -222,5 +250,6 @@ if __name__=='__main__':
     #test_function_tensor_decomposition()
     #test_quantization()
     #test_qtt_interpolation_points()
-
+ 
+    #test_tt_svd()
     test_image_feature_extraction()

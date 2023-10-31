@@ -47,7 +47,14 @@ public:
                 {rows, N},
                 samples_transpose(i * N));
 
+
+            auto t = start_clock();
             materialize_rhs(sample_view, j, rhs_buf);
+            double elapsed = stop_clock_get_elapsed(t);
+
+            cout << "Time spent materializing RHS: " << elapsed << endl;
+
+            t = start_clock();
             cblas_dgemm(
                 CblasRowMajor,
                 CblasTrans,
@@ -64,6 +71,8 @@ public:
                 result(),
                 (uint32_t) lhs.shape[1]
             );
+            elapsed = stop_clock_get_elapsed(t);
+            cout << "Elapsed on DGEMM: " << elapsed << endl;
         }
     }
 };
