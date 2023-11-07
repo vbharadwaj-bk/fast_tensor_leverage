@@ -224,8 +224,20 @@ def test_tt_svd(dataset="mnist", R=5, J=5000):
     end = time.time()
     print(f"Elapsed: {end-start}s")
 
-def (dataset="mnist", R=5, J=5000):
-    ground_truth = get_torch_tensor(dataset)
+def dump_dataset_to_file(dataset="mnist", R=5, J=5000):
+    R = 5
+    J = 5000
+    ground_truth = get_torch_tensor("mnist")
+
+    with open("data/mnist.npy", 'wb') as f:
+        np.save(f, ground_truth.data)
+
+def test_dense_tensor_cached(R=5, J=10000):
+    tensor = None
+    with open("data/mnist.npy", 'rb') as f:
+        tensor = np.load(f)
+
+    ground_truth = PyDenseTensor(tensor) 
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, 
         [R] * (ground_truth.N - 1))
@@ -235,7 +247,7 @@ def (dataset="mnist", R=5, J=5000):
 
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
-    tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    tt_als.execute_randomized_als_sweeps(num_sweeps=1, J=J)
     print(tt_als.compute_exact_fit())
 
 
@@ -252,4 +264,4 @@ if __name__=='__main__':
     #test_qtt_interpolation_points()
  
     #test_tt_svd()
-    test_image_feature_extraction()
+    test_dense_tensor_cached()

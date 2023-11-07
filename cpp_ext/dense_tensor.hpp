@@ -44,7 +44,7 @@ public:
         uint64_t N = dims.size();
         uint64_t ldt = prefix_prod[j];
 
-        #pragma omp parallel for 
+        //#pragma omp parallel for 
         for(uint64_t i = 0; i < num_samples; i++) {
             uint64_t offset = 0;
             for(uint32_t u = 0; u < N; u++) {
