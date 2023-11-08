@@ -8,10 +8,11 @@ from tensors.tensor_train import *
 
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
-        self.N = len(dims_row)
+        self.N = len(dims)
         self.tt = TensorTrain(dims, ranks, seed, init_method)
         self.U = self.tt.U
-        self.nodes = [tn.Node(self.U[i], name=f"mps_core_{i}", axis_names=[f'b{i}', f'p{i}',f'b{i+1}']) for i in range(self.N)] 
+        self.nodes_right = [tn.Node(self.U[i], name=f"mps_core_r_{i}", axis_names=[f'b{i}',f'p{i}',f'b{i+1}']) for i in range(self.N)] 
+        self.nodes_left = [tn.Node(self.U[i], name=f"mps_core_l_{i}", axis_names=[f'b{i}',f'p{i}',f'b{i+1}']) for i in range(self.N)] 
 
 class MPO:
     '''
@@ -42,14 +43,12 @@ class MPO_MPS_System:
         self.mps = MPS(dims, ranks_mps)
 
 
-
-
 if __name__=='__main__':
     N = 10
     I = 2
-    R_mpo = 5
-    R_mps = 5
+    R_mpo = 4
+    R_mps = 4
 
-    system = MPO_MPS_System(dims, [R_mpo] * (N - 1), [R_mps] * (N - 1))
+    system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
     print("Initialized sandwich system!")
 
