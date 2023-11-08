@@ -35,7 +35,13 @@ class MPO:
             self.U.append(core.reshape((rank_left, dims_row[i], dims_col[i], rank_right)).copy())
 
         self.nodes = [tn.Node(self.U[i], name=f"mpo_core_{i}", axis_names=[f'b{i}', f'pr{i}', f'pc{i}',f'b{i+1}']) for i in range(self.N)] 
-        
+
+    def materialize_matrix(self):
+        mpo_copy = tn.replicate_nodes(self.nodes)
+        output_edge_order = [f'pr{i}' for i in range(self.N)] + [f'pc{i}' for i in range(self.N)] 
+        result = tn.contractors.greedy(mpo_copy, output_edge_order=output_edge_order)
+        print(result)
+
 class MPO_MPS_System:
     '''
     This class creates and hooks up the "sandwich" MPS-MPO-MPS system.
@@ -59,3 +65,4 @@ if __name__=='__main__':
     system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
     print("Initialized sandwich system!")
 
+    system.materialize_matrix()
