@@ -6,6 +6,9 @@ from tensors.tensor_train import *
 # package is no longer under development, we should switch; fortunately,
 # several packages offer tensor contraction. 
 
+# Also verified: each node is just a thin wrapper around data, with
+# the same underlying pointer.
+
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
         self.N = len(dims)
@@ -39,9 +42,13 @@ class MPO_MPS_System:
     We can then copy out subsets of nodes to perform contractions. 
     '''
     def __init__(self, dims, ranks_mpo, ranks_mps):
-        self.mpo = MPO(dims, dims, ranks_mpo)
-        self.mps = MPS(dims, ranks_mps)
+        mpo = MPO(dims, dims, ranks_mpo)
+        mps = MPS(dims, ranks_mps)
 
+        # Connect all nodes of the sandwich
+
+        self.mpo = mpo
+        self.mps = mps
 
 if __name__=='__main__':
     N = 10
