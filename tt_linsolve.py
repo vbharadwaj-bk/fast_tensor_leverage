@@ -161,8 +161,6 @@ class MPO_MPS_System:
         mpo = self.mpo
         mps = self.mps
 
-        print(i)
-
         nodes_to_replicate = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
 
         previous, next = None, False 
@@ -234,6 +232,9 @@ class MPO_MPS_System:
 
             for i in range(0, N):
                 self._contract_cache_sweep(i, "down")
+
+            print(self.contractions_up[N-1].tensor)
+            print(self.contractions_down[0].tensor)
 
             print("Cold started DMRG!")
 
