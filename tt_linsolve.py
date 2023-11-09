@@ -161,23 +161,26 @@ class MPO_MPS_System:
         mpo = self.mpo
         mps = self.mps
 
+        print(i)
+
         nodes_to_replicate = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
 
         previous, next = None, False 
+        bond_label_in = bond_label_out = None
         if direction == "up":
             if i < N - 1:
                 previous = self.contractions_down[i+1]
                 bond_label_in = f'b{i+1}'
-                bond_label_out = f'b{i}'
             if i > 0:
                 next = True
+                bond_label_out = f'b{i}'
         elif direction == "down":
             if i > 0:
                 previous = self.contractions_up[i-1]
-                input_bond_label = f'b{i}'
-                output_bond_label = f'b{i+1}'
+                bond_label_in = f'b{i}'
             if i < N - 1:
                 next = True
+                bond_label_out = f'b{i+1}'
 
         if previous:
             nodes_to_replicate.append(previous)
@@ -187,19 +190,19 @@ class MPO_MPS_System:
         def gne(node, edge):
             return replicated_system[node].get_edge(edge)
 
-        if i < N - 1:
+        if previous:
             tn.connect(replicated_system[0][bond_label_in], replicated_system[3]['bl']) 
             tn.connect(replicated_system[1][bond_label_in], replicated_system[3]['bm']) 
             tn.connect(replicated_system[2][bond_label_in], replicated_system[3]['br']) 
 
-        if i > 0:
+        if next:
             output_edge_order = [gne(j, bond_label_out) for j in range(3)]
         else:
             output_edge_order = None
 
         result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order)
 
-        if i > 0:
+        if next:
             result.add_axis_names(['bl', 'bm', 'br'])
 
         if direction == "up":
@@ -229,7 +232,7 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)):
                 self._contract_cache_sweep(i, "up")
 
-            for i in reversed(range(0, N)):
+            for i in range(0, N):
                 self._contract_cache_sweep(i, "down")
 
             print("Cold started DMRG!")
