@@ -153,18 +153,32 @@ class MPO_MPS_System:
 
         return result
 
-    def _contract_cache_sweep_up(self, i):
-        '''
-        Sweep one step up ^^^
-        '''
+    def _contract_cache_sweep(self, i, direction):
+        assert(direction == "up" or direction == "down")
         N = self.N
         mpo = self.mpo
         mps = self.mps
 
         nodes_to_replicate = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
 
-        if i < N - 1:
-            nodes_to_replicate.append(self.contractions_down[i+1])
+        previous, next = None, False 
+        if direction == "up":
+            if i < N - 1:
+                previous = self.contractions_down[i+1]
+                bond_label_in = f'b{i+1}'
+                bond_label_out = f'b{i}'
+            if i > 0:
+                next = True
+        elif direction == "down":
+            if i > 0:
+                previous = self.contractions_up[i-1]
+                input_bond_label = f'b{i}'
+                output_bond_label = f'b{i+1}'
+            if i < N - 1:
+                next = True
+
+        if previous:
+            nodes_to_replicate.append(previous)
 
         replicated_system = tn.replicate_nodes(nodes_to_replicate)
 
@@ -172,12 +186,12 @@ class MPO_MPS_System:
             return replicated_system[node].get_edge(edge)
 
         if i < N - 1:
-            tn.connect(replicated_system[0][f'b{i+1}'], replicated_system[3]['bl']) 
-            tn.connect(replicated_system[1][f'b{i+1}'], replicated_system[3]['bm']) 
-            tn.connect(replicated_system[2][f'b{i+1}'], replicated_system[3]['br']) 
+            tn.connect(replicated_system[0][bond_label_in], replicated_system[3]['bl']) 
+            tn.connect(replicated_system[1][bond_label_in], replicated_system[3]['bm']) 
+            tn.connect(replicated_system[2][bond_label_in], replicated_system[3]['br']) 
 
         if i > 0:
-            output_edge_order = [gne(j, f'b{i}') for j in range(3)]
+            output_edge_order = [gne(j, bond_label_out) for j in range(3)]
         else:
             output_edge_order = None
 
@@ -186,8 +200,13 @@ class MPO_MPS_System:
         if i > 0:
             result.add_axis_names(['bl', 'bm', 'br'])
 
-        self.contractions_down[i] = None
-        self.contractions_down[i] = result
+        if direction == "up":
+            self.contractions_down[i] = None
+            self.contractions_down[i] = result
+        elif direction == "down":
+            self.contractions_up[i] = None
+            self.contractions_up[i] = result
+
 
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
@@ -206,7 +225,7 @@ class MPO_MPS_System:
             self.contractions_up = [None] * self.N
 
             for i in reversed(range(0, N)):
-                self._contract_cache_sweep_up(i)
+                self._contract_cache_sweep(i, "up")
 
             print("Cold started DMRG!")
 
