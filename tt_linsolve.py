@@ -11,15 +11,39 @@ from tensors.tensor_train import *
 
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
-        self.N = len(dims)
+        N = len(dims)
+        self.N = N
         self.tt = TensorTrain(dims, ranks, seed, init_method)
         self.U = self.tt.U
-        self.nodes_l = [tn.Node(self.U[i], name=f"mps_core_l_{i}", axis_names=[f'b{i}',f'pr{i}',f'b{i+1}']) for i in range(self.N)] 
-        self.nodes_r = [tn.Node(self.U[i], name=f"mps_core_l_{i}", axis_names=[f'b{i}',f'pc{i}',f'b{i+1}']) for i in range(self.N)] 
+
+        self.nodes_l = []
+        self.nodes_r = []
+
+        for i in range(self.N):
+            axis_names_left = [f'b{i}',f'pr{i}',f'b{i+1}'] 
+            axis_names_right = [f'b{i}',f'pc{i}',f'b{i+1}'] 
+
+            if i == 0:
+                axis_names_left = axis_names_left[1:]
+                axis_names_right = axis_names_right[1:]
+            elif i == N - 1:
+                axis_names_left = axis_names_left[:-1]
+                axis_names_right = axis_names_right[:-1]
+
+            node_l = tn.Node(self.U[i].squeeze(), 
+                    name=f"mps_core_l_{i}", 
+                    axis_names=axis_names_left) 
+            node_r = tn.Node(self.U[i].squeeze(), 
+                    name=f"mps_core_r_{i}", 
+                    axis_names=axis_names_right) 
+
+            self.nodes_l.append(node_l)
+            self.nodes_r.append(node_r)
 
         # Connect bond dimensions 
         for i in range(1, N):
             tn.connect(self.nodes_l[i-1][f'b{i}'], self.nodes_l[i][f'b{i}'])
+            tn.connect(self.nodes_r[i-1][f'b{i}'], self.nodes_r[i][f'b{i}'])
 
         self.vector_length = np.prod(dims)
 
@@ -30,8 +54,7 @@ class MPS:
         def gne(node, edge):
             return mps_copy[node].get_edge(edge)
 
-        output_edge_order = [gne(0, 'b0')] + [gne(i, f'pr{i}') for i in range(N)] \
-                        + [gne(N-1, f'b{N}')] 
+        output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
 
         result = tn.contractors.greedy(mps_copy, output_edge_order=output_edge_order).tensor
         result = result.reshape(self.vector_length)
@@ -44,7 +67,8 @@ class MPO:
     individual cores reshaped.
     '''
     def __init__(self, dims_row, dims_col, ranks, seed=None, init_method="gaussian"):
-        self.N = len(dims_row)
+        N = len(dims_row)
+        self.N = N 
         self.dims_row = dims_row
         self.dims_col = dims_col
         assert(self.N == len(dims_col))
@@ -60,8 +84,14 @@ class MPO:
 
         self.nodes = []
         for i in range(self.N):
-            labels = [f'b{i}', f'pr{i}', f'pc{i}',f'b{i+1}']
-            self.nodes.append(tn.Node(self.U[i], name=f"mpo_core{i}", axis_names=labels))
+            axis_names = [f'b{i}', f'pr{i}', f'pc{i}',f'b{i+1}']
+
+            if i == 0:
+                axis_names = axis_names[1:]
+            elif i == N-1:
+                axis_names = axis_names[:-1]
+
+            self.nodes.append(tn.Node(self.U[i].squeeze(), name=f"mpo_core{i}", axis_names=axis_names))
 
         # Connect bond dimensions 
         for i in range(1, N):
@@ -77,9 +107,8 @@ class MPO:
         def gne(node, edge):
             return mpo_copy[node].get_edge(edge)
 
-        output_edge_order = [gne(0, 'b0')] + [gne(i, f'pr{i}') for i in range(N)] \
-                        + [gne(i, f'pc{i}') for i in range(N)] \
-                        + [gne(N-1, f'b{N}')] 
+        output_edge_order = [gne(i, f'pr{i}') for i in range(N)] \
+                        + [gne(i, f'pc{i}') for i in range(N)]
 
         result = tn.contractors.greedy(mpo_copy, output_edge_order=output_edge_order).tensor
         result = result.reshape(self.total_rows, self.total_cols)
@@ -106,14 +135,79 @@ class MPO_MPS_System:
         self.mps = mps
         self.N = N
 
-if __name__=='__main__':
-    N = 5
+        self.contractions_left = []
+        self.contractions_right = []
+
+    def mpo_mps_multiply(self):
+        N = self.N
+        replicated_system = tn.replicate_nodes(self.mpo.nodes + self.mps.nodes_r)
+
+        # The first N nodes of the replicated system are the MPO cores
+        def gne(node, edge):
+            return replicated_system[node].get_edge(edge)
+
+        output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
+
+        result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order).tensor
+        result = result.reshape(self.mpo.total_rows)
+
+        return result
+
+    def _contract_cache_sweep_up(self, i):
+        '''
+        Sweep one step up 
+        '''
+        N = self.N
+        mpo = self.mpo
+        mps = self.mps
+
+        nodes_to_replicate = [mps.nodes_l[i],mpo[i], mps.nodes_r[i]]
+
+        if i < self.N - 1:
+            nodes_to_replicate.append(self.contractions_down[i+1])
+
+        replicated_system = tn.replicate_nodes(nodes_to_replicate)
+
+        def gne(node, edge):
+            return replicated_system[node].get_edge(edge)
+
+        #output_edge_order = [gne(0, 'b0'), gne(N, f'b0')] + [gne(i, f'pr{i}') for i in range(N)] \
+        #                + [gne(N-1, f'b{N}'), gne(2*N-1, f'b{N}')] 
+
+
+
+    def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
+        '''
+        Cold start places the MPS into canonical form with core 0
+        non-orthogonal and computes a set of right_contractions. 
+        '''
+        N = self.N
+        mps = self.mps
+        mpo = self.mpo
+
+        if cold_start:
+            # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
+            mps.tt.place_into_canonical_form(self, 0)
+
+            self.contractions_down = [None] * self.N
+            self.contractions_up = [None] * self.N
+
+
+def verify_mpo_mps_contraction():
+    N = 10
     I = 2
     R_mpo = 4
     R_mps = 4
 
     system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
+
     print("Initialized sandwich system!")
 
-    system.mpo.materialize_matrix()
-    print(system.mps.materialize_vector())
+    mat = system.mpo.materialize_matrix()
+    vec = system.mps.materialize_vector()
+
+    print(system.mpo_mps_multiply())
+    print(mat @ vec)
+
+if __name__=='__main__':
+    verify_mpo_mps_contraction()
