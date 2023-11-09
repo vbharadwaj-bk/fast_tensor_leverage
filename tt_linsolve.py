@@ -135,8 +135,8 @@ class MPO_MPS_System:
         self.mps = mps
         self.N = N
 
-        self.contractions_left = []
-        self.contractions_right = []
+        self.contractions_up = []
+        self.contractions_down = []
 
     def mpo_mps_multiply(self):
         N = self.N
@@ -155,15 +155,15 @@ class MPO_MPS_System:
 
     def _contract_cache_sweep_up(self, i):
         '''
-        Sweep one step up 
+        Sweep one step up
         '''
         N = self.N
         mpo = self.mpo
         mps = self.mps
 
-        nodes_to_replicate = [mps.nodes_l[i],mpo[i], mps.nodes_r[i]]
+        nodes_to_replicate = [mps.nodes_l[i], mpo[i], mps.nodes_r[i]]
 
-        if i < self.N - 1:
+        if i < N - 1:
             nodes_to_replicate.append(self.contractions_down[i+1])
 
         replicated_system = tn.replicate_nodes(nodes_to_replicate)
@@ -171,10 +171,23 @@ class MPO_MPS_System:
         def gne(node, edge):
             return replicated_system[node].get_edge(edge)
 
-        #output_edge_order = [gne(0, 'b0'), gne(N, f'b0')] + [gne(i, f'pr{i}') for i in range(N)] \
-        #                + [gne(N-1, f'b{N}'), gne(2*N-1, f'b{N}')] 
+        if i < N - 1:
+            tn.connect(replicated_system[0][f'b{i+1}'], replicated_system[3]['bl']) 
+            tn.connect(replicated_system[1][f'b{i+1}'], replicated_system[3]['bm']) 
+            tn.connect(replicated_system[2][f'b{i+1}'], replicated_system[3]['br']) 
 
+        if i > 0:
+            output_edge_order = [gne(i, f'b{i}') for i in range(3)]
+        else:
+            output_edge_order = None
 
+        result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order)
+
+        if i > 0:
+            result.add_axis_names(['bl', 'bm', 'br'])
+
+        self.contractions_down[i] = None
+        self.contractions_down[i] = result
 
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
