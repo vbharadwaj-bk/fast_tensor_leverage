@@ -155,13 +155,13 @@ class MPO_MPS_System:
 
     def _contract_cache_sweep_up(self, i):
         '''
-        Sweep one step up
+        Sweep one step up ^^^
         '''
         N = self.N
         mpo = self.mpo
         mps = self.mps
 
-        nodes_to_replicate = [mps.nodes_l[i], mpo[i], mps.nodes_r[i]]
+        nodes_to_replicate = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
 
         if i < N - 1:
             nodes_to_replicate.append(self.contractions_down[i+1])
@@ -177,7 +177,7 @@ class MPO_MPS_System:
             tn.connect(replicated_system[2][f'b{i+1}'], replicated_system[3]['br']) 
 
         if i > 0:
-            output_edge_order = [gne(i, f'b{i}') for i in range(3)]
+            output_edge_order = [gne(j, f'b{i}') for j in range(3)]
         else:
             output_edge_order = None
 
@@ -200,11 +200,15 @@ class MPO_MPS_System:
 
         if cold_start:
             # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
-            mps.tt.place_into_canonical_form(self, 0)
+            mps.tt.place_into_canonical_form(0)
 
             self.contractions_down = [None] * self.N
             self.contractions_up = [None] * self.N
 
+            for i in reversed(range(0, N)):
+                self._contract_cache_sweep_up(i)
+
+            print("Cold started DMRG!")
 
 def verify_mpo_mps_contraction():
     N = 10
@@ -222,5 +226,17 @@ def verify_mpo_mps_contraction():
     print(system.mpo_mps_multiply())
     print(mat @ vec)
 
+
+def test_dmrg():
+    N = 3
+    I = 2
+    R_mpo = 4
+    R_mps = 4
+
+    system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
+    system.execute_dmrg(None, 0, cold_start=True)
+
 if __name__=='__main__':
-    verify_mpo_mps_contraction()
+    #verify_mpo_mps_contraction()
+
+    test_dmrg()
