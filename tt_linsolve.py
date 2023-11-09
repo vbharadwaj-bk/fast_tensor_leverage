@@ -138,7 +138,7 @@ class MPO_MPS_System:
         self.contractions_up = []
         self.contractions_down = []
 
-    def mpo_mps_multiply(self):
+    def mpo_mps_multiply(self, reshape_into_vec=True):
         N = self.N
         replicated_system = tn.replicate_nodes(self.mpo.nodes + self.mps.nodes_r)
 
@@ -149,7 +149,9 @@ class MPO_MPS_System:
         output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
 
         result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order).tensor
-        result = result.reshape(self.mpo.total_rows)
+
+        if reshape_into_vec:
+            result = result.reshape(self.mpo.total_rows)
 
         return result
 
@@ -226,6 +228,9 @@ class MPO_MPS_System:
 
             for i in reversed(range(0, N)):
                 self._contract_cache_sweep(i, "up")
+
+            for i in reversed(range(0, N)):
+                self._contract_cache_sweep(i, "down")
 
             print("Cold started DMRG!")
 
