@@ -210,6 +210,31 @@ class MPO_MPS_System:
             self.contractions_up[i] = None
             self.contractions_up[i] = result
 
+    def form_lhs_system(self, i, contract_into_matrix=False):
+        '''
+        This method assumes that the correct up and down contractions have been 
+        previously computed.
+        '''
+        N = self.N
+        mpo = self.mpo
+        mps = self.mps
+
+        nodes_to_replicate = [mpo.nodes[i], self.contractions_up[i-1], self.contractions_down[i+1]]
+        replicated_system = tn.replicate_nodes(nodes_to_replicate)
+
+        def gne(node, edge):
+            return replicated_system[node].get_edge(edge)
+        
+        output_edge_order = [gne(0, 'bl'), gne(1, 'pr'), gne(2, 'bl'), 
+                             gne(0, 'br'), gne(1, 'pc'), gne(2, 'br')]
+
+        result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order)
+
+        if contract_into_matrix:
+            print(result.tensor.shape)
+        
+        return result
+
 
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
@@ -224,19 +249,23 @@ class MPO_MPS_System:
             # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
             mps.tt.place_into_canonical_form(0)
 
-            self.contractions_down = [None] * self.N
-            self.contractions_up = [None] * self.N
+            self.contractions_down = [None] * (self.N + 1)
+            self.contractions_up = [None] * (self.N + 1)
 
-            for i in reversed(range(0, N)):
+            self.contractions_down[N] = tn.node(np.ones(1).reshape((1, 1, 1)), axis_names=('bl', 'bm', 'br'))
+            self.contractions_up[N] = tn.node(np.ones(1).reshape((1, 1, 1)), axis_names=('bl', 'bm', 'br'))
+
+            for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-            for i in range(0, N):
-                self._contract_cache_sweep(i, "down")
-
-            print(self.contractions_up[N-1].tensor)
-            print(self.contractions_down[0].tensor)
+            #for i in range(0, N):
+            #    self._contract_cache_sweep(i, "down")
 
             print("Cold started DMRG!")
+
+
+        self.form_lhs_system(0, contract_into_matrix=True)
+
 
 def verify_mpo_mps_contraction():
     N = 10
