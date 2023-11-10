@@ -1,5 +1,6 @@
 import tensornetwork as tn
 import numpy as np
+import numpy.linalg as la
 from tensors.tensor_train import *
 
 # This code depends on the Google tensor network package; given that this
@@ -282,7 +283,7 @@ class MPO_MPS_System:
         del mps_nodes_r[i]  
         result = tn.contractors.greedy(mps_nodes_r + [rhs_node], output_edge_order=output_edge_order)
 
-        return result
+        return result.tensor
 
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
@@ -303,12 +304,34 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-            for i in range(0, N):
+        def vec(X):
+            prod_shape = np.prod(X.shape)
+            return X.reshape(prod_shape)
+
+        tt = mps.tt 
+
+        for iter in range(num_sweeps):
+            for i in range(N-1):
+                A = self.form_lhs_system(i, contract_into_matrix=True)
+                b = vec(self.contract_mps_with_rhs(rhs, i))
+
+                x = la.solve(A, b)
+                self.tt.U[i][:] = x.reshape(self.tt.U[i].shape)
+                self.orthogonalize_push_right(i)
                 self._contract_cache_sweep(i, "down")
 
-            print("Cold-started DMRG!")
+            print("Finished sweep down!")
 
-        self.form_lhs_system(3, contract_into_matrix=True)
+            for i in reversed(range(1,N)):
+                A = self.form_lhs_system(i, contract_into_matrix=True)
+                b = vec(self.contract_mps_with_rhs(rhs, i))
+
+                x = la.solve(A, b)
+                tt.U[i][:] = x.reshape(tt.U[i].shape)
+                self.orthogonalize_push_left(i)
+                self._contract_cache_sweep(i, "up")
+
+            print("Finished sweep up!")
 
 
 def verify_mpo_mps_contraction():
@@ -338,10 +361,7 @@ def test_dmrg():
     rhs = system.mpo_mps_multiply().reshape([I] * N)
     system.mps.tt.reinitialize_gaussian()
 
-    system.execute_dmrg(rhs, 0, cold_start=True)
-    result = system.contract_mps_with_rhs(rhs, 3)
-
-    print(result.shape)
+    system.execute_dmrg(rhs, 1, cold_start=True)
 
 if __name__=='__main__':
     test_dmrg()
