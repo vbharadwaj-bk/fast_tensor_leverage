@@ -89,15 +89,15 @@ class TensorTrain:
 
         Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx] * dim, self.ranks[idx+1]))
 
-        self.U[idx] = Q.reshape(self.ranks[idx], dim, self.ranks[idx+1])
-        self.U[idx+1] = np.einsum('ij,jkl->ikl', R, self.U[idx + 1]) 
+        self.U[idx][:] = Q.reshape(self.ranks[idx], dim, self.ranks[idx+1])
+        self.U[idx+1][:] = np.einsum('ij,jkl->ikl', R, self.U[idx + 1]) 
 
     def orthogonalize_push_left(self, idx):
         assert(idx > 0) 
         dim = self.dims[idx]
         Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx], dim * self.ranks[idx+1]).T)
-        self.U[idx] = Q.T.reshape(self.ranks[idx], dim, self.ranks[idx+1])
-        self.U[idx-1] = np.einsum('jkl,lm->jkm', self.U[idx - 1], R.T) 
+        self.U[idx][:] = Q.T.reshape(self.ranks[idx], dim, self.ranks[idx+1])
+        self.U[idx-1][:] = np.einsum('jkl,lm->jkm', self.U[idx - 1], R.T) 
 
     def place_into_canonical_form(self, idx_nonorthogonal):
         idx = idx_nonorthogonal

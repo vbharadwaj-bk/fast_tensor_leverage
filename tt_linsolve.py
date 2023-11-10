@@ -261,7 +261,22 @@ class MPO_MPS_System:
             result = result.reshape((np.prod(shape[0:length//2]), np.prod(shape[length//2:])))
 
         return result
-    
+
+    def form_tall_lhs_system(self, i):
+        '''
+        For debugging purposes, return the tall-skinny matrix corresponding
+        to the LHS system. 
+        '''
+        N = self.N
+        mpo = self.mpo
+        mps = self.mps
+
+        nodes_to_replicate = mpo.nodes + [node for j, node in enumerate(mps.nodes) if j !=i]
+
+
+        return 
+
+
     def contract_mps_with_rhs(self, rhs, i):
         mps = self.mps
         N = self.N
@@ -315,36 +330,32 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-        print(f"Error before sweeps: {self.compute_error(rhs)}")
-
         for iter in range(num_sweeps):
             for i in range(N-1):
                 A = self.form_lhs_system(i, contract_into_matrix=True)
                 b = vec(self.contract_mps_with_rhs(rhs, i))
 
                 x = la.solve(A, b)
+
+                print(f"Error before solve: {self.compute_error(rhs)}")
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
+                print(f"Error after solve: {self.compute_error(rhs)}")
                 tt.orthogonalize_push_right(i)
                 self._contract_cache_sweep(i, "down")
-
-            print("Finished sweep down!")
-            print(f"Error after downsweep {iter}: {self.compute_error(rhs)}")
 
             for i in reversed(range(1,N)):
                 A = self.form_lhs_system(i, contract_into_matrix=True)
                 b = vec(self.contract_mps_with_rhs(rhs, i))
-
                 x = la.solve(A, b)
+
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
+
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
 
-            print("Finished sweep up!")
-            print(f"Error after upsweep {iter}: {self.compute_error(rhs)}")
-
 
 def verify_mpo_mps_contraction():
-    N = 10
+    N = 5
     I = 2
     R_mpo = 4
     R_mps = 4
@@ -367,10 +378,10 @@ def test_dmrg():
     R_mps = 4
 
     system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
-    rhs = system.mpo_mps_multiply().reshape([I] * N)
+    rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-
-    system.execute_dmrg(rhs, 1, cold_start=True)
+    system.execute_dmrg(rhs, 5, cold_start=True)
 
 if __name__=='__main__':
     test_dmrg()
+    #verify_mpo_mps_contraction()
