@@ -219,22 +219,70 @@ class MPO_MPS_System:
         mpo = self.mpo
         mps = self.mps
 
-        nodes_to_replicate = [mpo.nodes[i], self.contractions_up[i-1], self.contractions_down[i+1]]
+        nodes_to_replicate = [mpo.nodes[i]]
+
+        if i > 0:
+            nodes_to_replicate.append(self.contractions_up[i-1])
+        if i < N-1:
+            nodes_to_replicate.append(self.contractions_down[i+1])
+ 
         replicated_system = tn.replicate_nodes(nodes_to_replicate)
 
         def gne(node, edge):
             return replicated_system[node].get_edge(edge)
         
-        output_edge_order = [gne(0, 'bl'), gne(1, 'pr'), gne(2, 'bl'), 
-                             gne(0, 'br'), gne(1, 'pc'), gne(2, 'br')]
+        if i > 0:
+            tn.connect(replicated_system[1]['bm'], replicated_system[0][f'b{i}']) 
+        if i < N - 1:
+            tn.connect(replicated_system[0][f'b{i+1}'], replicated_system[-1]['bm']) 
+
+        output_edge_order = None
+        if i > 0 and i < N - 1:
+            output_edge_order = [gne(1, 'bl'), gne(0, f'pr{i}'), gne(2, 'bl'), 
+                                gne(2, 'br'), gne(0, f'pc{i}'), gne(1, 'br')]
+        elif i == 0:
+            output_edge_order = [gne(0, f'pr{i}'), gne(1, 'bl'), 
+                                gne(1, 'br'), gne(0, f'pc{i}') ]
+        elif i == N - 1: 
+            output_edge_order = [gne(1, 'bl'), gne(0, f'pr{i}'),  
+                                gne(0, f'pc{i}'), gne(1, 'br')]
 
         result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order)
 
         if contract_into_matrix:
-            print(result.tensor.shape)
-        
-        return result
+            result = result.tensor
+            shape = result.shape
+            length = len(shape)
+            result = result.reshape((np.prod(shape[0:length//2]), np.prod(shape[length//2:])))
 
+        return result
+    
+    def contract_subchains_with_rhs(self, rhs, i):
+        mps = self.mps
+        N = self.N
+        rhs_node = np.Node(rhs)
+        mps_nodes_r = tn.replicate_nodes([node for j, node in enumerate(mps.nodes_r) if j != i])
+        mps_nodes_r.insert(i, None)        
+
+        for j in range(N):
+            if j != i:
+                tn.connect(mps_nodes_r[j][f'pc{j}'], rhs_node[j])
+
+        def gne(node, edge):
+            return mps_nodes_r[node].get_edge(edge)
+
+        output_edge_order = None
+        if i == 0:
+            output_edge_order = [rhs_node.get_edge(0), gne(1, 'b1')] 
+        elif i == N - 1:
+            output_edge_order = [gne(N-1, f'b{N-1}'), rhs_node.get_edge(N-1)] 
+        elif 0 < i < N - 1:
+            output_edge_order = [gne(i-1, f'b{i}'), rhs_node.get_edge(i), gne(i+1, f'b{i}')] 
+
+        del mps_nodes_r[i]  
+        result = tn.contractors.greedy(mps_nodes_r + [rhs_node], output_edge_order=output_edge_order)
+
+        return result
 
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
@@ -249,22 +297,18 @@ class MPO_MPS_System:
             # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
             mps.tt.place_into_canonical_form(0)
 
-            self.contractions_down = [None] * (self.N + 1)
-            self.contractions_up = [None] * (self.N + 1)
-
-            self.contractions_down[N] = tn.node(np.ones(1).reshape((1, 1, 1)), axis_names=('bl', 'bm', 'br'))
-            self.contractions_up[N] = tn.node(np.ones(1).reshape((1, 1, 1)), axis_names=('bl', 'bm', 'br'))
+            self.contractions_down = [None] * self.N
+            self.contractions_up = [None] * self.N
 
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-            #for i in range(0, N):
-            #    self._contract_cache_sweep(i, "down")
+            for i in range(0, N):
+                self._contract_cache_sweep(i, "down")
 
-            print("Cold started DMRG!")
+            print("Cold-started DMRG!")
 
-
-        self.form_lhs_system(0, contract_into_matrix=True)
+        self.form_lhs_system(3, contract_into_matrix=True)
 
 
 def verify_mpo_mps_contraction():
@@ -285,7 +329,7 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 3
+    N = 6
     I = 2
     R_mpo = 4
     R_mps = 4
