@@ -10,6 +10,10 @@ from tensors.tensor_train import *
 # Also verified: each node is just a thin wrapper around data, with
 # the same underlying pointer.
 
+def vec(X):
+    prod_shape = np.prod(X.shape)
+    return X.reshape(prod_shape)
+
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
         N = len(dims)
@@ -285,6 +289,12 @@ class MPO_MPS_System:
 
         return result.tensor
 
+    def compute_error(self, rhs):
+        Ax = self.mpo_mps_multiply()
+        b = vec(rhs)
+
+        return la.norm(b - Ax) 
+
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
         Cold start places the MPS into canonical form with core 0
@@ -293,6 +303,7 @@ class MPO_MPS_System:
         N = self.N
         mps = self.mps
         mpo = self.mpo
+        tt = mps.tt 
 
         if cold_start:
             # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
@@ -304,11 +315,7 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-        def vec(X):
-            prod_shape = np.prod(X.shape)
-            return X.reshape(prod_shape)
-
-        tt = mps.tt 
+        print(f"Error before sweeps: {self.compute_error(rhs)}")
 
         for iter in range(num_sweeps):
             for i in range(N-1):
@@ -316,11 +323,12 @@ class MPO_MPS_System:
                 b = vec(self.contract_mps_with_rhs(rhs, i))
 
                 x = la.solve(A, b)
-                self.tt.U[i][:] = x.reshape(self.tt.U[i].shape)
-                self.orthogonalize_push_right(i)
+                tt.U[i][:] = x.reshape(tt.U[i].shape)
+                tt.orthogonalize_push_right(i)
                 self._contract_cache_sweep(i, "down")
 
             print("Finished sweep down!")
+            print(f"Error after downsweep {iter}: {self.compute_error(rhs)}")
 
             for i in reversed(range(1,N)):
                 A = self.form_lhs_system(i, contract_into_matrix=True)
@@ -328,10 +336,11 @@ class MPO_MPS_System:
 
                 x = la.solve(A, b)
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
-                self.orthogonalize_push_left(i)
+                tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
 
             print("Finished sweep up!")
+            print(f"Error after upsweep {iter}: {self.compute_error(rhs)}")
 
 
 def verify_mpo_mps_contraction():
