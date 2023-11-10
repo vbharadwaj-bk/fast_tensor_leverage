@@ -257,10 +257,10 @@ class MPO_MPS_System:
 
         return result
     
-    def contract_subchains_with_rhs(self, rhs, i):
+    def contract_mps_with_rhs(self, rhs, i):
         mps = self.mps
         N = self.N
-        rhs_node = np.Node(rhs)
+        rhs_node = tn.Node(rhs)
         mps_nodes_r = tn.replicate_nodes([node for j, node in enumerate(mps.nodes_r) if j != i])
         mps_nodes_r.insert(i, None)        
 
@@ -275,9 +275,9 @@ class MPO_MPS_System:
         if i == 0:
             output_edge_order = [rhs_node.get_edge(0), gne(1, 'b1')] 
         elif i == N - 1:
-            output_edge_order = [gne(N-1, f'b{N-1}'), rhs_node.get_edge(N-1)] 
+            output_edge_order = [gne(N-2, f'b{N-1}'), rhs_node.get_edge(N-1)] 
         elif 0 < i < N - 1:
-            output_edge_order = [gne(i-1, f'b{i}'), rhs_node.get_edge(i), gne(i+1, f'b{i}')] 
+            output_edge_order = [gne(i-1, f'b{i}'), rhs_node.get_edge(i), gne(i+1, f'b{i+1}')] 
 
         del mps_nodes_r[i]  
         result = tn.contractors.greedy(mps_nodes_r + [rhs_node], output_edge_order=output_edge_order)
@@ -335,9 +335,13 @@ def test_dmrg():
     R_mps = 4
 
     system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
-    system.execute_dmrg(None, 0, cold_start=True)
+    rhs = system.mpo_mps_multiply().reshape([I] * N)
+    system.mps.tt.reinitialize_gaussian()
+
+    system.execute_dmrg(rhs, 0, cold_start=True)
+    result = system.contract_mps_with_rhs(rhs, 3)
+
+    print(result.shape)
 
 if __name__=='__main__':
-    #verify_mpo_mps_contraction()
-
     test_dmrg()

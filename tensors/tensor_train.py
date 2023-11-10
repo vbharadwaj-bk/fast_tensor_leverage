@@ -21,6 +21,7 @@ class TensorTrain:
         self.dims = np.array(dims, dtype=np.uint64)
         self.N = len(dims)
         self.ranks = np.array([1] + ranks + [1], np.uint64)
+        self.rng = rng
 
         reduced_ranks = []
 
@@ -47,6 +48,13 @@ class TensorTrain:
 
         self.matricizations = [None] * self.N
         self.internal_sampler = None
+
+    def reinitialize_gaussian(self):
+        for i in range(self.N):
+            self.U[i][:] = self.rng.normal(size=(self.ranks[i], self.dims[i], self.ranks[i+1])) 
+            self.U[i] /= la.norm(self.U[i])
+
+
 
     def clone(self):
         clone = TensorTrain(self.dims, list(self.ranks[1:-1]))
