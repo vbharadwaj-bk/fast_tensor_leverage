@@ -7,12 +7,86 @@ from tensors.tensor_train import *
 # package is no longer under development, we should switch; fortunately,
 # several packages offer tensor contraction. 
 
-# Also verified: each node is just a thin wrapper around data, with
-# the same underlying pointer.
+# The convention in this file is to assume that axis names between different
+# nodes are only shared when there is a contraction involved. If three
+# or more nodes share an edge, we raise an exception 
+# (no hypergraph contractions here). Also, all axis names must be specified. 
 
 def vec(X):
     prod_shape = np.prod(X.shape)
     return X.reshape(prod_shape)
+
+def contract_nodes(nodes_in, 
+                   contractor, 
+                   output_order=None, 
+                   out_row_modes=None, 
+                   out_col_modes=None,
+                   vectorize=False
+                   ):
+
+    assert(not (vectorize and matricize))
+    if output_order == None \
+        and (out_row_modes is None or out_col_modes is None):
+        raise Exception("Must specify either output order or matricize row / col axes.")
+
+    matricize = out_row_modes is not None
+
+    if matricize:
+        output_order = out_row_modes + out_col_modes
+
+    nodes = tn.replicate_nodes(nodes_in)
+    edges = {} # Dictionary of axis name to nodes sharing the edge
+
+    for node in nodes:
+        for name in node.axis_names:
+            if name not in edges:
+                edges[name] = [] 
+
+            edges[name].append(node)
+
+    dangling_edges = {}
+    for name in edges:
+        if len(edges[name]) >= 3:
+            node_names = ', '.join([node.name for node in edges[name]])
+            raise Exception(f"Error, nodes {node_names} all share edge {name}")
+        elif(len(edges[name]) == 1):
+            dangling_edges[name] = edges[name][0].get_edge(name)
+        else:
+            tn.connect(edges[name][0], edges[name][1])
+
+    output_edges = []
+    for name in output_order:
+        if name not in dangling_edges:
+            exception_text = f"Error, edge {name} is not dangling.\n"
+
+            if len(edges[name]) == 2:
+                exception_text += f"Edge {name} spans nodes {edges[name][0]} and {edges[name][1]}."
+            else:
+                exception_text += f"Edge {name} not found."
+
+            raise Exception(exception_text)
+
+        else:
+            output_edges.append(dangling_edges[name])
+
+    for name in dangling_edges:
+        if name not in output_order:
+            raise Exception(f"Error, list of dangling edges is {dangling_edges}. Edge {name} is dangling and not in output order.")
+
+    result = contractor(nodes, output_edge_order=output_edges)
+
+    if vectorize:
+        return vec(result)        
+    elif matricize:
+        shape = result.shape
+        row_count = np.prod(shape[:len(out_row_modes)])
+        col_count = np.prod(shape[len(out_row_modes):])
+
+        return result.tensor.reshape(row_count, col_count)
+    else:
+        result.add_axis_names(output_order)
+        return result
+
 
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
@@ -272,10 +346,25 @@ class MPO_MPS_System:
         mps = self.mps
 
         nodes_to_replicate = mpo.nodes + [node for j, node in enumerate(mps.nodes) if j !=i]
+        replicated_system = tn.replicate_nodes(nodes_to_replicate)
+
+        def gne(node, edge):
+            return replicated_system[node].get_edge(edge)
+
+        output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
+
+        if i > 0 and i < N - 1:
+            output_edge_order += [gne(i, 'bl'), gne(0, f'pr{i}'), gne(2, 'bl'), 
+                                gne(2, 'br'), gne(0, f'pc{i}'), gne(1, 'br')]
+        elif i == 0:
+            output_edge_order += [gne(0, f'pr{i}'), gne(1, 'bl'), 
+                                gne(1, 'br'), gne(0, f'pc{i}') ]
+        elif i == N - 1: 
+            output_edge_order += [gne(1, 'bl'), gne(0, f'pr{i}'),  
+                                gne(0, f'pc{i}'), gne(1, 'br')]
 
 
         return 
-
 
     def contract_mps_with_rhs(self, rhs, i):
         mps = self.mps
@@ -352,7 +441,6 @@ class MPO_MPS_System:
 
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
-
 
 def verify_mpo_mps_contraction():
     N = 5
