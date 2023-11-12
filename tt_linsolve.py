@@ -99,8 +99,8 @@ class MPS:
         self.nodes_r = []
 
         for i in range(self.N):
-            axis_names_left = [f'b{i}',f'pr{i}',f'b{i+1}'] 
-            axis_names_right = [f'b{i}',f'pc{i}',f'b{i+1}'] 
+            axis_names_left = [f'b_mpsl{i}',f'pr{i}',f'b_mpsl{i+1}'] 
+            axis_names_right = [f'b_mpsl{i}',f'pc{i}',f'b_mpsl{i+1}'] 
 
             if i == 0:
                 axis_names_left = axis_names_left[1:]
@@ -110,35 +110,24 @@ class MPS:
                 axis_names_right = axis_names_right[:-1]
 
             node_l = tn.Node(self.U[i].squeeze(), 
-                    name=f"mps_core_l_{i}", 
+                    name=f"mpsl_core_{i}", 
                     axis_names=axis_names_left) 
             node_r = tn.Node(self.U[i].squeeze(), 
-                    name=f"mps_core_r_{i}", 
+                    name=f"mpsr_core_{i}", 
                     axis_names=axis_names_right) 
 
             self.nodes_l.append(node_l)
             self.nodes_r.append(node_r)
 
-        # Connect bond dimensions 
-        for i in range(1, N):
-            tn.connect(self.nodes_l[i-1][f'b{i}'], self.nodes_l[i][f'b{i}'])
-            tn.connect(self.nodes_r[i-1][f'b{i}'], self.nodes_r[i][f'b{i}'])
-
         self.vector_length = np.prod(dims)
 
     def materialize_vector(self):
-        N = self.N
-        mps_copy = tn.replicate_nodes(self.nodes_l)
+        output_order = ['pr{i}' for i in range(self.N)]
 
-        def gne(node, edge):
-            return mps_copy[node].get_edge(edge)
-
-        output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
-
-        result = tn.contractors.greedy(mps_copy, output_edge_order=output_edge_order).tensor
-        result = result.reshape(self.vector_length)
-        return(result)
-
+        return contract_nodes(self.mps.nodes_l, 
+                       contractor=tn.contractors.greedy, 
+                       output_order=output_order,
+                       vectorize=True)
 
 class MPO:
     '''
@@ -172,26 +161,18 @@ class MPO:
 
             self.nodes.append(tn.Node(self.U[i].squeeze(), name=f"mpo_core{i}", axis_names=axis_names))
 
-        # Connect bond dimensions 
-        for i in range(1, N):
-            tn.connect(self.nodes[i-1][f'b{i}'], self.nodes[i][f'b{i}'], name=f'b{i}')
-
         self.total_rows = np.prod(dims_row)
         self.total_cols = np.prod(dims_col)
 
     def materialize_matrix(self):
-        N = self.N
-        mpo_copy = tn.replicate_nodes(self.nodes)
+        out_row_modes =  ['pr{i}' for i in range(self.N)]
+        out_col_modes = ['pc{i}' for i in range(self.N)]
 
-        def gne(node, edge):
-            return mpo_copy[node].get_edge(edge)
-
-        output_edge_order = [gne(i, f'pr{i}') for i in range(N)] \
-                        + [gne(i, f'pc{i}') for i in range(N)]
-
-        result = tn.contractors.greedy(mpo_copy, output_edge_order=output_edge_order).tensor
-        result = result.reshape(self.total_rows, self.total_cols)
-        return(result)
+        return contract_nodes(self.mps.nodes, 
+                       contractor=tn.contractors.greedy, 
+                       out_row_modes=out_row_modes,
+                       out_col_modes=out_col_modes,
+                       vectorize=True)
 
 
 class MPO_MPS_System:
@@ -204,12 +185,6 @@ class MPO_MPS_System:
         mpo = MPO(dims, dims, ranks_mpo)
         mps = MPS(dims, ranks_mps)
 
-        # Connect the physical dimensions of the MPO to the copies of the
-        # MPS nodes. 
-        for i in range(0, N):
-            tn.connect(mpo.nodes[i][f'pr{i}'], mps.nodes_l[i][f'pr{i}'])
-            tn.connect(mpo.nodes[i][f'pc{i}'], mps.nodes_r[i][f'pc{i}'])
-
         self.mpo = mpo
         self.mps = mps
         self.N = N
@@ -219,20 +194,13 @@ class MPO_MPS_System:
 
     def mpo_mps_multiply(self, reshape_into_vec=True):
         N = self.N
-        replicated_system = tn.replicate_nodes(self.mpo.nodes + self.mps.nodes_r)
 
-        # The first N nodes of the replicated system are the MPO cores
-        def gne(node, edge):
-            return replicated_system[node].get_edge(edge)
+        output_order = ['pr{i}' for i in range(self.N)]
 
-        output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
-
-        result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order).tensor
-
-        if reshape_into_vec:
-            result = result.reshape(self.mpo.total_rows)
-
-        return result
+        return contract_nodes(self.mpo.nodes + self.mps.nodes_r, 
+                       contractor=tn.contractors.greedy, 
+                       output_order=output_order,
+                       vectorize=reshape_into_vec)
 
     def _contract_cache_sweep(self, i, direction):
         assert(direction == "up" or direction == "down")
@@ -471,5 +439,5 @@ def test_dmrg():
     system.execute_dmrg(rhs, 5, cold_start=True)
 
 if __name__=='__main__':
-    test_dmrg()
-    #verify_mpo_mps_contraction()
+    #test_dmrg()
+    verify_mpo_mps_contraction()
