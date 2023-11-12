@@ -33,6 +33,8 @@ def contract_nodes(nodes_in,
 
     if matricize:
         output_order = out_row_modes + out_col_modes
+    elif output_order is None:
+        output_order = []
 
     nodes = tn.replicate_nodes(nodes_in)
     edges = {} # Dictionary of axis name to nodes sharing the edge
@@ -73,6 +75,8 @@ def contract_nodes(nodes_in,
         if name not in output_order:
             raise Exception(f"Error, list of dangling edges is {dangling_edges}. Edge {name} is dangling and not in output order.")
 
+    if len(output_edges) == 0:
+        output_edges = None
     result = contractor(nodes, output_edge_order=output_edges)
 
     if vectorize:
@@ -84,7 +88,8 @@ def contract_nodes(nodes_in,
 
         return result.tensor.reshape(row_count, col_count)
     else:
-        result.add_axis_names(output_order)
+        if len(output_order) > 0:
+            result.add_axis_names(output_order)
         return result
 
 
@@ -152,7 +157,7 @@ class MPO:
 
         self.nodes = []
         for i in range(self.N):
-            axis_names = [f'b{i}', f'pr{i}', f'pc{i}',f'b{i+1}']
+            axis_names = [f'b_mpo{i}', f'pr{i}', f'pc{i}',f'b_mpo{i+1}']
 
             if i == 0:
                 axis_names = axis_names[1:]
@@ -207,53 +212,37 @@ class MPO_MPS_System:
         mpo = self.mpo
         mps = self.mps
 
-        nodes_to_replicate = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
+        nodes = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
 
         previous, next = None, False 
-        bond_label_in = bond_label_out = None
         if direction == "up":
             if i < N - 1:
                 previous = self.contractions_down[i+1]
-                bond_label_in = f'b{i+1}'
             if i > 0:
                 next = True
-                bond_label_out = f'b{i}'
         elif direction == "down":
             if i > 0:
                 previous = self.contractions_up[i-1]
-                bond_label_in = f'b{i}'
             if i < N - 1:
                 next = True
-                bond_label_out = f'b{i+1}'
 
         if previous:
-            nodes_to_replicate.append(previous)
-
-        replicated_system = tn.replicate_nodes(nodes_to_replicate)
-
-        def gne(node, edge):
-            return replicated_system[node].get_edge(edge)
-
-        if previous:
-            tn.connect(replicated_system[0][bond_label_in], replicated_system[3]['bl']) 
-            tn.connect(replicated_system[1][bond_label_in], replicated_system[3]['bm']) 
-            tn.connect(replicated_system[2][bond_label_in], replicated_system[3]['br']) 
+            nodes.append(previous)
 
         if next:
-            output_edge_order = [gne(j, bond_label_out) for j in range(3)]
+            output_order = [f'b_mpsl{i+1}',
+                                 f'b_mpo{i+1}',
+                                 f'b_mpsr{i+1}']
         else:
-            output_edge_order = None
+            output_order = None
 
-        result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order)
-
-        if next:
-            result.add_axis_names(['bl', 'bm', 'br'])
+        result = contract_nodes(nodes, 
+                    contractor=tn.contractors.greedy, 
+                    output_order=output_order)
 
         if direction == "up":
-            self.contractions_down[i] = None
             self.contractions_down[i] = result
         elif direction == "down":
-            self.contractions_up[i] = None
             self.contractions_up[i] = result
 
     def form_lhs_system(self, i, contract_into_matrix=False):
@@ -265,35 +254,27 @@ class MPO_MPS_System:
         mpo = self.mpo
         mps = self.mps
 
-        nodes_to_replicate = [mpo.nodes[i]]
+        nodes = [mpo.nodes[i]]
 
         if i > 0:
-            nodes_to_replicate.append(self.contractions_up[i-1])
+            nodes.append(self.contractions_up[i-1])
         if i < N-1:
-            nodes_to_replicate.append(self.contractions_down[i+1])
- 
-        replicated_system = tn.replicate_nodes(nodes_to_replicate)
-
-        def gne(node, edge):
-            return replicated_system[node].get_edge(edge)
+            nodes.append(self.contractions_down[i+1])
         
-        if i > 0:
-            tn.connect(replicated_system[1]['bm'], replicated_system[0][f'b{i}']) 
-        if i < N - 1:
-            tn.connect(replicated_system[0][f'b{i+1}'], replicated_system[-1]['bm']) 
-
         output_edge_order = None
         if i > 0 and i < N - 1:
-            output_edge_order = [gne(1, 'bl'), gne(0, f'pr{i}'), gne(2, 'bl'), 
-                                gne(2, 'br'), gne(0, f'pc{i}'), gne(1, 'br')]
+            output_order = [f'b_mpsl{i}', f'pr{i}', f'b_mpsl{i+1}', 
+                                 f'b_mpsr{i}', f'pc{i}', f'b_mpsr{i+1}']
         elif i == 0:
-            output_edge_order = [gne(0, f'pr{i}'), gne(1, 'bl'), 
-                                gne(1, 'br'), gne(0, f'pc{i}') ]
+            output_order = [f'pr{i}', f'b_mpsl{i+1}', 
+                                 f'pc{i}', f'b_mpsr{i+1}']
         elif i == N - 1: 
-            output_edge_order = [gne(1, 'bl'), gne(0, f'pr{i}'),  
-                                gne(0, f'pc{i}'), gne(1, 'br')]
+            output_order = [f'pr{i}', f'b_mpsl{i+1}', 
+                                 f'pc{i}', f'b_mpsr{i+1}']
 
-        result = tn.contractors.greedy(replicated_system, output_edge_order=output_edge_order)
+        result = contract_nodes(nodes, 
+                    contractor=tn.contractors.greedy, 
+                    output_order=output_order)
 
         if contract_into_matrix:
             result = result.tensor
@@ -303,61 +284,22 @@ class MPO_MPS_System:
 
         return result
 
-    def form_tall_lhs_system(self, i):
-        '''
-        For debugging purposes, return the tall-skinny matrix corresponding
-        to the LHS system. 
-        '''
-        N = self.N
-        mpo = self.mpo
-        mps = self.mps
-
-        nodes_to_replicate = mpo.nodes + [node for j, node in enumerate(mps.nodes) if j !=i]
-        replicated_system = tn.replicate_nodes(nodes_to_replicate)
-
-        def gne(node, edge):
-            return replicated_system[node].get_edge(edge)
-
-        output_edge_order = [gne(i, f'pr{i}') for i in range(N)]
-
-        if i > 0 and i < N - 1:
-            output_edge_order += [gne(i, 'bl'), gne(0, f'pr{i}'), gne(2, 'bl'), 
-                                gne(2, 'br'), gne(0, f'pc{i}'), gne(1, 'br')]
-        elif i == 0:
-            output_edge_order += [gne(0, f'pr{i}'), gne(1, 'bl'), 
-                                gne(1, 'br'), gne(0, f'pc{i}') ]
-        elif i == N - 1: 
-            output_edge_order += [gne(1, 'bl'), gne(0, f'pr{i}'),  
-                                gne(0, f'pc{i}'), gne(1, 'br')]
-
-
-        return 
-
     def contract_mps_with_rhs(self, rhs, i):
         mps = self.mps
         N = self.N
-        rhs_node = tn.Node(rhs)
-        mps_nodes_r = tn.replicate_nodes([node for j, node in enumerate(mps.nodes_r) if j != i])
-        mps_nodes_r.insert(i, None)        
+        rhs_node = tn.Node(rhs, axis_names=[f'pr{i}' for i in range(N)])
+        nodes = [node for j, node in enumerate(mps.nodes_l) if j != i]
+        nodes.append(rhs_node)
 
-        for j in range(N):
-            if j != i:
-                tn.connect(mps_nodes_r[j][f'pc{j}'], rhs_node[j])
-
-        def gne(node, edge):
-            return mps_nodes_r[node].get_edge(edge)
-
-        output_edge_order = None
+        output_order = None
         if i == 0:
-            output_edge_order = [rhs_node.get_edge(0), gne(1, 'b1')] 
+            output_order = ['pr0', 'b_mpsl1'] 
         elif i == N - 1:
-            output_edge_order = [gne(N-2, f'b{N-1}'), rhs_node.get_edge(N-1)] 
+            output_order = [f'b_mpsl{i}', f'pr{i}'] 
         elif 0 < i < N - 1:
-            output_edge_order = [gne(i-1, f'b{i}'), rhs_node.get_edge(i), gne(i+1, f'b{i+1}')] 
+            output_order = [f'b_mpsl{i}', f'pr{i}', f'b_mpsl{i+1}'] 
 
-        del mps_nodes_r[i]  
-        result = tn.contractors.greedy(mps_nodes_r + [rhs_node], output_edge_order=output_edge_order)
-
+        result = tn.contractors.greedy(nodes, output_order=output_order)
         return result.tensor
 
     def compute_error(self, rhs):
