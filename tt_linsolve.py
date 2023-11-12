@@ -24,12 +24,12 @@ def contract_nodes(nodes_in,
                    vectorize=False
                    ):
 
-    assert(not (vectorize and matricize))
     if output_order == None \
         and (out_row_modes is None or out_col_modes is None):
         raise Exception("Must specify either output order or matricize row / col axes.")
 
     matricize = out_row_modes is not None
+    assert(not (vectorize and matricize))
 
     if matricize:
         output_order = out_row_modes + out_col_modes
@@ -52,7 +52,7 @@ def contract_nodes(nodes_in,
         elif(len(edges[name]) == 1):
             dangling_edges[name] = edges[name][0].get_edge(name)
         else:
-            tn.connect(edges[name][0], edges[name][1])
+            tn.connect(edges[name][0][name], edges[name][1][name])
 
     output_edges = []
     for name in output_order:
@@ -76,7 +76,7 @@ def contract_nodes(nodes_in,
     result = contractor(nodes, output_edge_order=output_edges)
 
     if vectorize:
-        return vec(result)        
+        return vec(result.tensor)        
     elif matricize:
         shape = result.shape
         row_count = np.prod(shape[:len(out_row_modes)])
@@ -122,9 +122,9 @@ class MPS:
         self.vector_length = np.prod(dims)
 
     def materialize_vector(self):
-        output_order = ['pr{i}' for i in range(self.N)]
+        output_order = [f'pr{i}' for i in range(self.N)]
 
-        return contract_nodes(self.mps.nodes_l, 
+        return contract_nodes(self.nodes_l, 
                        contractor=tn.contractors.greedy, 
                        output_order=output_order,
                        vectorize=True)
@@ -165,14 +165,13 @@ class MPO:
         self.total_cols = np.prod(dims_col)
 
     def materialize_matrix(self):
-        out_row_modes =  ['pr{i}' for i in range(self.N)]
-        out_col_modes = ['pc{i}' for i in range(self.N)]
+        out_row_modes =  [f'pr{i}' for i in range(self.N)]
+        out_col_modes = [f'pc{i}' for i in range(self.N)]
 
-        return contract_nodes(self.mps.nodes, 
+        return contract_nodes(self.nodes, 
                        contractor=tn.contractors.greedy, 
                        out_row_modes=out_row_modes,
-                       out_col_modes=out_col_modes,
-                       vectorize=True)
+                       out_col_modes=out_col_modes)
 
 
 class MPO_MPS_System:
@@ -195,7 +194,7 @@ class MPO_MPS_System:
     def mpo_mps_multiply(self, reshape_into_vec=True):
         N = self.N
 
-        output_order = ['pr{i}' for i in range(self.N)]
+        output_order = [f'pr{i}' for i in range(self.N)]
 
         return contract_nodes(self.mpo.nodes + self.mps.nodes_r, 
                        contractor=tn.contractors.greedy, 
@@ -411,7 +410,7 @@ class MPO_MPS_System:
                 self._contract_cache_sweep(i, "up")
 
 def verify_mpo_mps_contraction():
-    N = 5
+    N = 3
     I = 2
     R_mpo = 4
     R_mps = 4
