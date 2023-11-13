@@ -250,16 +250,17 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
+
+        print(f"Error before ALS: {self.compute_error(rhs)}")
+
         for iter in range(num_sweeps):
             for i in range(N-1):
                 A = self.form_lhs_system(i, contract_into_matrix=True)
                 b = vec(self.contract_mps_with_rhs(rhs, i))
 
                 x = la.solve(A, b)
-
-                print(f"Error before solve: {self.compute_error(rhs)}")
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
-                print(f"Error after solve: {self.compute_error(rhs)}")
+
                 tt.orthogonalize_push_right(i)
                 self._contract_cache_sweep(i, "down")
 
@@ -273,8 +274,10 @@ class MPO_MPS_System:
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
 
+            print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
+
 def verify_mpo_mps_contraction():
-    N = 3
+    N = 15
     I = 2
     R_mpo = 4
     R_mps = 4
@@ -291,7 +294,7 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 3
+    N = 10
     I = 2
     R_mpo = 4
     R_mps = 4
