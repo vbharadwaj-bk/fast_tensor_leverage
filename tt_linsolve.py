@@ -3,15 +3,6 @@ import numpy as np
 import numpy.linalg as la
 from tensors.tensor_train import *
 
-# This code depends on the Google tensor network package; given that this
-# package is no longer under development, we should switch; fortunately,
-# several packages offer tensor contraction. 
-
-# The convention in this file is to assume that axis names between different
-# nodes are only shared when there is a contraction involved. If three
-# or more nodes share an edge, we raise an exception 
-# (no hypergraph contractions here). Also, all axis names must be specified. 
-
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
         N = len(dims)
@@ -58,21 +49,29 @@ class MPO:
     The internal representation of an MPO is a tensor train with
     individual cores reshaped.
     '''
-    def __init__(self, dims_row, dims_col, ranks, seed=None, init_method="gaussian"):
+    def __init__(self, dims_row, dims_col, ranks, seed=None, cores=None, init_method="gaussian"):
         N = len(dims_row)
         self.N = N 
         self.dims_row = dims_row
         self.dims_col = dims_col
         assert(self.N == len(dims_col))
 
+        if cores is not None:
+            init_method = "cores"
+
         combined_core_dims = [dims_row[i] * dims_col[i] for i in range(self.N)]
 
         tt_internal = TensorTrain(combined_core_dims, ranks, seed, init_method)
         self.U = []
+        self.ranks = tt_internal.ranks
 
         for i, core in enumerate(tt_internal.U):
             rank_left, rank_right = core.shape[0], core.shape[2]
             self.U.append(core.reshape((rank_left, dims_row[i], dims_col[i], rank_right)).copy())
+
+        if init_method == "cores":
+            for i in range(self.N):
+                self.U[i][:] = cores[i]
 
         self.nodes = []
         for i in range(self.N):
@@ -103,10 +102,9 @@ class MPO_MPS_System:
     This class creates and hooks up the "sandwich" MPS-MPO-MPS system.
     We can then copy out subsets of nodes to perform contractions. 
     '''
-    def __init__(self, dims, ranks_mpo, ranks_mps):
-        N = len(dims)
-        mpo = MPO(dims, dims, ranks_mpo)
-        mps = MPS(dims, ranks_mps)
+    def __init__(self, mpo, mps):
+        assert(mpo.N == mps.N)
+        N = mps.N 
 
         self.mpo = mpo
         self.mps = mps
@@ -282,7 +280,9 @@ def verify_mpo_mps_contraction():
     R_mpo = 4
     R_mps = 4
 
-    system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
+    mpo = MPO([I] * N, [I] * N, [R_mpo] * (N - 1))
+    mps = MPS([I] * N, [R_mps] * (N - 1))
+    system = MPO_MPS_System(mpo, mps)
 
     print("Initialized sandwich system!")
 
@@ -294,12 +294,42 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 10
+    N = 3
     I = 2
-    R_mpo = 4
+    R_mpo_ns = 2
+    R_mpo = R_mpo_ns * R_mpo_ns
     R_mps = 4
 
-    system = MPO_MPS_System([I] * N, [R_mpo] * (N - 1), [R_mps] * (N - 1))
+    mpo_ns = MPO([I] * N, [I] * N, [R_mpo_ns] * (N - 1))
+
+    # Create an symmetric MPO by multiplying the nonsymm.. MPO
+    # with itself
+
+    sym_cores = []
+    r_nodes = tn.replicate_nodes(mpo_ns.nodes)
+    for i in range(N):
+        new_axis_names = [f'rb_mpo{i}', f'rpr{i}', f'pc{i}',f'rb_mpo{i+1}']
+        r_nodes[i].add_axis_names(new_axis_names)
+
+        output_order = [f'rb_mpo{i}',
+                        f'b_mpo{i}',
+                        f'rpr{i}', 
+                        f'pr{i}', 
+                        f'b_mpo{i+1}',
+                        f'rb_mpo{i+1}',
+                        ]
+
+        result = contract_nodes([mpo_ns.nodes[i], r_nodes[i]], output_order=output_order)
+        shape = result.shape
+        sym_cores.append(result.tensor.reshape([shape[0:2], shape[2], shape[3], shape[4:6]]))
+
+
+    mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks], cores=sym_cores)
+    mps = MPS([I] * N, [R_mps] * (N - 1))
+
+    print(mpo.materialize_matrix())
+    system = MPO_MPS_System(mpo, mps)
+
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
     system.execute_dmrg(rhs, 5, cold_start=True)
