@@ -56,9 +56,6 @@ class MPO:
         self.dims_col = dims_col
         assert(self.N == len(dims_col))
 
-        if cores is not None:
-            init_method = "cores"
-
         combined_core_dims = [dims_row[i] * dims_col[i] for i in range(self.N)]
 
         tt_internal = TensorTrain(combined_core_dims, ranks, seed, init_method)
@@ -69,9 +66,9 @@ class MPO:
             rank_left, rank_right = core.shape[0], core.shape[2]
             self.U.append(core.reshape((rank_left, dims_row[i], dims_col[i], rank_right)).copy())
 
-        if init_method == "cores":
+        if cores is not None:
             for i in range(self.N):
-                self.U[i][:] = cores[i]
+                self.U[i][:] = cores[i].reshape(self.U[i].shape)
 
         self.nodes = []
         for i in range(self.N):
@@ -148,8 +145,8 @@ class MPO_MPS_System:
 
         if next:
             output_order = [f'b_mpsl{next}',
-                                 f'b_mpo{next}',
-                                 f'b_mpsr{next}']
+                            f'b_mpo{next}',
+                            f'b_mpsr{next}']
         else:
             output_order = None
 
@@ -302,32 +299,47 @@ def test_dmrg():
 
     mpo_ns = MPO([I] * N, [I] * N, [R_mpo_ns] * (N - 1))
 
-    # Create an symmetric MPO by multiplying the nonsymm.. MPO
+    # Create an symmetric MPO by multiplying the nonsymmetric MPO
     # with itself
 
     sym_cores = []
     r_nodes = tn.replicate_nodes(mpo_ns.nodes)
     for i in range(N):
-        new_axis_names = [f'rb_mpo{i}', f'rpr{i}', f'pc{i}',f'rb_mpo{i+1}']
+        new_axis_names, output_order = None, None
+        if i > 0 and i < N - 1:
+            new_axis_names = [f'rb_mpo{i}', f'rpr{i}', f'pc{i}',f'rb_mpo{i+1}']
+            output_order = [f'rb_mpo{i}', f'b_mpo{i}',
+                            f'rpr{i}', f'pr{i}', 
+                            f'b_mpo{i+1}', f'rb_mpo{i+1}']
+        elif i == 0:
+            new_axis_names = [f'rpr{i}', f'pc{i}', f'rb_mpo{i+1}']
+            output_order = [f'rpr{i}', f'pr{i}', 
+                            f'b_mpo{i+1}', f'rb_mpo{i+1}'
+                            ]
+        elif i == N - 1:
+            new_axis_names = [f'rb_mpo{i}', f'rpr{i}', f'pc{i}']
+            output_order = [f'rb_mpo{i}', f'b_mpo{i}',
+                            f'rpr{i}', f'pr{i}']
+
         r_nodes[i].add_axis_names(new_axis_names)
-
-        output_order = [f'rb_mpo{i}',
-                        f'b_mpo{i}',
-                        f'rpr{i}', 
-                        f'pr{i}', 
-                        f'b_mpo{i+1}',
-                        f'rb_mpo{i+1}',
-                        ]
-
-        result = contract_nodes([mpo_ns.nodes[i], r_nodes[i]], output_order=output_order)
+        result = contract_nodes([mpo_ns.nodes[i], r_nodes[i]],  
+                                contractor=tn.contractors.greedy, 
+                                output_order=output_order)
         shape = result.shape
-        sym_cores.append(result.tensor.reshape([shape[0:2], shape[2], shape[3], shape[4:6]]))
+        output_shape = None
 
+        if i > 0 and i < N - 1:
+            output_shape =  [np.prod(shape[0:2]), shape[2], shape[3], np.prod(shape[4:6])]
+        elif i == 0:
+            output_shape =  [shape[0], shape[1], np.prod(shape[2:4])]
+        elif i == N - 1:
+            output_shape =  [np.prod(shape[0:2]), shape[2], shape[3]]
 
-    mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks], cores=sym_cores)
+        sym_cores.append(result.tensor.reshape(output_shape))
+
+    mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks[1:-1]], cores=sym_cores)
     mps = MPS([I] * N, [R_mps] * (N - 1))
 
-    print(mpo.materialize_matrix())
     system = MPO_MPS_System(mpo, mps)
 
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
