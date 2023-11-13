@@ -291,7 +291,7 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 3
+    N = 10
     I = 2
     R_mpo_ns = 2
     R_mpo = R_mpo_ns * R_mpo_ns
@@ -344,7 +344,7 @@ def test_dmrg():
 
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-    system.execute_dmrg(rhs, 5, cold_start=True)
+    system.execute_dmrg(rhs, 100, cold_start=True)
 
 if __name__=='__main__':
     test_dmrg()
