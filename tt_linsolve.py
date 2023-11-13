@@ -1,4 +1,4 @@
-import tensornetwork as tn
+from algorithms.contractions import *
 import numpy as np
 import numpy.linalg as la
 from tensors.tensor_train import *
@@ -12,87 +12,6 @@ from tensors.tensor_train import *
 # or more nodes share an edge, we raise an exception 
 # (no hypergraph contractions here). Also, all axis names must be specified. 
 
-def vec(X):
-    prod_shape = np.prod(X.shape)
-    return X.reshape(prod_shape)
-
-def contract_nodes(nodes_in, 
-                   contractor, 
-                   output_order=None, 
-                   out_row_modes=None, 
-                   out_col_modes=None,
-                   vectorize=False
-                   ):
-
-    if output_order == None \
-        and (out_row_modes is None or out_col_modes is None):
-        raise Exception("Must specify either output order or matricize row / col axes.")
-
-    matricize = out_row_modes is not None
-    assert(not (vectorize and matricize))
-
-    if matricize:
-        output_order = out_row_modes + out_col_modes
-    elif output_order is None:
-        output_order = []
-
-    nodes = tn.replicate_nodes(nodes_in)
-    edges = {} # Dictionary of axis name to nodes sharing the edge
-
-    for node in nodes:
-        for name in node.axis_names:
-            if name not in edges:
-                edges[name] = [] 
-
-            edges[name].append(node)
-
-    dangling_edges = {}
-    for name in edges:
-        if len(edges[name]) >= 3:
-            node_names = ', '.join([node.name for node in edges[name]])
-            raise Exception(f"Error, nodes {node_names} all share edge {name}")
-        elif(len(edges[name]) == 1):
-            dangling_edges[name] = edges[name][0].get_edge(name)
-        else:
-            tn.connect(edges[name][0][name], edges[name][1][name])
-
-    output_edges = []
-    for name in output_order:
-        if name not in dangling_edges:
-            exception_text = f"Error, edge {name} is not dangling.\n"
-
-            if len(edges[name]) == 2:
-                exception_text += f"Edge {name} spans nodes {edges[name][0]} and {edges[name][1]}."
-            else:
-                exception_text += f"Edge {name} not found."
-
-            raise Exception(exception_text)
-
-        else:
-            output_edges.append(dangling_edges[name])
-
-    for name in dangling_edges:
-        if name not in output_order:
-            raise Exception(f"Error, list of dangling edges is {dangling_edges}. Edge {name} is dangling and not in output order.")
-
-    if len(output_edges) == 0:
-        output_edges = None
-    result = contractor(nodes, output_edge_order=output_edges)
-
-    if vectorize:
-        return vec(result.tensor)        
-    elif matricize:
-        shape = result.shape
-        row_count = np.prod(shape[:len(out_row_modes)])
-        col_count = np.prod(shape[len(out_row_modes):])
-
-        return result.tensor.reshape(row_count, col_count)
-    else:
-        if len(output_order) > 0:
-            result.add_axis_names(output_order)
-        return result
-
-
 class MPS:
     def __init__(self, dims, ranks, seed=None, init_method="gaussian"):
         N = len(dims)
@@ -105,7 +24,7 @@ class MPS:
 
         for i in range(self.N):
             axis_names_left = [f'b_mpsl{i}',f'pr{i}',f'b_mpsl{i+1}'] 
-            axis_names_right = [f'b_mpsl{i}',f'pc{i}',f'b_mpsl{i+1}'] 
+            axis_names_right = [f'b_mpsr{i}',f'pc{i}',f'b_mpsr{i+1}'] 
 
             if i == 0:
                 axis_names_left = axis_names_left[1:]
@@ -214,25 +133,25 @@ class MPO_MPS_System:
 
         nodes = [mps.nodes_l[i], mpo.nodes[i], mps.nodes_r[i]]
 
-        previous, next = None, False 
+        previous, next = None, False
         if direction == "up":
             if i < N - 1:
                 previous = self.contractions_down[i+1]
             if i > 0:
-                next = True
+                next = i
         elif direction == "down":
             if i > 0:
                 previous = self.contractions_up[i-1]
             if i < N - 1:
-                next = True
+                next = i + 1 
 
         if previous:
             nodes.append(previous)
 
         if next:
-            output_order = [f'b_mpsl{i+1}',
-                                 f'b_mpo{i+1}',
-                                 f'b_mpsr{i+1}']
+            output_order = [f'b_mpsl{next}',
+                                 f'b_mpo{next}',
+                                 f'b_mpsr{next}']
         else:
             output_order = None
 
@@ -269,8 +188,8 @@ class MPO_MPS_System:
             output_order = [f'pr{i}', f'b_mpsl{i+1}', 
                                  f'pc{i}', f'b_mpsr{i+1}']
         elif i == N - 1: 
-            output_order = [f'pr{i}', f'b_mpsl{i+1}', 
-                                 f'pc{i}', f'b_mpsr{i+1}']
+            output_order = [f'pr{i}', f'b_mpsl{i}', 
+                                 f'pc{i}', f'b_mpsr{i}']
 
         result = contract_nodes(nodes, 
                     contractor=tn.contractors.greedy, 
@@ -298,8 +217,11 @@ class MPO_MPS_System:
             output_order = [f'b_mpsl{i}', f'pr{i}'] 
         elif 0 < i < N - 1:
             output_order = [f'b_mpsl{i}', f'pr{i}', f'b_mpsl{i+1}'] 
-
-        result = tn.contractors.greedy(nodes, output_order=output_order)
+ 
+        result = contract_nodes(nodes, 
+                    contractor=tn.contractors.greedy, 
+                    output_order=output_order)
+         
         return result.tensor
 
     def compute_error(self, rhs):
@@ -369,7 +291,7 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 6
+    N = 3
     I = 2
     R_mpo = 4
     R_mps = 4
@@ -380,5 +302,5 @@ def test_dmrg():
     system.execute_dmrg(rhs, 5, cold_start=True)
 
 if __name__=='__main__':
-    #test_dmrg()
-    verify_mpo_mps_contraction()
+    test_dmrg()
+    #verify_mpo_mps_contraction()
