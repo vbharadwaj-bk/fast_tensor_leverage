@@ -177,10 +177,15 @@ class MPO_MPS_System:
         
         output_edge_order = None
         if i > 0 and i < N - 1:
-            output_order = [f'b_mpsl{i}', f'pr{i}', f'b_mpsl{i+1}', 
-                                 f'b_mpsr{i}', f'pc{i}', f'b_mpsr{i+1}']
+            output_order = [f'b_mpsl{i+1}',
+                            f'pr{i}', 
+                            f'b_mpsl{i}', 
+                            f'b_mpsr{i}', 
+                            f'pc{i}', 
+                            f'b_mpsr{i+1}'
+                        ]
         elif i == 0:
-            output_order = [f'pr{i}', f'b_mpsl{i+1}', 
+            output_order = [f'b_mpsl{i+1}', f'pr{i}', 
                                  f'pc{i}', f'b_mpsr{i+1}']
         elif i == N - 1: 
             output_order = [f'pr{i}', f'b_mpsl{i}', 
@@ -217,6 +222,32 @@ class MPO_MPS_System:
                        contractor=tn.contractors.greedy, 
                        out_row_modes=out_row_modes,
                        out_col_modes=out_col_modes)
+
+    def form_lhs_debug(self, i, contract_into_matrix=True):
+        N = self.N
+        mpo = self.mpo
+        mps = self.mps
+
+        nodes = mpo.nodes + [node for j, node in enumerate(mps.nodes_l)
+                             if j != i] \
+                            + [node for j, node in enumerate(mps.nodes_r)
+                                                if j != i]
+
+        out_row_modes = [f'pr{i}']
+        out_col_modes = [f'pc{i}']
+
+        if i > 0:
+            out_row_modes = [f'b_mpsl{i}'] + out_row_modes
+            out_col_modes = [f'b_mpsr{i}'] + out_col_modes
+        if i < N - 1:
+            out_row_modes = out_row_modes + [f'b_mpsl{i+1}'] 
+            out_col_modes = out_col_modes + [f'b_mpsr{i+1}'] 
+
+        return contract_nodes(nodes, 
+                       contractor=tn.contractors.greedy, 
+                       out_row_modes=out_row_modes,
+                       out_col_modes=out_col_modes)
+
 
     def contract_mps_with_rhs(self, rhs, i):
         mps = self.mps
@@ -269,49 +300,46 @@ class MPO_MPS_System:
 
         for iter in range(num_sweeps):
             for i in range(N-1):
-                A = self.form_tall_lhs_system(i)
-                b = vec(rhs)
+                x_o = vec(tt.U[i])
 
-                #x_o = vec(tt.U[i])
+                mat = mpo.materialize_matrix()
+                v = mps.materialize_vector()
 
-                #mat = mpo.materialize_matrix()
-                #v = mps.materialize_vector()
+                print(f"Loss before: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
-                #print(A @ x_o)
-                #print("-------------------")
-                #print(self.mpo_mps_multiply())
-                #print("-------------------")
-                #print(mat @ v)
-                #exit(1)
+                A = self.form_lhs_debug(i, contract_into_matrix=True)
+                b = vec(self.contract_mps_with_rhs(rhs, i))
+                x = la.solve(A, b)
 
-                x = la.lstsq(A, b, rcond=None)[0]
-
-                #A = self.form_lhs_system(i, contract_into_matrix=True)
-                #b = vec(self.contract_mps_with_rhs(rhs, i))
-                #x = la.solve(A, b)
-
-                #print(f"Error before solve: {self.compute_error(rhs)}") 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
-                #print(f"Error after solve: {self.compute_error(rhs)}") 
+
+                v = mps.materialize_vector()
+                print(f"Loss: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 tt.orthogonalize_push_right(i)
                 self._contract_cache_sweep(i, "down")
 
             for i in reversed(range(1,N)):
-                A = self.form_tall_lhs_system(i)
-                b = vec(rhs)
-                x = la.lstsq(A, b, rcond=None)[0]
+                x_o = vec(tt.U[i])
 
-                #A = self.form_lhs_system(i, contract_into_matrix=True)
-                #b = vec(self.contract_mps_with_rhs(rhs, i))
-                #x = la.solve(A, b)
+                mat = mpo.materialize_matrix()
+                v = mps.materialize_vector()
+
+                print(f"Loss before: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
+
+                A = self.form_lhs_debug(i, contract_into_matrix=True)
+                b = vec(self.contract_mps_with_rhs(rhs, i))
+                x = la.solve(A, b)
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
+
+                v = mps.materialize_vector()
+                print(f"Loss: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
 
-            print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
+            #print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
 
 def verify_mpo_mps_contraction():
     N = 15
@@ -334,7 +362,7 @@ def verify_mpo_mps_contraction():
 
 def test_dmrg():
     N = 3
-    I = 13
+    I = 5
     R_mpo_ns = 2
     R_mpo = R_mpo_ns * R_mpo_ns
     R_mps = 4
@@ -383,7 +411,7 @@ def test_dmrg():
     mps = MPS([I] * N, [R_mps] * (N - 1)) 
 
     system = MPO_MPS_System(mpo, mps)
-
+ 
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
     system.execute_dmrg(rhs, 100, cold_start=True)
