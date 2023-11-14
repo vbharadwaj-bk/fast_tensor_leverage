@@ -300,6 +300,7 @@ class MPO_MPS_System:
 
         for iter in range(num_sweeps):
             for i in range(N-1):
+                print("SWEEPING DOWN...")
                 x_o = vec(tt.U[i])
 
                 mat = mpo.materialize_matrix()
@@ -308,9 +309,16 @@ class MPO_MPS_System:
                 print(f"Loss before: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 A = self.form_lhs_debug(i, contract_into_matrix=True)
-                b = vec(self.contract_mps_with_rhs(rhs, i))
-                x = la.solve(A, b)
 
+                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
+                print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
+
+                b = vec(self.contract_mps_with_rhs(rhs, i))
+
+                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
+                print(f"Contracted v^T b\t: {x_o.T @ b}")
+
+                x = la.solve(A, b)
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
 
                 v = mps.materialize_vector()
@@ -320,6 +328,7 @@ class MPO_MPS_System:
                 self._contract_cache_sweep(i, "down")
 
             for i in reversed(range(1,N)):
+                print("SWEEPING UP...")
                 x_o = vec(tt.U[i])
 
                 mat = mpo.materialize_matrix()
