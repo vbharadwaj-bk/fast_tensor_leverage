@@ -337,12 +337,10 @@ class MPO_MPS_System:
 
             for i in reversed(range(1,N)):
                 print("SWEEPING UP...")
-                x_o = vec(tt.U[i])
+                x_o = vec(tt.U[i]).copy()
 
                 mat = mpo.materialize_matrix()
                 v = mps.materialize_vector()
-
-                print(f"Loss before: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 A = self.form_lhs_debug(i, contract_into_matrix=True)
 
@@ -354,11 +352,19 @@ class MPO_MPS_System:
                 print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
                 print(f"Contracted v^T b\t: {x_o.T @ b}")
 
+                print(f"cond(A): {la.cond(A)}")
+
+                print(f"Loss BEFORE: {0.5 * (x_o.T @ (A @ x_o)) - x_o.T @ b}") 
+
+                print(f"{np.linalg.eigvals(mat)}")
                 x = la.solve(A, b)
+                print(f"Loss AFTER COMP: {0.5 * (x.T @ (A @ x)) - x.T @ b}") 
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
 
+
                 v = mps.materialize_vector()
+
 
                 print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
                 print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
@@ -366,7 +372,6 @@ class MPO_MPS_System:
                 print(f"Contracted v^T b\t: {x_o.T @ b}")
 
 
-                print(f"Loss AFTER: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
@@ -441,6 +446,18 @@ def test_dmrg():
 
     mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks[1:-1]], cores=sym_cores)
     mps = MPS([I] * N, [R_mps] * (N - 1)) 
+
+    def is_pos_def(x):
+        return np.all(np.linalg.eigvals(x) > 0)
+
+    #mat = mpo.materialize_matrix()
+    mat = mpo_ns.materialize_matrix()
+    mat = mat @ mat.T
+
+    mat_comp = mpo.materialize_matrix()
+    print(la.norm(mat - mat_comp))
+    #print(is_pos_def(mat))
+    exit(1)
 
     system = MPO_MPS_System(mpo, mps)
  
