@@ -322,7 +322,15 @@ class MPO_MPS_System:
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
 
                 v = mps.materialize_vector()
-                print(f"Loss: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
+                print(f"Loss AFTER: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
+
+                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
+                print(f"Contracted v^T A v\t: {x.T @ A @ x}")
+
+                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
+                print(f"Contracted v^T b\t: {x.T @ b}")
+
+                print("----------------------")
 
                 tt.orthogonalize_push_right(i)
                 self._contract_cache_sweep(i, "down")
@@ -337,13 +345,28 @@ class MPO_MPS_System:
                 print(f"Loss before: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 A = self.form_lhs_debug(i, contract_into_matrix=True)
+
+                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
+                print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
+
                 b = vec(self.contract_mps_with_rhs(rhs, i))
+
+                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
+                print(f"Contracted v^T b\t: {x_o.T @ b}")
+
                 x = la.solve(A, b)
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
 
                 v = mps.materialize_vector()
-                print(f"Loss: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
+
+                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
+                print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
+                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
+                print(f"Contracted v^T b\t: {x_o.T @ b}")
+
+
+                print(f"Loss AFTER: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
 
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
@@ -423,7 +446,7 @@ def test_dmrg():
  
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-    system.execute_dmrg(rhs, 100, cold_start=True)
+    system.execute_dmrg(rhs, 1, cold_start=True)
 
 if __name__=='__main__':
     test_dmrg()

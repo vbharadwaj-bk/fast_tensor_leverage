@@ -88,7 +88,6 @@ class TensorTrain:
         dim = self.dims[idx]
 
         Q, R = la.qr(self.U[idx].view().reshape(self.ranks[idx] * dim, self.ranks[idx+1]))
-
         self.U[idx][:] = Q.reshape(self.ranks[idx], dim, self.ranks[idx+1])
         self.U[idx+1][:] = np.einsum('ij,jkl->ikl', R, self.U[idx + 1]) 
 
