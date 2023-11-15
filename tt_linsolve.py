@@ -415,7 +415,7 @@ def test_dmrg():
         new_axis_names, output_order = None, None
         if i > 0 and i < N - 1:
             new_axis_names = [f'rb_mpo{i}', f'rpr{i}', f'pc{i}',f'rb_mpo{i+1}']
-            output_order = [f'rb_mpo{i}', f'b_mpo{i}',
+            output_order = [f'b_mpo{i}', f'rb_mpo{i}', 
                             f'rpr{i}', f'pr{i}', 
                             f'b_mpo{i+1}', f'rb_mpo{i+1}']
         elif i == 0:
@@ -425,7 +425,7 @@ def test_dmrg():
                             ]
         elif i == N - 1:
             new_axis_names = [f'rb_mpo{i}', f'rpr{i}', f'pc{i}']
-            output_order = [f'rb_mpo{i}', f'b_mpo{i}',
+            output_order = [f'b_mpo{i}', f'rb_mpo{i}', 
                             f'rpr{i}', f'pr{i}']
 
         r_nodes[i].add_axis_names(new_axis_names)
@@ -456,7 +456,7 @@ def test_dmrg():
 
     mat_comp = mpo.materialize_matrix()
     print(la.norm(mat - mat_comp))
-    #print(is_pos_def(mat))
+    print(is_pos_def(mat), is_pos_def(mat_comp))
     exit(1)
 
     system = MPO_MPS_System(mpo, mps)
