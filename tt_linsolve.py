@@ -221,7 +221,6 @@ class MPO_MPS_System:
                        out_row_modes=out_row_modes,
                        out_col_modes=out_col_modes)
 
-
     def contract_mps_with_rhs(self, rhs, i):
         mps = self.mps
         N = self.N
@@ -325,8 +324,8 @@ class MPO_MPS_System:
         weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
         design = np.einsum("ij,i->ij", design, 1.0 / weights)
 
-        print(right_rows.T @ right_rows)
-        exit(1)
+        #print(right_rows.T @ right_rows)
+        #exit(1)
 
         samples_to_spmm = samples
 
@@ -345,6 +344,25 @@ class MPO_MPS_System:
         
         return result
 
+    def form_Q_matrix(self, i):
+        N = self.N
+        mpo = self.mpo
+        mps = self.mps
+
+        nodes = [node for j, node in enumerate(mps.nodes_l)
+                 if j != i]
+
+        out_row_modes = [f'pr{j}' for j in range(N) if j != i]
+        out_col_modes = []
+        if i > 0:
+            out_col_modes.append(f'b_mpsl{i}')
+        if i < N - 1:
+            out_col_modes.append(f'b_mpsl{i+1}')
+
+        return contract_nodes(nodes, 
+                       contractor=tn.contractors.greedy, 
+                       out_row_modes=out_row_modes,
+                       out_col_modes=out_col_modes)
 
     def execute_dmrg_randomized(self, rhs, num_sweeps, J, cold_start=True):
         N = self.N
@@ -371,6 +389,9 @@ class MPO_MPS_System:
 
         for iter in range(num_sweeps):
             for i in range(N-1):
+                Q = self.form_Q_matrix(i)
+                print(la.norm(Q.T @ Q - np.eye(Q.shape[1])))
+
                 A = self.form_lhs(i, contract_into_matrix=True) 
                 b = self.sampled_QTB(i, J, ground_truth)
                 x = la.solve(A, b)
