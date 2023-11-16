@@ -164,7 +164,7 @@ class MPO_MPS_System:
         elif direction == "down":
             self.contractions_up[i] = result
 
-    def form_lhs_system(self, i, contract_into_matrix=False):
+    def form_lhs(self, i, contract_into_matrix=False):
         '''
         This method assumes that the correct up and down contractions have been 
         previously computed.
@@ -311,7 +311,6 @@ class MPO_MPS_System:
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
                 tt.orthogonalize_push_right(i)
-                #print(f"Loss AFTER COMP: {0.5 * (x.T @ (A @ x)) - x.T @ b}") 
 
                 self._contract_cache_sweep(i, "down")
 
@@ -319,8 +318,6 @@ class MPO_MPS_System:
                 A = self.form_lhs_debug(i, contract_into_matrix=True)
                 b = vec(self.contract_mps_with_rhs(rhs, i))
                 x = la.solve(A, b)
-
-                #print(f"Loss AFTER COMP: {0.5 * (x.T @ (A @ x)) - x.T @ b}") 
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
                 tt.orthogonalize_push_left(i)
