@@ -289,7 +289,7 @@ class MPO_MPS_System:
 
             print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
 
-    def solve_sampled_system(self, i, J, ground_truth):
+    def sampled_QTB(self, i, J, ground_truth):
         tt = self.mps.tt
         samples = np.zeros((J, self.N), dtype=np.uint64)
 
@@ -333,6 +333,11 @@ class MPO_MPS_System:
                 i,
                 result)
         
+        result = result.reshape(tt.dims[i], 
+                                tt.ranks[i],
+                                tt.ranks[i+1])
+        
+        result = vec(result.transpose((1, 0, 2)))  
         return result
 
 
@@ -356,13 +361,13 @@ class MPO_MPS_System:
 
         print(f"Error before ALS: {self.compute_error(rhs)}")
 
-        ground_truth = PyDenseTensor(rhs) 
+        ground_truth = PyDenseTensor(rhs)
+        J= 1000 
 
         for iter in range(num_sweeps):
             for i in range(N-1):
                 A = self.form_lhs(i, contract_into_matrix=True) 
-
-                b = vec(self.contract_mps_with_rhs(rhs, i))
+                b = self.sampled_QTB(i, J, ground_truth)
                 x = la.solve(A, b)
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
@@ -372,7 +377,7 @@ class MPO_MPS_System:
 
             for i in reversed(range(1,N)):
                 A = self.form_lhs(i, contract_into_matrix=True)
-                b = vec(self.contract_mps_with_rhs(rhs, i))
+                b = self.sampled_QTB(i, J, ground_truth)
                 x = la.solve(A, b)
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
@@ -455,7 +460,7 @@ def test_dmrg():
  
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-    system.execute_dmrg_exact(rhs, 200, cold_start=True)
+    #system.execute_dmrg_exact(rhs, 200, cold_start=True)
     system.execute_dmrg_randomized(rhs, 
                                    200, 
                                    J=1000, 
