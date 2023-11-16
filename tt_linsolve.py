@@ -324,6 +324,10 @@ class MPO_MPS_System:
 
         weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
         design = np.einsum("ij,i->ij", design, 1.0 / weights)
+
+        print(design.T @ design)
+        exit(1)
+
         samples_to_spmm = samples
 
         result = np.zeros((tt.dims[i], design.shape[1]), dtype=np.double)
@@ -335,9 +339,10 @@ class MPO_MPS_System:
         
         result = result.reshape(tt.dims[i], 
                                 tt.ranks[i],
-                                tt.ranks[i+1])
+                                tt.ranks[i+1]).copy()
         
-        result = vec(result.transpose((1, 0, 2)))  
+        result = vec(result.transpose((1, 0, 2)))
+        
         return result
 
 
@@ -362,7 +367,7 @@ class MPO_MPS_System:
         print(f"Error before ALS: {self.compute_error(rhs)}")
 
         ground_truth = PyDenseTensor(rhs)
-        J= 1000 
+        J= 10000
 
         for iter in range(num_sweeps):
             for i in range(N-1):
@@ -372,7 +377,7 @@ class MPO_MPS_System:
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
                 tt.orthogonalize_push_right(i)
-                tt.update_internal_sampler(i, "right", True)
+                tt.update_internal_sampler(i, "left", True)
                 self._contract_cache_sweep(i, "down")
 
             for i in reversed(range(1,N)):
@@ -382,7 +387,7 @@ class MPO_MPS_System:
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
                 tt.orthogonalize_push_left(i)
-                tt.update_internal_sampler(i, "left", True)
+                tt.update_internal_sampler(i, "right", True)
                 self._contract_cache_sweep(i, "up")
 
             print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
