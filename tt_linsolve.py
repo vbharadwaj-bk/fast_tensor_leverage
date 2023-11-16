@@ -325,7 +325,7 @@ class MPO_MPS_System:
         weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
         design = np.einsum("ij,i->ij", design, 1.0 / weights)
 
-        print(design.T @ design)
+        print(right_rows.T @ right_rows)
         exit(1)
 
         samples_to_spmm = samples
@@ -412,7 +412,7 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 12
+    N = 4
     I = 2
     R_mpo_ns = 4
     R_mpo = R_mpo_ns * R_mpo_ns
