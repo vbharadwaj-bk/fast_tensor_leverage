@@ -12,7 +12,7 @@ class TensorTrain:
     '''
     Core[i] has dimensions (ranks[i], dims[i], ranks[i+1]) 
     '''
-    def __init__(self, dims, ranks, seed=None, init_method="gaussian"): 
+    def __init__(self, dims, ranks, seed=None, init_method="gaussian", reduce_rank=True): 
         if seed is None:
             rng = np.random.default_rng()
         else:
@@ -28,8 +28,10 @@ class TensorTrain:
         for i in range(self.N - 1):
             left_dim = np.prod(self.dims[:i+1])
             right_dim = np.prod(self.dims[i+1:])
-            oldrank = self.ranks[i+1] 
-            self.ranks[i+1] = min(left_dim, right_dim, self.ranks[i+1])
+            oldrank = self.ranks[i+1]
+
+            if reduce_rank:
+                self.ranks[i+1] = min(left_dim, right_dim, self.ranks[i+1])
 
             if self.ranks[i+1] != oldrank:
                 reduced_ranks.append(i+1) 

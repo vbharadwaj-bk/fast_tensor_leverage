@@ -58,7 +58,12 @@ class MPO:
 
         combined_core_dims = [dims_row[i] * dims_col[i] for i in range(self.N)]
 
-        tt_internal = TensorTrain(combined_core_dims, ranks, seed, init_method)
+        reduce_rank = cores is None 
+        tt_internal = TensorTrain(combined_core_dims, 
+                                  ranks, 
+                                  seed, 
+                                  init_method,
+                                  reduce_rank=reduce_rank)
         self.U = []
         self.ranks = tt_internal.ranks
 
@@ -274,7 +279,7 @@ class MPO_MPS_System:
         Ax = self.mpo_mps_multiply()
         b = vec(rhs)
 
-        return la.norm(b - Ax) 
+        return la.norm(b - Ax) / la.norm(b) 
 
     def execute_dmrg(self, rhs, num_sweeps, cold_start=True):
         '''
@@ -300,83 +305,28 @@ class MPO_MPS_System:
 
         for iter in range(num_sweeps):
             for i in range(N-1):
-                print("SWEEPING DOWN...")
-                x_o = vec(tt.U[i])
-
-                mat = mpo.materialize_matrix()
-                v = mps.materialize_vector()
-
-                print(f"Loss before: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
-
                 A = self.form_lhs_debug(i, contract_into_matrix=True)
-
-                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
-                print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
-
                 b = vec(self.contract_mps_with_rhs(rhs, i))
-
-                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
-                print(f"Contracted v^T b\t: {x_o.T @ b}")
-
                 x = la.solve(A, b)
+
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
-
-                v = mps.materialize_vector()
-                print(f"Loss AFTER: {0.5 * (v.T @ mat @ v) - v.T @ vec(rhs)}") 
-
-                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
-                print(f"Contracted v^T A v\t: {x.T @ A @ x}")
-
-                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
-                print(f"Contracted v^T b\t: {x.T @ b}")
-
-                print("----------------------")
-
                 tt.orthogonalize_push_right(i)
+                #print(f"Loss AFTER COMP: {0.5 * (x.T @ (A @ x)) - x.T @ b}") 
+
                 self._contract_cache_sweep(i, "down")
 
             for i in reversed(range(1,N)):
-                print("SWEEPING UP...")
-                x_o = vec(tt.U[i]).copy()
-
-                mat = mpo.materialize_matrix()
-                v = mps.materialize_vector()
-
                 A = self.form_lhs_debug(i, contract_into_matrix=True)
-
-                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
-                print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
-
                 b = vec(self.contract_mps_with_rhs(rhs, i))
-
-                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
-                print(f"Contracted v^T b\t: {x_o.T @ b}")
-
-                print(f"cond(A): {la.cond(A)}")
-
-                print(f"Loss BEFORE: {0.5 * (x_o.T @ (A @ x_o)) - x_o.T @ b}") 
-
-                print(f"{np.linalg.eigvals(mat)}")
                 x = la.solve(A, b)
-                print(f"Loss AFTER COMP: {0.5 * (x.T @ (A @ x)) - x.T @ b}") 
+
+                #print(f"Loss AFTER COMP: {0.5 * (x.T @ (A @ x)) - x.T @ b}") 
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
-
-
-                v = mps.materialize_vector()
-
-
-                print(f"Whole v^T A v\t\t: {v.T @ mat @ v}")
-                print(f"Contracted v^T A v\t: {x_o.T @ A @ x_o}")
-                print(f"Whole v^T b\t\t: {v.T @ vec(rhs)}")
-                print(f"Contracted v^T b\t: {x_o.T @ b}")
-
-
-
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
 
-            #print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
+            print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
 
 def verify_mpo_mps_contraction():
     N = 15
@@ -398,11 +348,11 @@ def verify_mpo_mps_contraction():
 
 
 def test_dmrg():
-    N = 3
-    I = 5
-    R_mpo_ns = 2
+    N = 12
+    I = 2
+    R_mpo_ns = 4
     R_mpo = R_mpo_ns * R_mpo_ns
-    R_mps = 4
+    R_mps = 10
 
     mpo_ns = MPO([I] * N, [I] * N, [R_mpo_ns] * (N - 1))
 
@@ -447,23 +397,11 @@ def test_dmrg():
     mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks[1:-1]], cores=sym_cores)
     mps = MPS([I] * N, [R_mps] * (N - 1)) 
 
-    def is_pos_def(x):
-        return np.all(np.linalg.eigvals(x) > 0)
-
-    #mat = mpo.materialize_matrix()
-    mat = mpo_ns.materialize_matrix()
-    mat = mat @ mat.T
-
-    mat_comp = mpo.materialize_matrix()
-    print(la.norm(mat - mat_comp))
-    print(is_pos_def(mat), is_pos_def(mat_comp))
-    exit(1)
-
     system = MPO_MPS_System(mpo, mps)
  
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-    system.execute_dmrg(rhs, 1, cold_start=True)
+    system.execute_dmrg(rhs, 200, cold_start=True)
 
 if __name__=='__main__':
     test_dmrg()
