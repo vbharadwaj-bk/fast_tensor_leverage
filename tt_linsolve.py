@@ -36,6 +36,28 @@ class MPS:
             self.nodes_r.append(node_r)
 
         self.vector_length = np.prod(dims)
+        
+
+    def test_sampling_process(self):
+        # Testing the sampling process
+        tt = self.tt
+        #tt.place_into_canonical_form(0)
+        J = 5000
+        #tt.build_fast_sampler(0, J=J)
+        samples = np.zeros((J, self.N), dtype=np.uint64)
+        
+        right_samples = tt.leverage_sample(0, J, "right")
+        samples[:, 1:] = right_samples  
+        design = tt.evaluate_partial_fast(samples, 0, "right")
+
+        weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
+        design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
+        design_gram = design.T @ design
+        print(design_gram)
+
+        # End testing
+        exit(1)
+
 
     def materialize_vector(self):
         output_order = [f'pr{i}' for i in range(self.N)]
@@ -300,16 +322,12 @@ class MPO_MPS_System:
 
             left_rows = tt.evaluate_partial_fast(samples, i, "left")
             left_cols = left_rows.shape[1]
-        else:
-            left_cols = 1
+
         if i < self.N - 1:
             right_samples = tt.leverage_sample(i, J, "right")
             samples[:, i+1:] = right_samples
             
             right_rows = tt.evaluate_partial_fast(samples, i, "right")
-            right_cols = right_rows.shape[1]
-        else:
-            right_cols = 1
 
         design, samples_to_spmm = None, None
 
@@ -324,8 +342,7 @@ class MPO_MPS_System:
         weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
         design = np.einsum("ij,i->ij", design, 1.0 / weights)
 
-        #print(right_rows.T @ right_rows)
-        #exit(1)
+        #self.mps.test_sampling_process()
 
         samples_to_spmm = samples
 
@@ -380,18 +397,13 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
+        print(f"Error before ALS: {self.compute_error(rhs)}")
+        ground_truth = PyDenseTensor(rhs)
         tt.build_fast_sampler(0, J=J)
 
-        print(f"Error before ALS: {self.compute_error(rhs)}")
-
-        ground_truth = PyDenseTensor(rhs)
-        J= 10000
 
         for iter in range(num_sweeps):
             for i in range(N-1):
-                Q = self.form_Q_matrix(i)
-                print(la.norm(Q.T @ Q - np.eye(Q.shape[1])))
-
                 A = self.form_lhs(i, contract_into_matrix=True) 
                 b = self.sampled_QTB(i, J, ground_truth)
                 x = la.solve(A, b)
