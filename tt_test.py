@@ -55,7 +55,7 @@ def test_tt_sampling(I=20, R=4, N=3, J=10000, seed=20, test_direction="left"):
     ax.set_title(f"{J} samples drawn by our method vs. true distribution")
     fig.savefig('plotting/distribution_comparison.png')
 
-def test_tt_als(I=20, R=4, N=3, J=10000):
+def test_tt_als(I=20, R=4, N=10, J=100000):
     '''
     Test that TT-ALS can recover a tensor with a known
     low TT-rank representation.
@@ -74,6 +74,7 @@ def test_tt_als(I=20, R=4, N=3, J=10000):
     print(tt_als.compute_exact_fit())
     tt_approx.build_fast_sampler(0, J=J)
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
+    print(tt_als.compute_exact_fit())
 
 def test_image_feature_extraction(dataset="mnist", R=5, J=5000):
     ground_truth = get_torch_tensor(dataset)
@@ -254,8 +255,8 @@ def test_dense_tensor_cached(R=5, J=10000):
 
 if __name__=='__main__':
     #test_sparse_tensor_decomposition() 
-    test_dense_recovery()
-    #test_tt_als()
+    #test_dense_recovery()
+    test_tt_als()
 
     #print_tensor_param_counts([60000, 28, 28], 
     #    rank_cp=25, rank_tt=21)

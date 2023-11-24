@@ -38,11 +38,10 @@ class MPS:
         self.vector_length = np.prod(dims)
         
 
-    def test_sampling_process(self):
+    def test_sampling_process(self, J):
         # Testing the sampling process
         tt = self.tt
         #tt.place_into_canonical_form(0)
-        J = 5000
         #tt.build_fast_sampler(0, J=J)
         samples = np.zeros((J, self.N), dtype=np.uint64)
         
@@ -53,7 +52,7 @@ class MPS:
         weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
         design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
         design_gram = design.T @ design
-        print(design_gram)
+        #print(design_gram)
 
         # End testing
         exit(1)
@@ -340,9 +339,10 @@ class MPO_MPS_System:
             design = np.einsum("ij,ik->ijk", left_rows, right_rows).reshape(J, -1)
 
         weights = la.norm(design, axis=1) ** 2 / design.shape[1] * J
-        design = np.einsum("ij,i->ij", design, 1.0 / weights)
 
-        #self.mps.test_sampling_process()
+        design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
+        #print(np.sqrt(la.cond(design.T @ design)))
+        design = np.einsum("ij,i->ij", design, np.sqrt(1.0 / weights))
 
         samples_to_spmm = samples
 
@@ -401,11 +401,14 @@ class MPO_MPS_System:
         ground_truth = PyDenseTensor(rhs)
         tt.build_fast_sampler(0, J=J)
 
-
         for iter in range(num_sweeps):
             for i in range(N-1):
                 A = self.form_lhs(i, contract_into_matrix=True) 
                 b = self.sampled_QTB(i, J, ground_truth)
+
+                b_comp = vec(self.contract_mps_with_rhs(rhs, i))
+                print(la.norm(b - b_comp) / la.norm(b_comp))
+
                 x = la.solve(A, b)
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
@@ -416,6 +419,10 @@ class MPO_MPS_System:
             for i in reversed(range(1,N)):
                 A = self.form_lhs(i, contract_into_matrix=True)
                 b = self.sampled_QTB(i, J, ground_truth)
+
+                b_comp = vec(self.contract_mps_with_rhs(rhs, i))
+                print(la.norm(b - b_comp))
+
                 x = la.solve(A, b)
 
                 tt.U[i][:] = x.reshape(tt.U[i].shape)
@@ -491,18 +498,21 @@ def test_dmrg():
 
         sym_cores.append(result.tensor.reshape(output_shape))
 
+    for core in sym_cores:
+        core *= 10
+
     mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks[1:-1]], cores=sym_cores)
-    mps = MPS([I] * N, [R_mps] * (N - 1)) 
+    mps = MPS([I] * N, [R_mps] * (N - 1))
 
     system = MPO_MPS_System(mpo, mps)
  
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-    #system.execute_dmrg_exact(rhs, 200, cold_start=True)
-    system.execute_dmrg_randomized(rhs, 
-                                   200, 
-                                   J=10000, 
-                                   cold_start=True)
+    system.execute_dmrg_exact(rhs, 200, cold_start=True)
+    #system.execute_dmrg_randomized(rhs, 
+    #                               200, 
+    #                               J=100000, 
+    #                               cold_start=True)
 
 if __name__=='__main__':
     test_dmrg()
