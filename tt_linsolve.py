@@ -275,6 +275,8 @@ class MPO_MPS_System:
         mpo = self.mpo
         tt = mps.tt 
 
+        errors = []
+
         if cold_start:
             # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
             mps.tt.place_into_canonical_form(0)
@@ -285,7 +287,8 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-        print(f"Error before ALS: {self.compute_error(rhs)}")
+        errors.append(self.compute_error(rhs))
+        print(f"Error before ALS: {errors[-1]}")
 
         for iter in range(num_sweeps):
             for i in range(N-1):
@@ -307,7 +310,10 @@ class MPO_MPS_System:
                 tt.orthogonalize_push_left(i)
                 self._contract_cache_sweep(i, "up")
 
-            print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
+            errors.append(self.compute_error(rhs))
+            print(f"Error after sweep {iter}: {errors[-1]}")
+
+        return errors
 
     def sampled_QTB(self, i, J, ground_truth):
         tt = self.mps.tt
@@ -387,6 +393,8 @@ class MPO_MPS_System:
         mpo = self.mpo
         tt = mps.tt 
 
+        errors = []
+
         if cold_start:
             # Step 1: Place the MPS in canonical form w/ core 0 non-orthogonal
             mps.tt.place_into_canonical_form(0)
@@ -397,7 +405,8 @@ class MPO_MPS_System:
             for i in reversed(range(0, N)): 
                 self._contract_cache_sweep(i, "up")
 
-        print(f"Error before ALS: {self.compute_error(rhs)}")
+        errors.append(self.compute_error(rhs))
+        print(f"Error before ALS: {errors[-1]}")
         ground_truth = PyDenseTensor(rhs)
         tt.build_fast_sampler(0, J=J)
 
@@ -406,8 +415,8 @@ class MPO_MPS_System:
                 A = self.form_lhs(i, contract_into_matrix=True) 
                 b = self.sampled_QTB(i, J, ground_truth)
 
-                b_comp = vec(self.contract_mps_with_rhs(rhs, i))
-                print(la.norm(b - b_comp) / la.norm(b_comp))
+                #b_comp = vec(self.contract_mps_with_rhs(rhs, i))
+                #print(la.norm(b - b_comp) / la.norm(b_comp))
 
                 x = la.solve(A, b)
 
@@ -420,8 +429,8 @@ class MPO_MPS_System:
                 A = self.form_lhs(i, contract_into_matrix=True)
                 b = self.sampled_QTB(i, J, ground_truth)
 
-                b_comp = vec(self.contract_mps_with_rhs(rhs, i))
-                print(la.norm(b - b_comp))
+                #b_comp = vec(self.contract_mps_with_rhs(rhs, i))
+                #print(la.norm(b - b_comp))
 
                 x = la.solve(A, b)
 
@@ -430,7 +439,10 @@ class MPO_MPS_System:
                 tt.update_internal_sampler(i, "right", True)
                 self._contract_cache_sweep(i, "up")
 
-            print(f"Error after sweep {iter}: {self.compute_error(rhs)}")
+            errors.append(self.compute_error(rhs))
+            print(f"Error after sweep {iter}: {errors[-1]}")
+
+        return errors
 
 def verify_mpo_mps_contraction():
     N = 15
@@ -503,16 +515,31 @@ def test_dmrg():
 
     mpo = MPO([I] * N, [I] * N, [rank * rank for rank in mpo_ns.ranks[1:-1]], cores=sym_cores)
     mps = MPS([I] * N, [R_mps] * (N - 1))
-
     system = MPO_MPS_System(mpo, mps)
  
     rhs = system.mpo_mps_multiply().reshape([I] * N) * 1000
     system.mps.tt.reinitialize_gaussian()
-    system.execute_dmrg_exact(rhs, 200, cold_start=True)
-    #system.execute_dmrg_randomized(rhs, 
-    #                               200, 
-    #                               J=100000, 
-    #                               cold_start=True)
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+    ax.set_xlabel("Sweep #")
+    ax.set_ylabel("Relative Error")
+    
+    errors = system.execute_dmrg_exact(rhs, 5, cold_start=True)
+    ax.plot(errors, label="exact")
+
+    for J in [10000, 50000, 100000]:
+        mps = MPS([I] * N, [R_mps] * (N - 1))
+        system = MPO_MPS_System(mpo, mps)
+        errors = system.execute_dmrg_randomized(rhs, 
+                                    5, 
+                                    J, 
+                                    cold_start=True)
+        ax.plot(errors, label=f"Random, J={J}")
+
+    ax.set_yscale('log')
+    fig.legend()
+    fig.savefig("plotting/dmrg.png")
 
 if __name__=='__main__':
     test_dmrg()
