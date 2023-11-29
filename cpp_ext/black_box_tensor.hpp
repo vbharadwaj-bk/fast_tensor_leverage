@@ -52,7 +52,7 @@ public:
             materialize_rhs(sample_view, j, rhs_buf);
             double elapsed = stop_clock_get_elapsed(t);
 
-            cout << "Time spent materializing RHS: " << elapsed << endl;
+            //cout << "Time spent materializing RHS: " << elapsed << endl;
 
             t = start_clock();
             cblas_dgemm(
@@ -72,7 +72,7 @@ public:
                 (uint32_t) lhs.shape[1]
             );
             elapsed = stop_clock_get_elapsed(t);
-            cout << "Elapsed on DGEMM: " << elapsed << endl;
+            //cout << "Elapsed on DGEMM: " << elapsed << endl;
         }
     }
 };

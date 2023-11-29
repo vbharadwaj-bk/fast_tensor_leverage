@@ -176,10 +176,37 @@ class TensorTrainALS:
                 design,
                 j,
                 result)
-        result = result @ la.pinv(design_gram) 
 
+        result_with_pinv = result @ la.pinv(design_gram) 
+        tt_approx.U[j] = result_with_pinv.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
-        tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
+        # DEBUGGING ONLY: ----------------------------------------
+        N = tt_approx.N
+        left_chain = tt_approx.left_chain_matricize(j)
+        right_chain = tt_approx.right_chain_matricize(j)
+
+        if len(left_chain.shape) == 0:
+            left_cols = 1
+        else:
+            left_cols = left_chain.shape[1]
+
+        if len(right_chain.shape) == 0:
+            right_cols = 1
+        else:
+            right_cols = right_chain.shape[1] 
+
+        design = np.kron(left_chain, right_chain)
+        target_modes = list(range(N))
+        target_modes.remove(j)
+        target_modes.append(j)
+
+        data_t = np.transpose(self.ground_truth.data, target_modes)
+        data_mat = data_t.reshape([-1, data_t.shape[-1]])
+        mode_size = data_mat.shape[1]
+        exact_multiplication = (design.T @ data_mat).T
+
+        print(la.norm(exact_multiplication - result) / la.norm(exact_multiplication))
+
 
     def execute_randomized_als_sweeps(self, num_sweeps, J, alg='iid_leverage', J2=None, cb=None):
         print("Starting randomized ALS!")
