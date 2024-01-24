@@ -149,8 +149,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.dense_tt_tests/coil-100.zip
-.dense_tt_tests/coil-100
+/home/mila/r/rakhshab/my_projects/TT_Sampling/fast_tensor_leverage/dense_tt_tests/coil-100.zip
 
 
 
