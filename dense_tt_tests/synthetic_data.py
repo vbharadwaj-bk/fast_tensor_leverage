@@ -14,10 +14,6 @@ from algorithms.tt_als import *
 from tensors.tensor_train import *
 from relative_error import *
 
-# tt_approx = TensorTrain([I] * N, [R] * (N - 1))
-# tt_approx_GT = TensorTrain([I] * N, [R] * (N - 1))
-# ground_truth = PyDenseTensor(tt_approx_GT.materialize_dense())
-
 
 def generate_tt_full_tensors(r_true, N, dims, std_noise):
     R = [1] + [r_true] * (N - 1) + [1]
@@ -72,11 +68,11 @@ def compute_fit(ground_truths, tests, n_trials, r, num_sweeps, J):
 if __name__ == '__main__':
     n_trials = 1
     N = 3
-    dims = list(range(100, 201, 100))
-    r = 5
-    r_true = 5
-    std_noise = 10
+    dims = list(range(100, 501, 100))
+    r = 10
+    r_true = 10
+    std_noise = 0.1
     ground_truths_noisy, ground_truths = generate_tt_full_tensors(r_true, N, dims, std_noise)
     tests = ["tt-svd", "randomized_tt-svd", "tt-als", "randomized_tt-als"]
-    compute_fit(ground_truths_noisy, tests, n_trials, r, 1, 100000)
+    compute_fit(ground_truths, tests, n_trials, r, 1, 100000)
     # compute_fit(ground_truths, tests, n_trials, r, 1, 100000)
