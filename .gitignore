@@ -149,7 +149,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.dense_tt_tests/coil-100.zip
+dense_tt_tests/coil-100.zip/*
 
 
 
