@@ -36,6 +36,10 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
     tt_cores_rsvd = None
 
     for test in tests:
+        print('-' * 20)
+        print(f"Starting test {test}")
+        print('-' * 20)
+
         total_fit = []
         total_time = []
         # outfile = f'outputs/dense_tt/synthetic/svd_{j}-{r}-{test}.json'
@@ -116,14 +120,15 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
 if __name__ == '__main__':
     n_trials = 5
     N = 10
-    dim = [3,4,5]
+    dim = [3]
     # true_rank = rank = range(5,15,5)
     true_rank = 10
     rank = 2
     std_noise = 1e-6
-    tests = ["tt-svd", "randomized_tt-svd", "tt-als", "randomized_tt-als"]
+    #tests = ["tt-svd", "randomized_tt-svd", "tt-als", "randomized_tt-als"]
+    tests = ["tt-svd", "tt-als", "randomized_tt-svd", "randomized_tt-als"]
     J = 2000
-    nsweeps = 50
+    nsweeps = 10
     for d in dim:
         print(f"{d} is running")
         compute_relative_error(N, d, tests, rank, J, n_trials, nsweeps, std_noise, true_rank)

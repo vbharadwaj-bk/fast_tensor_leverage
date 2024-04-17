@@ -10,6 +10,9 @@ class TensorTrainALS:
         self.ground_truth = ground_truth
         self.tt_approx = tt_approx
 
+        self.sampling_time = 0.0
+        self.solve_time = 0.0
+
         print("Initialized TT-ALS!")
 
     def compute_exact_fit(self):
@@ -108,8 +111,12 @@ class TensorTrainALS:
         samples = np.zeros((J, N), dtype=np.uint64)
         left_rows = None
         right_rows = None
+
         if j > 0:
+            start = time.time()
             left_samples = tt_approx.leverage_sample(j, J, "left")
+            self.sampling_time += time.time() - start
+
             samples[:, :j] = left_samples
 
             left_rows = tt_approx.evaluate_partial_fast(samples, j, "left")
@@ -117,7 +124,10 @@ class TensorTrainALS:
         else:
             left_cols = 1
         if j < N - 1:
+            start = time.time()
             right_samples = tt_approx.leverage_sample(j, J, "right")
+            self.sampling_time += time.time() - start
+
             samples[:, j+1:] = right_samples
             
             right_rows = tt_approx.evaluate_partial_fast(samples, j, "right")
@@ -172,39 +182,41 @@ class TensorTrainALS:
 
         result = np.zeros((tt_approx.dims[j], design.shape[1]), dtype=np.double)
 
+        start = time.time()
         self.ground_truth.execute_sampled_spmm(
                 samples_to_spmm,
                 design,
                 j,
                 result)
+        self.solve_time += time.time() - start
 
         result_with_pinv = result @ la.pinv(design_gram) 
         tt_approx.U[j] = result_with_pinv.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
         # DEBUGGING ONLY: ----------------------------------------
-        N = tt_approx.N
-        left_chain = tt_approx.left_chain_matricize(j)
-        right_chain = tt_approx.right_chain_matricize(j)
+        #N = tt_approx.N
+        #left_chain = tt_approx.left_chain_matricize(j)
+        #right_chain = tt_approx.right_chain_matricize(j)
 
-        if len(left_chain.shape) == 0:
-            left_cols = 1
-        else:
-            left_cols = left_chain.shape[1]
+        #if len(left_chain.shape) == 0:
+        #    left_cols = 1
+        #else:
+        #    left_cols = left_chain.shape[1]
 
-        if len(right_chain.shape) == 0:
-            right_cols = 1
-        else:
-            right_cols = right_chain.shape[1] 
+        #if len(right_chain.shape) == 0:
+        #    right_cols = 1
+        #else:
+        #    right_cols = right_chain.shape[1] 
 
-        design = np.kron(left_chain, right_chain)
-        target_modes = list(range(N))
-        target_modes.remove(j)
-        target_modes.append(j)
+        #design = np.kron(left_chain, right_chain)
+        #target_modes = list(range(N))
+        #target_modes.remove(j)
+        #target_modes.append(j)
 
-        data_t = np.transpose(self.ground_truth.data, target_modes)
-        data_mat = data_t.reshape([-1, data_t.shape[-1]])
-        mode_size = data_mat.shape[1]
-        exact_multiplication = (design.T @ data_mat).T
+        #data_t = np.transpose(self.ground_truth.data, target_modes)
+        #data_mat = data_t.reshape([-1, data_t.shape[-1]])
+        #mode_size = data_mat.shape[1]
+        #exact_multiplication = (design.T @ data_mat).T
 
         # print(la.norm(exact_multiplication - result) / la.norm(exact_multiplication))
     @profile
@@ -235,6 +247,8 @@ class TensorTrainALS:
 
             tt_approx.update_internal_sampler(0, "left", False)
             print(self.compute_exact_fit())
+            print(self.sampling_time)
+            print(self.solve_time)
 
             #if i % epoch_interval == 0:
             #    if accuracy_method == "approx":
