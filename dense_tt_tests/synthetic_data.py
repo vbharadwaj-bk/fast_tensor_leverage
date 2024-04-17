@@ -4,75 +4,126 @@ import os
 import json
 import statistics
 import sys
+from tt_als import *
+from tensor_train import *
 from tt_svd import *
-
-current_script_path = os.path.dirname(os.path.abspath(__file__))
-fast_tensor_leverage_path = os.path.dirname(current_script_path)
-sys.path.append(fast_tensor_leverage_path)
-from tensors.dense_tensor import *
-from algorithms.tt_als import *
-from tensors.tensor_train import *
-from relative_error import *
+from tensorly.tt_tensor import tt_to_tensor
+from line_profiler import profile
 
 
-def generate_tt_full_tensors(r_true, N, dims, std_noise):
-    R = [1] + [r_true] * (N - 1) + [1]
-    tt = []
-    dense_data = []
-    dense_noisy_data = []
-    tensor_size = [[I] * N for I in dims]
-    for size in tensor_size:
-        tt.append(TensorTrain(size, [r_true] * (N - 1)))
-    for tt_object in tt:
-        tt_full = tt_object.materialize_dense()
-        noise = np.random.normal(0, std_noise, tt_full.shape)
-        dense_data.append(PyDenseTensor(tt_full))
-        dense_noisy_data.append(PyDenseTensor(tt_full + noise))
 
-    return dense_noisy_data, dense_data
+def fit(ground_truth, approx):
+    fitness = 1 - (np.linalg.norm(approx - ground_truth) / np.linalg.norm(ground_truth))
+    return fitness
 
 
-def compute_fit(ground_truths, tests, n_trials, r, num_sweeps, J):
-    count = 0
-    for ground_truth in ground_truths:
-        count += 1
-        for test in tests:
-            fit = []
-            total_time = []
-            outfile = f'outputs/dense_tt/synthetic/{std_noise}_{test}_data{count}_rank{r_true}.json'
-            directory = os.path.dirname(outfile)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            for i in range(n_trials):
-                print(f"Starting trial {i}...")
+def generate_tt_full_tensors(true_rank, dims, std_noise):
+    tt = TensorTrain(dims, true_rank, init_method="gaussian")
+    tt_full = tt.materialize_dense()
+    tt_full_dense = PyDenseTensor(tt_full)
+    noise = np.random.normal(0, std_noise, tt_full.shape)
+    full_data = tt_full + noise
+
+    dense_noisy_data = PyDenseTensor(full_data)
+
+    return dense_noisy_data, tt_full_dense
+
+def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=None, true_rank=None):
+    # for sz in dim:
+    dims = [dim] * N
+    ranks = [1] + [r] * (N - 1) + [1]
+    tt_cores_svd = None
+    tt_cores_rsvd = None
+
+    for test in tests:
+        total_fit = []
+        total_time = []
+        # outfile = f'outputs/dense_tt/synthetic/svd_{j}-{r}-{test}.json'
+        outfile = f'outputs/dense_tt/synthetic/svd_{J}-{r}-{test}_{true_rank}_{dim}_{n_trials}_{nsweeps}.json'
+        directory = os.path.dirname(outfile)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        for tr in range(n_trials):
+            X, ground_truth = generate_tt_full_tensors(true_rank, dims, std_noise)
+            if test == "tt-svd":
                 start = time.time()
-                fit.append(fit_data(ground_truth, test, r, num_sweeps, J))
+                cores_svd = tensor_train_svd(X.data, ranks, svd="truncated_svd", verbose=False)
+                end = time.time()
+                total_time.append(end-start)
+                approx = tt_to_tensor(cores_svd)
+                total_fit.append(fit(ground_truth.data, approx))
+                tt_cores_svd = cores_svd
+
+            elif test == "randomized_tt-svd":
+                start = time.time()
+                cores_rsvd = tensor_train_svd(X.data, ranks, svd="randomized_svd", verbose=False)
+                end = time.time()
+                total_time.append(end - start)
+                approx = tt_to_tensor(cores_rsvd)
+                total_fit.append(fit(ground_truth.data, approx))
+                tt_cores_rsvd = cores_rsvd
+
+            elif test == "tt-als":
+                if tt_cores_svd is None:
+                    raise ValueError("TT-SVD cores must be computed before TT-ALS")
+
+                tt_approx = TensorTrain(dims, r, init_method=None, U=tt_cores_svd)
+                tt_approx.place_into_canonical_form(0)
+                start = time.time()
+                tt_als = TensorTrainALS(ground_truth, tt_approx)
+                tt_als.execute_exact_als_sweeps_slow(num_sweeps=nsweeps)
+                end = time.time()
+                total_time.append(end - start)
+                fit_result = tt_als.compute_exact_fit()
+                total_fit.append(fit_result)
+
+            elif test == "randomized_tt-als":  # proposal
+                if tt_cores_rsvd is None:
+                    raise ValueError("TT-SVD cores must be computed before TT-ALS")
+
+                tt_approx = TensorTrain(dims, r, init_method=None, U=tt_cores_rsvd)
+                tt_approx.place_into_canonical_form(0)
+                start = time.time()
+                tt_approx.build_fast_sampler(0, J=J)
+                tt_als = TensorTrainALS(ground_truth, tt_approx)
+                tt_als.execute_randomized_als_sweeps(num_sweeps=nsweeps, J=J)
                 end = time.time()
                 total_time.append(end - start)
 
-            mean_fit = np.mean(fit)
-            mean_time = np.mean(total_time)
+                fit_result = tt_als.compute_exact_fit()
+                total_fit.append(fit_result)
+            else:
+                continue
 
-            result = {
-                "data": ground_truth.data.shape,
-                "test_name": test,
-                "time": mean_time,
-                "fit": mean_fit,
-                "count": count,
-            }
+        time_mean = np.mean(total_time)
 
-            with open(outfile, 'w') as f:
-                json.dump(result, f)
+        fit_mean = np.mean(total_fit)
+
+
+        result = {
+            "dim_size": dim,
+            "sample_size": J,
+            "test_name": test,
+            "time": time_mean,
+            "fit": fit_mean,
+        }
+
+        with open(outfile, 'w') as f:
+            json.dump(result, f)
 
 
 if __name__ == '__main__':
-    n_trials = 1
-    N = 3
-    dims = list(range(100, 501, 100))
-    r = 10
-    r_true = 10
-    std_noise = 0.1
-    ground_truths_noisy, ground_truths = generate_tt_full_tensors(r_true, N, dims, std_noise)
+    n_trials = 5
+    N = 10
+    dim = [3,4,5]
+    # true_rank = rank = range(5,15,5)
+    true_rank = 10
+    rank = 2
+    std_noise = 1e-6
     tests = ["tt-svd", "randomized_tt-svd", "tt-als", "randomized_tt-als"]
-    compute_fit(ground_truths, tests, n_trials, r, 1, 100000)
-    # compute_fit(ground_truths, tests, n_trials, r, 1, 100000)
+    J = 2000
+    nsweeps = 50
+    for d in dim:
+        print(f"{d} is running")
+        compute_relative_error(N, d, tests, rank, J, n_trials, nsweeps, std_noise, true_rank)
