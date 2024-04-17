@@ -2,13 +2,10 @@ import numpy as np
 import numpy.linalg as la
 import matplotlib.pyplot as plt
 import tensorly as tl
-from tensorly.decomposition import tensor_train
-from tensorly.tt_tensor import tt_to_tensor
-from tensorly.tt_tensor import validate_tt_rank, TTTensor
 
 import cppimport.import_hook
 from cpp_ext.tt_module import TTSampler
-from tt_svd import *
+# from tt_svd import *
 from synthetic_data import *
 
 
@@ -19,7 +16,7 @@ class TensorTrain:
     '''
     Core[i] has dimensions (ranks[i], dims[i], ranks[i+1]) 
     '''
-    def __init__(self, dims, ranks, seed=None, init_method="gaussian", reduce_rank=True):
+    def __init__(self, dims, rank, seed=None, init_method=None, U=None, reduce_rank=True):
         if seed is None:
             rng = np.random.default_rng()
         else:
@@ -27,7 +24,9 @@ class TensorTrain:
 
         self.dims = np.array(dims, dtype=np.uint64)
         self.N = len(dims)
-        self.ranks = np.array([1] + ranks + [1], np.uint64)
+        self.rank = rank
+        self.U = U
+        self.ranks = np.array([1] + [self.rank]*(self.N-1) + [1], np.uint64)
         self.rng = rng
         # self.std_noise = std_noise
 
@@ -49,17 +48,15 @@ class TensorTrain:
 
         assert(len(self.ranks) == self.N + 1)
 
-        if init_method=="gaussian":
+        if init_method == "gaussian" and self.U is None:
             self.U = [rng.normal(size=(self.ranks[i], self.dims[i], self.ranks[i+1])) for i in range(self.N)]
             for i in range(self.N):
                 self.U[i] /= la.norm(self.U[i])
 
-        # if init_method=="tt-svd":
-        #     noisy_ground_truth, _ = generate_tt_full_tensors(self.ranks[1], self.N, self.dims, self.std_noise)
-        #     self.tensor_train_svd = TensorTrainSVD(noisy_ground_truth.data, self.ranks[1])
-        #     self.U = self.tensor_train_svd.tt_svd()
-        #     for i in range(self.N):
-        #         self.U[i] /= la.norm(self.U[i])
+        elif init_method is None and self.U is not None:
+            for i in range(self.N):
+                self.U[i] /= la.norm(self.U[i])
+
         else:
             raise(NotImplementedError()) 
 

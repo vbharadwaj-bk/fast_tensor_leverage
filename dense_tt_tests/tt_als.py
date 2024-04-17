@@ -3,6 +3,7 @@ from dense_tensor import *
 from tensors.sparse_tensor import *
 from tensors.function_tensor import *
 import time
+from line_profiler import profile
 
 class TensorTrainALS:
     def __init__(self, ground_truth, tt_approx):
@@ -70,6 +71,7 @@ class TensorTrainALS:
         mode_size = data_mat.shape[1]
         tt_approx.U[i] = (design.T @ data_mat).reshape(left_cols, right_cols, mode_size).transpose([0, 2, 1]).copy()
 
+    @profile
     def execute_exact_als_sweeps_slow(self, num_sweeps):
         '''
         Assumes that the TT is in orthogonal
@@ -85,6 +87,7 @@ class TensorTrainALS:
         N = tt_approx.N
 
         for _ in range(num_sweeps):
+            print(f"Starting sweep {_}...")
             for i in range(N - 1):
                 self.optimize_core_exact(i)
                 tt_approx.orthogonalize_push_right(i)
@@ -97,7 +100,6 @@ class TensorTrainALS:
             #     print(self.compute_approx_fit())
             # elif accuracy_method == "exact":
             print(self.compute_exact_fit())
-
 
     def optimize_core_approx(self, j, J, alg, J2):
         tt_approx = self.tt_approx
@@ -204,9 +206,8 @@ class TensorTrainALS:
         mode_size = data_mat.shape[1]
         exact_multiplication = (design.T @ data_mat).T
 
-        print(la.norm(exact_multiplication - result) / la.norm(exact_multiplication))
-
-
+        # print(la.norm(exact_multiplication - result) / la.norm(exact_multiplication))
+    @profile
     def execute_randomized_als_sweeps(self, num_sweeps, J, alg='iid_leverage', J2=None, cb=None):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
@@ -233,6 +234,7 @@ class TensorTrainALS:
                     cb(i, "right")
 
             tt_approx.update_internal_sampler(0, "left", False)
+            print(self.compute_exact_fit())
 
             #if i % epoch_interval == 0:
             #    if accuracy_method == "approx":
