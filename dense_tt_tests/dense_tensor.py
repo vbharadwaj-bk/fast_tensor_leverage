@@ -9,7 +9,9 @@ from common import *
 current_script_path = os.path.dirname(os.path.abspath(__file__))
 fast_tensor_leverage_path = os.path.dirname(current_script_path)
 sys.path.append(fast_tensor_leverage_path)
+
 import cppimport.import_hook
+from cpp_ext.tt_module import TTSampler
 from cpp_ext.tt_module import DenseTensor_float, DenseTensor_double
 
 class PyDenseTensor:

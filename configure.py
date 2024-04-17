@@ -7,7 +7,7 @@ if __name__=='__main__':
 	files = os.listdir()
     
 	if "env.sh" not in files:
-		shutil.copy("env_template.sh", "env.sh") 
+		shutil.copy("env_template.sh", "env.sh")
 
 	if "config.json" not in files:
-		shutil.copy("config_template.json", "config.json") 
+		shutil.copy("config_template.json", "config.json")

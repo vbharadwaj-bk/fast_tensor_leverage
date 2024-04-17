@@ -3,7 +3,7 @@ import numpy.linalg as la
 import matplotlib.pyplot as plt
 
 import cppimport.import_hook
-from cpp_ext.tt_module import TTSampler 
+from cpp_ext.tt_module import TTSampler
 
 def batch_dot_product(A, B):
     return np.einsum('ij,ij->j', A, B)

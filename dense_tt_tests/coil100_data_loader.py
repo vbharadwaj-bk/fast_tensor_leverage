@@ -6,13 +6,13 @@ from PIL import Image
 import glob
 import sys
 
-current_script_path = os.path.dirname(os.path.abspath(__file__))
-fast_tensor_leverage_path = os.path.dirname(os.path.dirname(current_script_path))
-cpp_ext_path = os.path.join(fast_tensor_leverage_path, 'cpp_ext')
-tensors_path = os.path.join(fast_tensor_leverage_path, 'tensors')
-sys.path.append(cpp_ext_path)
-sys.path.append(tensors_path)
-from tensors.dense_tensor import *
+# current_script_path = os.path.dirname(os.path.abspath(__file__))
+# fast_tensor_leverage_path = os.path.dirname(os.path.dirname(current_script_path))
+# cpp_ext_path = os.path.join(fast_tensor_leverage_path, 'cpp_ext')
+# tensors_path = os.path.join(fast_tensor_leverage_path, 'tensors')
+# sys.path.append(cpp_ext_path)
+# sys.path.append(tensors_path)
+from dense_tensor import *
 
 def get_coil_dataset(image_path):
     file_url = "http://www.cs.columbia.edu/CAVE/databases/SLAM_coil-20_coil-100/coil-100/coil-100.zip"
@@ -59,9 +59,10 @@ def get_coil_tensor(dataset_name):
     images_np, labels_np = get_coil_dataset(image_path)
 
     print("Initialized dense tensor...")
+
     tensor = PyDenseTensor(images_np)
     return tensor, labels_np
 
 if __name__ == "__main__":
     tensor, labels = get_coil_tensor("coil-100")
-    print(f"Tensor shape: {type(tensor)}, Labels shape: {labels.shape}")
+    print(f"Tensor shape: {type(tensor)}, tensor shape: {tensor.shape}")
