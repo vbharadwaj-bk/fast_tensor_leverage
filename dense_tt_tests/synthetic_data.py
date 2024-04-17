@@ -11,7 +11,6 @@ from tensorly.tt_tensor import tt_to_tensor
 from line_profiler import profile
 
 
-
 def fit(ground_truth, approx):
     fitness = 1 - (np.linalg.norm(approx - ground_truth) / np.linalg.norm(ground_truth))
     return fitness
