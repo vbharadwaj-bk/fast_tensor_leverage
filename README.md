@@ -139,11 +139,6 @@ and CXX to your C and C++ compilers. The C++ extension
 module is compiled with
 these when it is imported by Python at runtime. 
 
-Next, update your LD_LIBRARY_PATH 
-to include the BLAS and TBB library folders using
-`env.sh`. You should also set the number of
-OpenMP threads based on your system configuration. 
-
 ### Step 3: Test the code 
 You're ready to test! The C++ extension
 compiles automatically the first time you run
