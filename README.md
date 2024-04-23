@@ -40,8 +40,8 @@ scripts in the `benchmarks` folder. You can reproduce the
 figures using the material in the `plotting` folder. From
 within the folder, run 
 
-```
-python generate_images.py
+```shell
+[zsh]> python generate_images.py
 ```
 which will output all figures in PDF format to 
 `plotting/paper_images`. This script will also print tables
@@ -102,18 +102,16 @@ need Python as well to run it.
 ## Building our code
 
 ### Step 0: Clone the Repository
-Clone the repoitory and `cd` into it. The exact
-name of the repository has been omitted below to
-preserve anonymity during the reviewing process.
-```
-git clone <FULL PATH HERE>/fast_tensor_leverage.git
-cd fast_tensor_leverage
+Clone the repository and `cd` into it. 
+```shell
+[zsh]> git clone https://github.com/vbharadwaj-bk/fast_tensor_leverage.git
+[zsh]> cd fast_tensor_leverage
 ```
 
 ### Step 1: Install Python packages
 Install Python dependencies with the following command:
-```
-pip install -r requirements.txt
+```shell
+[zsh]> pip install -r requirements.txt
 ```
 We rely on the Pybind11 and cppimport packages. We
 use the HDF5 format to store sparse tensors, so
@@ -122,8 +120,8 @@ sparse tensor decomposition.
 
 ### Step 2: Configure the compile and runtime environments 
 Within the repository, run the following command:
-```
-python configure.py
+```shell
+[zsh]> python configure.py
 ```
 This will create two files in the repository root:
 `config.json` and `env.sh`. Edit the configuration
@@ -151,8 +149,8 @@ You're ready to test! The C++ extension
 compiles automatically the first time you run
 the code, and is not compiled subsequently. Run
 the following code:
-```
-python compare_distributions.py
+```shell
+[zsh]> python compare_distributions.py
 ```
 If all goes well, you should see a new graph in
 the `plotting` folder called
