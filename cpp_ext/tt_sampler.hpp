@@ -332,5 +332,8 @@ public:
                 result());
     }
 
+    void m4tc(py::array_t<uint32_t> idxs_py) {
+
+    }
 };
 

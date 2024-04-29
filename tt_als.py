@@ -87,7 +87,7 @@ class TensorTrainALS:
         tt_approx = self.tt_approx
         N = tt_approx.N
 
-        # Evaluate the MTTTTC by processing batches of nonzero entries 
+        # Evaluate the m4tc by processing batches of nonzero entries 
         B = 20000
 
         def optimize_core(j):
@@ -102,7 +102,7 @@ class TensorTrainALS:
                 left_rows = tt_approx.evaluate_partial_fast(idx_batch, j, "left")
                 right_rows = tt_approx.evaluate_partial_fast(idx_batch, j, "right")
 
-                tt_approx.mttttc(idx_batch, j, left_rows, right_rows, result)
+                tt_approx.m4tc(idx_batch, j, left_rows, right_rows, result)
 
             tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
 
