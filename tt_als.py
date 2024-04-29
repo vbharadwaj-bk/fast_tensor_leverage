@@ -83,6 +83,48 @@ class TensorTrainALS:
 
             print(tt_als.compute_exact_fit())
 
+    def execute_exact_als_sweeps_sparse(self, num_sweeps, J, epoch_interval=5):
+        tt_approx = self.tt_approx
+        N = tt_approx.N
+
+        # Evaluate the MTTTTC by processing batches of nonzero entries 
+        B = 20000
+
+        def optimize_core(j):
+            ground_truth = self.ground_truth
+            result = np.zeros((tt_approx.dims[j], left_rows.shape[1] * right_rows.shape[1]), dtype=np.double)
+
+            for i in range(0, ground_truth.nnz, B):
+                lb = i
+                ub = min(i+B, ground_truth.nnz)
+                idx_batch = ground_truth.tensor_idxs[lb:ub].copy()
+
+                left_rows = tt_approx.evaluate_partial_fast(idx_batch, j, "left")
+                right_rows = tt_approx.evaluate_partial_fast(idx_batch, j, "right")
+
+                tt_approx.mttttc(idx_batch, j, left_rows, right_rows, result)
+
+            tt_approx.U[j] = result.reshape(tt_approx.dims[j], left_cols, right_cols).transpose([1, 0, 2]).copy()
+
+
+        for i in range(num_sweeps):
+            print(f"Starting sweep {i}...")
+            for j in range(N - 1):
+                optimize_core(j)
+                tt_approx.orthogonalize_push_right(j)
+                tt_approx.update_internal_sampler(j, "left", True)
+
+            for j in range(N - 1, 0, -1):
+                optimize_core(j)
+                tt_approx.orthogonalize_push_left(j)
+                tt_approx.update_internal_sampler(j, "right", True)
+
+            tt_approx.update_internal_sampler(0, "left", False)
+
+            if i % epoch_interval == 0:
+                print(self.compute_exact_fit())
+
+
     def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):
         print("Starting randomized ALS!")
         tt_approx = self.tt_approx
