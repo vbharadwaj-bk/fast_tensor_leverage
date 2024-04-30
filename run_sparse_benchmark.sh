@@ -1,10 +1,15 @@
 #!/bin/bash
-#SBATCH -N 8
+#SBATCH -N 1
 #SBATCH -C cpu
 #SBATCH -q regular
-#SBATCH -t 11:00:00
-#SBATCH -A m1266 
-#SBATCH -q regular 
+#SBATCH -t 4:00:00
 
-. modules_perlmutter.sh
-srun -N 4 -n 4 -u python sparse_tensor_benchmark.py 
+. env.sh 
+srun -N 1 -u python sparse_tensor_benchmark.py \
+        -i $sparse_tensor_benchmark \
+        --trank $TARGET_RANK \
+        -s      $SAMPLES \
+        -iter   $ITERATIONS \
+        -alg    $ALG \
+        -r      $TRIAL_COUNT \
+        -o      outputs/sparse_tensor_train

@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 
-import logging, sys, json, argparse
+import logging, sys, json, argparse, os, datetime
 
 import cppimport
 import cppimport.import_hook
@@ -152,6 +152,35 @@ def test_sparse_tensor_decomposition(params):
     tensor_name = params.input
     preprocessing = tensor_map[tensor_name]["preprocessing"] 
     initialization = tensor_map[tensor_name]["initialization"]    
+
+    filename_prefix = '_'.join([params.input, str(params.trank), 
+                                    str(params.iter), params.distribution, 
+                                    params.algorithm, str(params.samples), 
+                                    str(params.epoch_iter)])
+
+    files = os.listdir(args.output_folder)
+    filtered_files = [f for f in files if filename_prefix in f]
+
+    trial_nums = []
+    for f in filtered_files:
+        with open(os.path.join(args.output_folder, f), 'r') as f_handle:
+            exp = json.load(f_handle)
+            trial_nums.append(exp["trial_num"])
+
+    if len(remaining_trials) > 0:
+            trial_num = remaining_trials[0] 
+            output_filename = f'{filename_prefix}_{trial_num}.out'
+
+    remaining_trials = [i for i in range(args.repetitions) if i not in trial_nums]
+
+    if len(remaining_trials) == 0:
+        print("No trials left to perform!")
+        exit(0)
+
+    # Proceed if there are trials remaining 
+    trial_num = remaining_trials[0]
+    output_filename = f'{filename_prefix}_{trial_num}.out'
+
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
     ranks = [params.trank] * (ground_truth.N - 1)
@@ -162,17 +191,36 @@ def test_sparse_tensor_decomposition(params):
     tt_approx.place_into_canonical_form(0)
     tt_approx.build_fast_sampler(0, J=params.samples)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
+    optimizer_stats = None
 
     if params.algorithm == "exact":
-        tt_als.execute_exact_als_sweeps_sparse(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
+        optimizer_stats = tt_als.execute_exact_als_sweeps_sparse(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
     elif params.algorithm == "random":
-        tt_als.execute_randomized_als_sweeps(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
+        optimizer_stats = tt_als.execute_randomized_als_sweeps(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
 
-    filename_prefix = '_'.join([params.input, str(params.trank), 
-                                    str(params.iter), params.distribution, 
-                                    params.algorithm, str(params.samples), 
-                                    str(params.epoch_iter)])
+    now = datetime.now()
+    output_dict = {
+        'time': now.strftime('%m/%d/%Y, %H:%M:%S'), 
+        'input': params.input,
+        'target_rank': params.trank,
+        'iterations': params.iter,
+        'algorithm': params.algorithm,
+        'sample_count': params.samples,
+        'accuracy_epoch_length': params.epoch_iter,
+        'trial_count': params.repetitions,
+        'trial_num': trial_num,
+        'initial_fit': initial_fit,
+        'final_fit': final_fit,
+        'thread_count': os.environ.get('OMP_NUM_THREADS'),
+        'stats': optimizer_stats
+    }
 
+    print(json.dumps(output_dict, indent=4))
+    print(f"Final Fit: {final_fit}")
+
+    if output_filename is not None:
+        with open(os.path.join(args.output_folder, output_filename), 'w') as f:
+            f.write(json.dumps(output_dict, indent=4)) 
 
 
 if __name__=='__main__':
