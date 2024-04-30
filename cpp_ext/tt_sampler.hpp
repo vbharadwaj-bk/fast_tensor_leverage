@@ -336,11 +336,13 @@ public:
                 int j,
                 py::array_t<double> left_py,
                 py::array_t<double> right_py,
+                py::array_t<double> values_py,
                 py::array_t<double> result_py
     ) {
             Buffer<uint32_t> idxs(idxs_py);
             Buffer<double> left(left_py);
             Buffer<double> right(right_py);
+            Buffer<double> values(values_py);
             Buffer<double> result(result_py);
 
             uint64_t J = idxs.shape[0];
@@ -350,14 +352,15 @@ public:
             uint64_t R2 = right.shape[1];
 
             #pragma omp parallel for
-            for(int i = 0; i < J; i++) {
+            for(uint64_t i = 0; i < J; i++) {
                 uint64_t target = idxs[i * N + j];
+                double value = values[i];
 
                 for(uint64_t u = 0; u < R1; u++) {
                     for(uint64_t v = 0; v < R2; v++) {
 
                         #pragma omp atomic
-                        result[target * R1 * R2 + u * R2 + v] +=
+                        result[target * R1 * R2 + u * R2 + v] += value *  
                         left[i * R1 + u] * right[i * R2 + v]; 
                     }
                 }

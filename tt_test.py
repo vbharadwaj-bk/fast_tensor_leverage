@@ -1,11 +1,10 @@
 import numpy as np
 import numpy.linalg as la
 
-import logging, sys
+import logging, sys, json, argparse
 
 import cppimport
 import cppimport.import_hook
-
 
 from tensor_train import *
 from tt_als import *
@@ -130,8 +129,8 @@ def test_dense_recovery():
     tt_als.execute_randomized_als_sweeps(num_sweeps=10, J=J)
 
 
-def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
-    param_map = {
+def test_sparse_tensor_decomposition(params):
+    tensor_map = {
         "uber": {
             "preprocessing": None,
             "initialization": None
@@ -150,23 +149,44 @@ def test_sparse_tensor_decomposition(tensor_name="enron", R=10, J=65000):
         }
     }
 
-    preprocessing = param_map[tensor_name]["preprocessing"] 
-    initialization = param_map[tensor_name]["initialization"]    
+    tensor_name = params.input
+    preprocessing = tensor_map[tensor_name]["preprocessing"] 
+    initialization = tensor_map[tensor_name]["initialization"]    
     ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
-    ranks = [R] * (ground_truth.N - 1)
+    ranks = [params.trank] * (ground_truth.N - 1)
 
     print("Loaded dataset...")
     tt_approx = TensorTrain(ground_truth.shape, ranks)
 
     tt_approx.place_into_canonical_form(0)
-    tt_approx.build_fast_sampler(0, J=J)
+    tt_approx.build_fast_sampler(0, J=params.samples)
     tt_als = TensorTrainALS(ground_truth, tt_approx)
 
-    tt_als.execute_randomized_als_sweeps(num_sweeps=20, J=J, epoch_interval=5)
+    if params.algorithm == "exact":
+        tt_als.execute_exact_als_sweeps_sparse(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
+    elif params.algorithm == "random":
+        tt_als.execute_randomized_als_sweeps(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
+
+    filename_prefix = '_'.join([params.input, str(params.trank), 
+                                    str(params.iter), params.distribution, 
+                                    params.algorithm, str(params.samples), 
+                                    str(params.epoch_iter)])
+
 
 
 if __name__=='__main__':
-    test_sparse_tensor_decomposition() 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i','--input', type=str, help='Tensor name to decompose', required=True)
+    parser.add_argument("-t", "--trank", help="Rank of the target decomposition", required=True, type=int)
+    parser.add_argument("-iter", help="Number of ALS iterations", required=True, type=int)
+    parser.add_argument('-alg','--algorithm', type=str, help='Algorithm to perform decomposition')
+    parser.add_argument("-s", "--samples", help="Number of samples taken from the KRP", required=False, type=int)
+    parser.add_argument("-o", "--output_folder", help="Folder name to print statistics", required=False)
+    parser.add_argument("-e", "--epoch_iter", help="Number of iterations per accuracy evaluation epoch", required=False, type=int, default=5)
+    parser.add_argument("-r", "--repetitions", help="Number of repetitions for multiple trials", required=False, type=int, default=1)
+    args = parser.parse_args()
+
+    test_sparse_tensor_decomposition(args) 
     #test_dense_recovery()
     #test_tt_als()
