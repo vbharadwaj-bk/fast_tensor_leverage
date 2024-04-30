@@ -84,6 +84,13 @@ class TensorTrainALS:
             print(tt_als.compute_exact_fit())
 
     def execute_exact_als_sweeps_sparse(self, num_sweeps, J, epoch_interval=5):
+        print("Starting exact ALS for sparse tensors!")
+        stats =         {   "als_time": 0.0, 
+                            "fit_computation_time": 0.0,
+                            "iterations": [],
+                            "fits": [],
+                            "als_iter_times": []
+                            }
         tt_approx = self.tt_approx
         N = tt_approx.N
 
@@ -110,6 +117,7 @@ class TensorTrainALS:
 
 
         for i in range(num_sweeps):
+            als_start = time.time()
             print(f"Starting sweep {i}...")
             for j in range(N - 1):
                 optimize_core(j)
@@ -122,9 +130,18 @@ class TensorTrainALS:
                 tt_approx.update_internal_sampler(j, "right", True)
 
             tt_approx.update_internal_sampler(0, "left", False)
+            stats["als_time"] += time.time() - als_start
 
             if i % epoch_interval == 0:
-                print(self.compute_exact_fit())
+                fit_computation_start = time.time()
+                stats["iterations"].append(i)
+                fit = self.compute_exact_fit()
+                stats["fits"].append(fit)
+                stats["als_iter_times"].append(stats["als_time"]) 
+                print(f"Fit after {i} iterations: {fit}")
+                stats["fit_computation_time"] += time.time() - fit_computation_start 
+
+        return stats 
 
 
     def execute_randomized_als_sweeps(self, num_sweeps, J, epoch_interval=5):

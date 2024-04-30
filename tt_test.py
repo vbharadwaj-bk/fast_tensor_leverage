@@ -178,54 +178,53 @@ def test_sparse_tensor_decomposition(params):
         print("No trials left to perform!")
         exit(0)
 
-    # Proceed if there are trials remaining 
-    trial_num = remaining_trials[0]
-    output_filename = f'{filename_prefix}_{trial_num}.out'
+    for trial_num in remaining_trials:
+        output_filename = f'{filename_prefix}_{trial_num}.out'
 
-    ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
+        ground_truth = PySparseTensor(f"/pscratch/sd/v/vbharadw/tensors/{tensor_name}.tns_converted.hdf5", lookup="sort", preprocessing=preprocessing)
 
-    ranks = [params.trank] * (ground_truth.N - 1)
+        ranks = [params.trank] * (ground_truth.N - 1)
 
-    print("Loaded dataset...")
-    tt_approx = TensorTrain(ground_truth.shape, ranks)
+        print("Loaded dataset...")
+        tt_approx = TensorTrain(ground_truth.shape, ranks)
 
-    tt_approx.place_into_canonical_form(0)
-    tt_approx.build_fast_sampler(0, J=params.samples)
-    tt_als = TensorTrainALS(ground_truth, tt_approx)
-    optimizer_stats = None
+        tt_approx.place_into_canonical_form(0)
+        tt_approx.build_fast_sampler(0, J=params.samples)
+        tt_als = TensorTrainALS(ground_truth, tt_approx)
+        optimizer_stats = None
 
-    initial_fit = tt_als.compute_exact_fit()
+        initial_fit = tt_als.compute_exact_fit()
 
-    if params.algorithm == "exact":
-        optimizer_stats = tt_als.execute_exact_als_sweeps_sparse(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
-    elif params.algorithm == "random":
-        optimizer_stats = tt_als.execute_randomized_als_sweeps(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
+        if params.algorithm == "exact":
+            optimizer_stats = tt_als.execute_exact_als_sweeps_sparse(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
+        elif params.algorithm == "random":
+            optimizer_stats = tt_als.execute_randomized_als_sweeps(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
 
-    final_fit = tt_als.compute_exact_fit()
+        final_fit = tt_als.compute_exact_fit()
 
-    now = datetime.datetime.now()
-    output_dict = {
-        'time': now.strftime('%m/%d/%Y, %H:%M:%S'), 
-        'input': params.input,
-        'target_rank': params.trank,
-        'iterations': params.iter,
-        'algorithm': params.algorithm,
-        'sample_count': params.samples,
-        'accuracy_epoch_length': params.epoch_iter,
-        'trial_count': params.repetitions,
-        'trial_num': trial_num,
-        'initial_fit': initial_fit,
-        'final_fit': final_fit,
-        'thread_count': os.environ.get('OMP_NUM_THREADS'),
-        'stats': optimizer_stats
-    }
+        now = datetime.datetime.now()
+        output_dict = {
+            'time': now.strftime('%m/%d/%Y, %H:%M:%S'), 
+            'input': params.input,
+            'target_rank': params.trank,
+            'iterations': params.iter,
+            'algorithm': params.algorithm,
+            'sample_count': params.samples,
+            'accuracy_epoch_length': params.epoch_iter,
+            'trial_count': params.repetitions,
+            'trial_num': trial_num,
+            'initial_fit': initial_fit,
+            'final_fit': final_fit,
+            'thread_count': os.environ.get('OMP_NUM_THREADS'),
+            'stats': optimizer_stats
+        }
 
-    print(json.dumps(output_dict, indent=4))
-    print(f"Final Fit: {final_fit}")
+        print(json.dumps(output_dict, indent=4))
+        print(f"Final Fit: {final_fit}")
 
-    if output_filename is not None:
-        with open(os.path.join(args.output_folder, output_filename), 'w') as f:
-            f.write(json.dumps(output_dict, indent=4)) 
+        if output_filename is not None:
+            with open(os.path.join(args.output_folder, output_filename), 'w') as f:
+                f.write(json.dumps(output_dict, indent=4)) 
 
 
 if __name__=='__main__':
