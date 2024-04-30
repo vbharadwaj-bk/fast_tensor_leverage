@@ -24,6 +24,7 @@ PYBIND11_MODULE(tt_module, m) {
         .def(py::init<uint64_t, uint64_t, uint64_t, py::array_t<uint64_t>>())
         .def("update_matricization", &TTSampler::update_matricization)
         .def("sample", &TTSampler::sample)
+        .def("m45c", &TTSampler::m4tc)
         .def("evaluate_indices_partial", &TTSampler::evaluate_indices_partial);
     py::class_<Tensor>(m, "Tensor")
         .def("execute_downsampled_mttkrp", &Tensor::execute_downsampled_mttkrp_py);
