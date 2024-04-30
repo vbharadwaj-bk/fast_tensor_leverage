@@ -132,7 +132,9 @@ class TensorTrainALS:
         stats =         {   "als_time": 0.0, 
                             "fit_computation_time": 0.0,
                             "iterations": [],
-                            "fits": []}
+                            "fits": [],
+                            "als_iter_times": []
+                            }
         tt_approx = self.tt_approx
         N = tt_approx.N
         def optimize_core(j):
@@ -206,6 +208,7 @@ class TensorTrainALS:
                 stats["iterations"].append(i)
                 fit = self.compute_exact_fit()
                 stats["fits"].append(fit)
+                stats["als_iter_times"].append(stats["als_time"]) 
                 print(f"Fit after {i} iterations: {fit}")
                 stats["fit_computation_time"] += time.time() - fit_computation_start 
 

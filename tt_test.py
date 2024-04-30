@@ -154,8 +154,7 @@ def test_sparse_tensor_decomposition(params):
     initialization = tensor_map[tensor_name]["initialization"]    
 
     filename_prefix = '_'.join([params.input, str(params.trank), 
-                                    str(params.iter), params.distribution, 
-                                    params.algorithm, str(params.samples), 
+                                    str(params.iter), params.algorithm, str(params.samples), 
                                     str(params.epoch_iter)])
 
     files = os.listdir(args.output_folder)
@@ -166,6 +165,8 @@ def test_sparse_tensor_decomposition(params):
         with open(os.path.join(args.output_folder, f), 'r') as f_handle:
             exp = json.load(f_handle)
             trial_nums.append(exp["trial_num"])
+
+    remaining_trials = [i for i in range(args.repetitions) if i not in trial_nums]
 
     if len(remaining_trials) > 0:
             trial_num = remaining_trials[0] 
@@ -193,12 +194,16 @@ def test_sparse_tensor_decomposition(params):
     tt_als = TensorTrainALS(ground_truth, tt_approx)
     optimizer_stats = None
 
+    initial_fit = tt_als.compute_exact_fit()
+
     if params.algorithm == "exact":
         optimizer_stats = tt_als.execute_exact_als_sweeps_sparse(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
     elif params.algorithm == "random":
         optimizer_stats = tt_als.execute_randomized_als_sweeps(num_sweeps=params.iter, J=params.samples, epoch_interval=params.epoch_iter)
 
-    now = datetime.now()
+    final_fit = tt_als.compute_exact_fit()
+
+    now = datetime.datetime.now()
     output_dict = {
         'time': now.strftime('%m/%d/%Y, %H:%M:%S'), 
         'input': params.input,
