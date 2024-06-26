@@ -155,6 +155,7 @@ dense_tt_tests/dense_tensor.py
 dense_tt_tests/tt_als.py
 dense_tt_tests/cpp_ext
 dense_tt_tests/mnist
+dense_tt_tests/dc-mall
 dense_tt_tests/outputs/*
 dense_tt_tests/dense_tt_sets/*
 *.mp4
