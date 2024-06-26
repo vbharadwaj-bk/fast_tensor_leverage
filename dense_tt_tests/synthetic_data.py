@@ -6,7 +6,7 @@ import statistics
 import sys
 from tt_als import *
 from tensor_train import *
-from tt_svd import *
+from tt_svd_draft import *
 from tensorly.tt_tensor import tt_to_tensor
 from line_profiler import profile
 
@@ -38,7 +38,7 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
         total_fit = []
         total_time = []
         # outfile = f'outputs/dense_tt/synthetic/svd_{j}-{r}-{test}.json'
-        outfile = f'outputs/dense_tt/synthetic/svd_{J}-{r}-{test}_{true_rank}_{dim}_{n_trials}_{nsweeps}.json'
+        outfile = f'outputs/dense_tt/synthetic/jsons/oversample_{N}_{J}-{r}-{test}_{true_rank}_{dim}_{n_trials}_{nsweeps}.json'
         directory = os.path.dirname(outfile)
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -46,8 +46,9 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
         for tr in range(n_trials):
             X, ground_truth = generate_tt_full_tensors(true_rank, dims, std_noise)
             if test == "tt-svd":
+                print(f"svd is loading ...")
                 start = time.time()
-                cores_svd = tensor_train_svd(X.data, ranks, svd="truncated_svd", verbose=False)
+                cores_svd = tensor_train_svd(X.data, ranks, svd="truncated_svd")
                 end = time.time()
                 total_time.append(end-start)
                 approx = tt_to_tensor(cores_svd)
@@ -55,8 +56,9 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
                 tt_cores_svd = cores_svd
 
             elif test == "randomized_tt-svd":
+                print(f"rsvd is loading ...")
                 start = time.time()
-                cores_rsvd = tensor_train_svd(X.data, ranks, svd="randomized_svd", verbose=False)
+                cores_rsvd = tensor_train_svd(X.data, ranks, svd="randomized_svd")
                 end = time.time()
                 total_time.append(end - start)
                 approx = tt_to_tensor(cores_rsvd)
@@ -92,13 +94,32 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
 
                 fit_result = tt_als.compute_exact_fit()
                 total_fit.append(fit_result)
+
+            # elif test == "tt_als_sampled":
+            #     start = time.time()
+            #     j = 20
+            #     n_samples = [j] * N
+            #     cores = tensor_train_als_sampled(X.data, rank, n_samples, nsweeps, init_method=None, tt_decomp=tt_cores_rsvd)
+            #     end = time.time()
+            #     total_time.append(end - start)
+            #     approx = tt_to_tensor(cores)
+            #     total_fit.append(fit(ground_truth.data, approx))
+            # elif test == "tns-tt":
+            #     print("tns_tt is loading ... ")
+            #     j = 20
+            #     start = time.time()
+            #     cores = tns_tt_test(X.data, rank, j, nsweeps=20, init_method=None,
+            #                         tt_decomp=tt_cores_rsvd)
+            #     end = time.time()
+            #     total_time.append(end - start)
+            #     approx = tt_to_tensor(cores)
+            #     total_fit.append(fit(ground_truth.data, approx))
+
             else:
                 continue
 
         time_mean = np.mean(total_time)
-
         fit_mean = np.mean(total_fit)
-
 
         result = {
             "dim_size": dim,
@@ -114,15 +135,15 @@ def compute_relative_error(N, dim, tests, r, J, n_trials, nsweeps, std_noise=Non
 
 if __name__ == '__main__':
     n_trials = 5
-    N = 10
-    dim = [3,4,5]
+    N = 3
+    dim = [100,200,300,400,500]
     # true_rank = rank = range(5,15,5)
-    true_rank = 10
-    rank = 2
+    true_rank = 20
+    rank = 5
     std_noise = 1e-6
     tests = ["tt-svd", "randomized_tt-svd", "tt-als", "randomized_tt-als"]
-    J = 2000
-    nsweeps = 50
+    J = 5000
+    nsweeps = 20
     for d in dim:
         print(f"{d} is running")
         compute_relative_error(N, d, tests, rank, J, n_trials, nsweeps, std_noise, true_rank)

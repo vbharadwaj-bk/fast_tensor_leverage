@@ -63,6 +63,6 @@ def get_coil_tensor(dataset_name):
     tensor = PyDenseTensor(images_np)
     return tensor, labels_np
 
-if __name__ == "__main__":
-    tensor, labels = get_coil_tensor("coil-100")
-    print(f"Tensor shape: {type(tensor)}, tensor shape: {tensor.shape}")
+# if __name__ == "__main__":
+#     tensor, labels = get_coil_tensor("coil-100")
+#     print(f"Tensor shape: {type(tensor)}, tensor shape: {tensor.shape}")

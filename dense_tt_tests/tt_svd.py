@@ -68,7 +68,7 @@ def randomized_range_finder(A, n_dims, n_iter=1, random_state=None):
 def randomized_svd(
         matrix,
         n_eigenvecs=None,
-        n_oversamples=0,
+        n_oversamples=2,
         n_iter=1,
         random_state=None,
         **kwargs,
@@ -100,6 +100,7 @@ def randomized_svd(
 
 
 def tensor_train_svd(input_tensor, rank, svd=None, verbose=False):
+    print(f"svd is starting ...")
     rank = validate_tt_rank(np.shape(input_tensor), rank=rank)
     tensor_size = input_tensor.shape
     n_dim = len(tensor_size)

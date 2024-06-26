@@ -8,9 +8,13 @@ from PIL import Image
 import glob
 import sys
 from moviepy.editor import VideoFileClip
-from PIL import Image
-
+import tifffile as tiff
+import h5py
 from dense_tensor import *
+import torch
+from torch.utils.data import Dataset
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
 
 
 def get_datasets(dataset):
@@ -22,19 +26,26 @@ def get_datasets(dataset):
                                 "dense_tt_tests")
     if dataset == "pavia":
         file_url = "http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat"
-        filename = file_url.split('/')[-1]
+        filename = 'PaviaU.mat'
     elif dataset == "bench-park":
         file_url = 'https://www.pexels.com/video/853751/download/'
         filename = 'bench-park-video.mp4'
     elif dataset == "cat":
         file_url = "https://www.pexels.com/download/video/854982/?fps=25.0&h=720&w=1280"
         filename = 'cat-video.mp4'
+    elif dataset == "dc-mall":
+        file_url = "http://cobweb.ecn.purdue.edu/~biehl/Hyperspectral_Project.zip/dc.tif"
+        filename = 'dc-mall'
+    elif dataset == "mnist":
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))  # Normalize the images
+        ])
+        file_url = datasets.MNIST(root='./dense_tt_sets', train=True, download=True, transform=transform)
+        filename = 'mnist'
     # elif dataset == "coil-reshaped":
     #     file_url = "http://www.cs.columbia.edu/CAVE/databases/SLAM_coil-20_coil-100/coil-100/coil-100.zip"
     #     filename = file_url.split('/')[-1]
-    else:
-        raise ValueError(f"not implemented yet")
-
     print(f"Filename: {filename}")
 
     full_file_path = os.path.join(dataset_path, filename)
@@ -60,14 +71,16 @@ def get_datasets(dataset):
 def load_data(data, file_path):
     tensor = None
     if data == "pavia":
-        data = loadmat(file_path)
-        hyperspectral_data = data.get('paviaU')
+        hyperspectral_data = scipy.io.loadmat(file_path)
+        hyperspectral_data = hyperspectral_data['paviaU']
+        print(hyperspectral_data.shape)
         if hyperspectral_data is None:
             raise KeyError("Key 'paviaU' not found in the .mat file")
 
-        hyperspectral_data = np.array(hyperspectral_data).astype(np.float64)
-        hyperspectral_data = hyperspectral_data[:600, :320, :100]
-        hyperspectral_data = hyperspectral_data.reshape((100,100,80,24))
+        hyperspectral_data = np.transpose(hyperspectral_data[:600, :320, :100],(2,1,0))
+        # hyperspectral_data = hyperspectral_data[:600, :320, :100]
+        hyperspectral_data = hyperspectral_data.reshape((100,320,30,20))
+        hyperspectral_data = np.array(hyperspectral_data).astype(np.float32)
 
         print("Initialized dense tensor...")
         tensor = PyDenseTensor(hyperspectral_data)
@@ -79,6 +92,11 @@ def load_data(data, file_path):
         video_data = np.array(frames)
         video_data_grayscale = video_data.mean(axis=-1)
         target_shape = (24, 45, 32, 60, 28, 13)
+        reshaped_data = video_data_grayscale.reshape(target_shape)
+        print("Data reshaped successfully.")
+        print("Initialized dense tensor...")
+        tensor = PyDenseTensor(reshaped_data)
+
         try:
             if video_data_grayscale.size == np.product(target_shape):
                 reshaped_data = video_data_grayscale.reshape(target_shape)
@@ -89,14 +107,17 @@ def load_data(data, file_path):
                 print("Cannot reshape: total number of elements does not match the target shape.")
         except Exception as e:
             print(f"Error during reshaping: {e}")
+
     elif data == "cat":
         video_path = file_path
         bench_park_data = VideoFileClip(video_path)
         frames = [frame for frame in bench_park_data.iter_frames()]
         video_data = np.array(frames)
         video_data_grayscale = video_data.mean(axis=-1)
+        print(video_data_grayscale.shape)
+        video_data_grayscale = np.transpose(video_data_grayscale,(1,2,0))
         # target_shape = (16, 45, 32, 40, 13, 22)
-        target_shape = (100,143,128,144)
+        target_shape = (286,720,40,32)
         # target_shape = target_shape.reshape(32,,)
         try:
             if video_data_grayscale.size == np.product(target_shape):
@@ -109,23 +130,36 @@ def load_data(data, file_path):
         except Exception as e:
             print(f"Error during reshaping: {e}")
 
-    # elif data == "coil-reshape":
-    #     red_truck_path = os.listdir(file_path)
-    #     no_obj = 1
-    #     pic_per_obj = 72
-    #     strt = 4
-    #     X = np.zeros((128, 128, 3, no_obj * pic_per_obj), dtype=np.uint8)
-    #     cnt = 0
-    #     for obj in range(1, no_obj + 1):
-    #         for pic in range(1, pic_per_obj + 1):
-    #             img_path = os.path.join(path, flist[strt + cnt])
-    #             X[:, :, :, (obj - 1) * pic_per_obj + pic - 1] = np.array(Image.open(img_path))
-    #             cnt += 1
-    #
-    #     if dataset == 'coil-reshape':
-    #         X = X.reshape((8, 16, 8, 16, 3, 8, 9))
-    #     else:
-    #         X = X.astype(np.float64)
+    elif data == "dc-mall":
+        file_name = 'dc-mall'
+        hyper = tiff.imread('dc.tif')
+        hyperspectral_data = np.array(hyper).astype(np.float32)
+        print(f"Loaded hyperspectral data shape: {hyperspectral_data.shape}")
+
+        hyperspectral_data = hyperspectral_data[:190,:,:306]
+        print(hyperspectral_data.shape)
+        hyperspectral_data = hyperspectral_data.reshape((1280,306,10,19))
+        print("Initialized dense tensor...")
+        tensor = PyDenseTensor(hyperspectral_data)
+
+    elif data == "mnist":
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))  # Normalize the images
+        ])
+        data = datasets.MNIST(root='./dense_tt_sets', train=True, download=True, transform=transform)
+        images_list = []
+        mnist_loader = DataLoader(data, batch_size=2, shuffle=True)
+        for images, labels in mnist_loader:
+            images_np = images.numpy()
+            images_np = images_np.astype(np.float64)
+            images_list.append(images_np)
+
+        images_np = np.array(images_list).astype(np.float64)
+        mnist_data  = images_np.reshape((280,600,28,10))
+        print("Initialized dense tensor...")
+
+        tensor = PyDenseTensor(mnist_data)
 
     else:
         print(f"Dataset type {data} not supported for this operation")
@@ -134,7 +168,7 @@ def load_data(data, file_path):
 
 
 # if __name__ == "__main__":
-#     data= "cat"
+#     data= "mnist"
 #     file_path = get_datasets(data)
-#     cat_data = load_data(data, file_path)
-#     print(f"Dataset shape is {cat_data.shape}")
+#     data = load_data(data, file_path)
+#     print(f"Dataset shape is {data.shape}")
