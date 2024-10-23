@@ -26,6 +26,7 @@ class TensorTrain:
         self.N = len(dims)
         self.rank = rank
         self.U = U
+        # self.ranks = rank
         self.ranks = np.array([1] + [self.rank] * (self.N - 1) + [1], np.uint64)
         self.rng = rng
         # self.std_noise = std_noise

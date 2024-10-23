@@ -22,8 +22,7 @@ def get_datasets(dataset):
     filename = None  # Initialize filename variable
 
     home_directory = os.path.expanduser("~")
-    dataset_path = os.path.join(home_directory, "my_projects", "TT_Sampling", "fast_tensor_leverage",
-                                "dense_tt_tests")
+    #dataset_path = os.path.join(data_set path)
     if dataset == "pavia":
         file_url = "http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat"
         filename = 'PaviaU.mat'
@@ -43,9 +42,6 @@ def get_datasets(dataset):
         ])
         file_url = datasets.MNIST(root='./dense_tt_sets', train=True, download=True, transform=transform)
         filename = 'mnist'
-    # elif dataset == "coil-reshaped":
-    #     file_url = "http://www.cs.columbia.edu/CAVE/databases/SLAM_coil-20_coil-100/coil-100/coil-100.zip"
-    #     filename = file_url.split('/')[-1]
     print(f"Filename: {filename}")
 
     full_file_path = os.path.join(dataset_path, filename)
