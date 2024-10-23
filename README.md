@@ -1,2 +1,1 @@
-# Work in Progress
-This branch contains code that is a work in progress...
+# Leverage Score Sampling for ALS Tensor Train Decomposition
