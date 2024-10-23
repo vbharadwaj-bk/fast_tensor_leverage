@@ -166,7 +166,7 @@ dense_tt_tests/draw_samples_tns_tt.py
 dense_tt_tests/tns_tt_test.py
 dense_tt_tests/tns_tt.py
 dense_tt_tests/tt_als_sampled.py
-dense_tensor/coil100_data_loader.py
+dense_tt_tests/coil100_data_loader.py
 *.mp4
 *.zip
 *.lprof
