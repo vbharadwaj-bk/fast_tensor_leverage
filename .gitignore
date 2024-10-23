@@ -161,7 +161,7 @@ dense_tt_tests/dc-mall
 dense_tt_tests/outputs/*
 dense_tt_tests/dense_tt_sets/*
 dense_tt_tests/config.json
-dense_tt_tests/draw_samples_test
+dense_tt_tests/draw_samples_test.py
 dense_tt_tests/draw_samples_tns_tt.py
 dense_tt_tests/tns_tt_test.py
 dense_tt_tests/tns_tt.py
